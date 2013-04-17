@@ -34,6 +34,7 @@
 #include "testing/stage_rca.hpp"
 #include "testing/stage_fallback.hpp"
 #include "akihara/recruitment.hpp"
+#include "flix/recruitment.hpp"
 
 namespace ai {
 // =======================================================================
@@ -132,8 +133,11 @@ static register_candidate_action_factory<testing_ai_default::leader_shares_keep_
 static register_candidate_action_factory<testing_ai_default::global_fallback_phase>
 	global_fallback_phase_factory("ai_default_rca::global_fallback_phase");
 
-static register_candidate_action_factory<akihara_recruitment::recruitment>
-	recruitment_factory("akihara_recruitment::recruitment");
+//static register_candidate_action_factory<akihara_recruitment::recruitment>
+//	recruitment_factory("akihara_recruitment::recruitment");
+
+static register_candidate_action_factory<flix_recruitment::recruitment>
+	recruitment_factory("flix_recruitment::recruitment");
 
 // === Also keep the old syntax ===
 static register_candidate_action_factory<testing_ai_default::goto_phase>
