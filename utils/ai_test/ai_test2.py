@@ -6,6 +6,7 @@ import ConfigParser
 import os
 import string
 import random
+import sys
 
 class GameResult:
 	ai_config1 = ''
@@ -37,15 +38,21 @@ def filter_non_printable(str):
 
 def construct_command_line(cfg,ai1,ai2,f1,f2,map):
 	wesnoth = cfg.get('default','path_to_wesnoth_binary')
-	options= cfg.get('default','arguments_to_wesnoth_binary')
-	ai_config1='--ai_config1='+ai1
-	ai_config2='--ai_config2='+ai2
+	options= cfg.get('default','additional_arguments')
+	ai_config1='--ai-config 1:'+ai1
+	ai_config2='--ai-config 2:'+ai2
+	if sys.argv[1]=='-p':
+		gui=''
+	else:
+		gui='--nogui'	
+
 	if (map==''):
 		optmap=''
 	else:
 		optmap='--scenario='+map
-
-	return wesnoth+' '+options+' '+optmap+' '+ai_config1+' '+ai_config2
+	
+	statics='--log-info=ai/testing,mp/connect --multiplayer'
+	return wesnoth+' '+options+' '+optmap+' '+ai_config1+' '+ai_config2+' '+gui+' '+statics
 
 def do_filter(str,substring):
 	n = str.find(substring)
@@ -157,7 +164,8 @@ def tests(cfg):
 	random.seed()
 	for i in range(0, n):
 		map = random.choice(maplist)
-		d = random.randint(0,1)
+		#d = random.randint(0,1)
+		d = 0
 		print 'TEST: map '+map+' i='+str(i)+' d='+str(d)
 		if (d==0):
 			game_result = GameResult(ai1,ai2,f1,f2,map,'default')
@@ -168,11 +176,29 @@ def tests(cfg):
 # main
 
 cfg = ConfigParser.ConfigParser()
-cfg.read('ai_test.cfg')
+cfg.read('ai_test2.cfg')
+
+# only 'test the test' with GUI / start one game then exit
+if sys.argv[1] == '-p':
+	test = tests(cfg).next()
+	run_game(cfg, test)
+	sys.exit(0)
+	
 
 log_file = open(datetime.now().strftime(cfg.get('default','log_file').strip())  , 'w')
 log_file.write('"ai_config1"'+', '+'"ai_config2"'+', '+'"ai_ident1"'+', '+'"ai_ident2"'+', '+ '"duration"'+', '+'"faction1"'+', '+'"faction2"'+', '+'"is_success"'+', '+'"local_modifications"'+', '+'"map"'+', '+'"repo_release"'+', '+'"test"'+', '+'"end_turn"'+', '+'"version_string"'+', '+'"winner_side"'+'\n');
 log_file.flush();
+
+total = 0
+s1 = 0
+s2 = 0
+draw = 0
+
 for test in tests(cfg):
 	game_result = run_game(cfg,test)
+	total = total + 1
+	if(game_result.winner_side == '1'): s1 = s1 + 1
+	if(game_result.winner_side == '2'): s2 = s2 + 1
+	if(game_result.winner_side == '0'): draw = draw + 1
+	print '=====Total games: ' + str(total) + ' Side 1 won: ' + str(s1) + "/" + str(s1 * 100 / total) + '% Side 2 won: ' + str(s2) + "/" + str(s2 * 100 / total) + '%' + '% Draws: ' + str(draw) + "/" + str(draw * 100 / total) + '%' 
 	save_result(cfg,log_file,game_result)
