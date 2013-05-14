@@ -17,8 +17,8 @@
  * Strategic recruitment routine, for experimentation
  */
 
-#ifndef AI_FLIX_RECRUITMENT_HPP_INCLUDED
-#define AI_FLIX_RECRUITMENT_HPP_INCLUDED
+#ifndef AI_FLIX2_RECRUITMENT_HPP_INCLUDED
+#define AI_FLIX2_RECRUITMENT_HPP_INCLUDED
 
 #include "../composite/rca.hpp"
 #include "../../team.hpp"
@@ -31,7 +31,7 @@
 
 namespace ai {
 
-namespace flix_recruitment {
+namespace flix2_recruitment {
 
 typedef std::map<std::string, std::map<std::string, double> > effectivness_table;
 

@@ -603,6 +603,7 @@ set(wesnoth-main_SRC
 	ai/actions.cpp
 	ai/akihara/recruitment.cpp
 	ai/flix/recruitment.cpp
+	ai/flix/recruitment2.cpp
 	ai/composite/ai.cpp
 	ai/composite/aspect.cpp
 	ai/composite/component.cpp

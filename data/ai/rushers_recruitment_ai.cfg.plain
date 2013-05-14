@@ -1,0 +1,362 @@
+þline 1 ../data/ai/dev/rushers_recruitment_ai.cfg
+#textdomain wesnoth-AI-demos
+
+þline 1 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg
+#textdomain wesnoth
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+þline 3 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+þline 3 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+
+[ai]
+    id=ron_recruit
+    description=_"RCA + Ron's recruit"
+    version=10710
+    [engine]
+        name="lua"
+        code= <<
+            local ai = ...
+            return wesnoth.require("~add-ons/AI-demos/lua/generic-rush_engine.lua").init(ai)
+        >>
+    [/engine]
+    [stage]
+        id=main_loop
+        name=ai_default_rca::candidate_action_evaluation_loop
+        þline 53 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=goto
+        engine=cpp
+        name=ai_default_rca::goto_phase
+        max_score=þline 6 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 57 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+    200000
+þline 57 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 6 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 58 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+    200000
+þline 58 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 19 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        
+        þline 73 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=move_leader_to_goals
+        engine=cpp
+        name=ai_default_rca::move_leader_to_goals_phase
+        max_score=þline 14 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 77 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+    140000
+þline 77 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 14 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 78 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+    140000
+þline 78 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 21 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 83 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=move_leader_to_keep
+        engine=cpp
+        name=ai_default_rca::move_leader_to_keep_phase
+        max_score=þline 18 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 87 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+    120000
+þline 87 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 18 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 88 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+    120000
+þline 88 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 22 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 93 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=combat
+        engine=cpp
+        name=ai_default_rca::combat_phase
+        max_score=þline 22 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 97 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+    100000
+þline 97 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 22 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 98 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+    100000
+þline 98 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 23 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 103 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=healing
+        engine=cpp
+        name=ai_default_rca::get_healing_phase
+        max_score=þline 26 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 107 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+    80000
+þline 107 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 26 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 108 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+    80000
+þline 108 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 24 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 113 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=villages
+        engine=cpp
+        name=ai_default_rca::get_villages_phase
+        max_score=þline 30 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 117 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+    60000
+þline 117 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 30 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 118 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+    60000
+þline 118 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 25 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 123 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=retreat
+        engine=cpp
+        name=ai_default_rca::retreat_phase
+        max_score=þline 34 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 127 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+    40000
+þline 127 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 34 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 128 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+    40000
+þline 128 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 26 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 133 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=move_to_targets
+        engine=cpp
+        name=ai_default_rca::move_to_targets_phase
+        max_score=þline 38 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 137 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+    20000
+þline 137 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 38 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 138 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+    20000
+þline 138 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 27 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        þline 143 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth
+    [candidate_action]
+        id=leader_shares_keep
+        engine=cpp
+        name=ai_default_rca::leader_shares_keep_phase
+        max_score=þline 42 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 147 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+    10000
+þline 147 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+        score=þline 42 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 148 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+    10000
+þline 148 core/macros/ai_candidate_actions.cfg 3 ../data/ai/dev/rushers_recruitment_ai.cfg 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+
+    [/candidate_action]
+þline 28 ../data/ai/dev/rushers_recruitment_ai.cfg
+þtextdomain wesnoth-AI-demos
+
+        [candidate_action]
+            engine=lua
+            name=recruit_rushers
+            evaluation="return (...):recruit_rushers_eval()"
+            execution="(...):recruit_rushers_exec()"
+        [/candidate_action]
+    [/stage]
+[/ai]þtextdomain wesnoth

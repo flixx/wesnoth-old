@@ -1,0 +1,172 @@
+þline 1 ../../data/ai/ais/ai_default_rca.cfg
+
+
+[ai]
+    id=ai_default_rca
+    description=_"Multiplayer_AI^Default AI (RCA)" 
+    version=10710
+    [stage]
+        id=main_loop
+        name=ai_default_rca::candidate_action_evaluation_loop
+        þline 53 core/macros/ai_candidate_actions.cfg 10 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=goto
+        engine=cpp
+        name=ai_default_rca::goto_phase
+        max_score=þline 6 core/macros/ai_candidate_actions.cfg 57 core/macros/ai_candidate_actions.cfg 10 ../../data/ai/ais/ai_default_rca.cfg
+    200000
+þline 57 core/macros/ai_candidate_actions.cfg 10 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 6 core/macros/ai_candidate_actions.cfg 58 core/macros/ai_candidate_actions.cfg 10 ../../data/ai/ais/ai_default_rca.cfg
+    200000
+þline 58 core/macros/ai_candidate_actions.cfg 10 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 10 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 63 core/macros/ai_candidate_actions.cfg 11 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=recruitment
+        engine=cpp
+        name=ai_default_rca::aspect_recruitment_phase
+        max_score=þline 10 core/macros/ai_candidate_actions.cfg 67 core/macros/ai_candidate_actions.cfg 11 ../../data/ai/ais/ai_default_rca.cfg
+    180000
+þline 67 core/macros/ai_candidate_actions.cfg 11 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 10 core/macros/ai_candidate_actions.cfg 68 core/macros/ai_candidate_actions.cfg 11 ../../data/ai/ais/ai_default_rca.cfg
+    180000
+þline 68 core/macros/ai_candidate_actions.cfg 11 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 11 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 73 core/macros/ai_candidate_actions.cfg 12 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=move_leader_to_goals
+        engine=cpp
+        name=ai_default_rca::move_leader_to_goals_phase
+        max_score=þline 14 core/macros/ai_candidate_actions.cfg 77 core/macros/ai_candidate_actions.cfg 12 ../../data/ai/ais/ai_default_rca.cfg
+    140000
+þline 77 core/macros/ai_candidate_actions.cfg 12 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 14 core/macros/ai_candidate_actions.cfg 78 core/macros/ai_candidate_actions.cfg 12 ../../data/ai/ais/ai_default_rca.cfg
+    140000
+þline 78 core/macros/ai_candidate_actions.cfg 12 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 12 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 83 core/macros/ai_candidate_actions.cfg 13 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=move_leader_to_keep
+        engine=cpp
+        name=ai_default_rca::move_leader_to_keep_phase
+        max_score=þline 18 core/macros/ai_candidate_actions.cfg 87 core/macros/ai_candidate_actions.cfg 13 ../../data/ai/ais/ai_default_rca.cfg
+    120000
+þline 87 core/macros/ai_candidate_actions.cfg 13 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 18 core/macros/ai_candidate_actions.cfg 88 core/macros/ai_candidate_actions.cfg 13 ../../data/ai/ais/ai_default_rca.cfg
+    120000
+þline 88 core/macros/ai_candidate_actions.cfg 13 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 13 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 93 core/macros/ai_candidate_actions.cfg 14 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=combat
+        engine=cpp
+        name=ai_default_rca::combat_phase
+        max_score=þline 22 core/macros/ai_candidate_actions.cfg 97 core/macros/ai_candidate_actions.cfg 14 ../../data/ai/ais/ai_default_rca.cfg
+    100000
+þline 97 core/macros/ai_candidate_actions.cfg 14 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 22 core/macros/ai_candidate_actions.cfg 98 core/macros/ai_candidate_actions.cfg 14 ../../data/ai/ais/ai_default_rca.cfg
+    100000
+þline 98 core/macros/ai_candidate_actions.cfg 14 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 14 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 103 core/macros/ai_candidate_actions.cfg 15 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=healing
+        engine=cpp
+        name=ai_default_rca::get_healing_phase
+        max_score=þline 26 core/macros/ai_candidate_actions.cfg 107 core/macros/ai_candidate_actions.cfg 15 ../../data/ai/ais/ai_default_rca.cfg
+    80000
+þline 107 core/macros/ai_candidate_actions.cfg 15 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 26 core/macros/ai_candidate_actions.cfg 108 core/macros/ai_candidate_actions.cfg 15 ../../data/ai/ais/ai_default_rca.cfg
+    80000
+þline 108 core/macros/ai_candidate_actions.cfg 15 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 15 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 113 core/macros/ai_candidate_actions.cfg 16 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=villages
+        engine=cpp
+        name=ai_default_rca::get_villages_phase
+        max_score=þline 30 core/macros/ai_candidate_actions.cfg 117 core/macros/ai_candidate_actions.cfg 16 ../../data/ai/ais/ai_default_rca.cfg
+    60000
+þline 117 core/macros/ai_candidate_actions.cfg 16 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 30 core/macros/ai_candidate_actions.cfg 118 core/macros/ai_candidate_actions.cfg 16 ../../data/ai/ais/ai_default_rca.cfg
+    60000
+þline 118 core/macros/ai_candidate_actions.cfg 16 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 16 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 123 core/macros/ai_candidate_actions.cfg 17 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=retreat
+        engine=cpp
+        name=ai_default_rca::retreat_phase
+        max_score=þline 34 core/macros/ai_candidate_actions.cfg 127 core/macros/ai_candidate_actions.cfg 17 ../../data/ai/ais/ai_default_rca.cfg
+    40000
+þline 127 core/macros/ai_candidate_actions.cfg 17 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 34 core/macros/ai_candidate_actions.cfg 128 core/macros/ai_candidate_actions.cfg 17 ../../data/ai/ais/ai_default_rca.cfg
+    40000
+þline 128 core/macros/ai_candidate_actions.cfg 17 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 17 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 133 core/macros/ai_candidate_actions.cfg 18 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=move_to_targets
+        engine=cpp
+        name=ai_default_rca::move_to_targets_phase
+        max_score=þline 38 core/macros/ai_candidate_actions.cfg 137 core/macros/ai_candidate_actions.cfg 18 ../../data/ai/ais/ai_default_rca.cfg
+    20000
+þline 137 core/macros/ai_candidate_actions.cfg 18 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 38 core/macros/ai_candidate_actions.cfg 138 core/macros/ai_candidate_actions.cfg 18 ../../data/ai/ais/ai_default_rca.cfg
+    20000
+þline 138 core/macros/ai_candidate_actions.cfg 18 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 18 ../../data/ai/ais/ai_default_rca.cfg
+
+        þline 143 core/macros/ai_candidate_actions.cfg 19 ../../data/ai/ais/ai_default_rca.cfg
+    [candidate_action]
+        id=leader_shares_keep
+        engine=cpp
+        name=ai_default_rca::leader_shares_keep_phase
+        max_score=þline 42 core/macros/ai_candidate_actions.cfg 147 core/macros/ai_candidate_actions.cfg 19 ../../data/ai/ais/ai_default_rca.cfg
+    10000
+þline 147 core/macros/ai_candidate_actions.cfg 19 ../../data/ai/ais/ai_default_rca.cfg
+
+        score=þline 42 core/macros/ai_candidate_actions.cfg 148 core/macros/ai_candidate_actions.cfg 19 ../../data/ai/ais/ai_default_rca.cfg
+    10000
+þline 148 core/macros/ai_candidate_actions.cfg 19 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/candidate_action]
+þline 19 ../../data/ai/ais/ai_default_rca.cfg
+
+    [/stage]
+[/ai]

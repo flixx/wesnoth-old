@@ -21,7 +21,7 @@
 #include "../default/ai.hpp"
 #include <math.h>
 #include <iomanip>
-#include "recruitment.hpp"
+#include "recruitment2.hpp"
 
 #include "../actions.hpp"
 #include "../manager.hpp"
@@ -48,7 +48,7 @@ static lg::log_domain log_ai_flix("ai/flix");
 
 namespace ai {
 
-namespace flix_recruitment {
+namespace flix2_recruitment {
 
 	recruitment::recruitment( rca_context &context , const config &cfg ):
 		candidate_action(context, cfg){ 	}
@@ -134,8 +134,8 @@ void recruitment::execute() {
 				//table[*own_unit_s][*enemy_unit_s] = compare_unit_types(*own_unit, *enemy_unit) + cost_weight;
 				//table[*own_unit_s][*enemy_unit_s] = rand() % 20;
 
-				//table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy / own_unit->cost() - enemy_effectiveness_vs_own / enemy_unit->cost(); // * own_unit->cost() / enemy_unit->cost();
-				table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy - enemy_effectiveness_vs_own;
+				table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy / own_unit->cost() - enemy_effectiveness_vs_own / enemy_unit->cost(); // * own_unit->cost() / enemy_unit->cost();
+				//table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy - enemy_effectiveness_vs_own;
 				LOG_AI_FLIX << *own_unit_s << " : " << *enemy_unit_s << " << " << own_effectiveness_vs_enemy << " - " << enemy_effectiveness_vs_own << " = " << table[*own_unit_s][*enemy_unit_s] << "\n";
 			}
 		}
@@ -162,7 +162,7 @@ void recruitment::execute() {
 	{
 	}
 
-	/**
+
 	int recruitment::average_resistance_against(const unit_type& a, const unit_type& b) const
 	{
 		int weighting_sum = 0, defense = 0;
@@ -240,10 +240,10 @@ void recruitment::execute() {
 		}
 		return sum/weight_sum;
 	}
-	**/
 
 
 
+	/**
 	int recruitment::average_resistance_against(const unit_type& a, const unit_type& b) const
 	{
 		int weighting_sum_a = 0, defense_a = 0, weighting_sum_b = 0, defense_b = 0;
@@ -405,8 +405,7 @@ void recruitment::execute() {
 //		}
 		return best_attack_damage;
 	}
-
-
+	 **/
 	int recruitment::compare_unit_types(const unit_type& a, const unit_type& b) const
 	{
 		const int a_effectiveness_vs_b = average_resistance_against(b,a);
