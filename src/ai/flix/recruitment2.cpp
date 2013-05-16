@@ -1,8 +1,6 @@
-/*
- * recruitment.cpp
- *
- *  Created on: Apr 16, 2013
- *      Author: fehlx
+/**
+ * This file was only for testing purposes and will
+ * be deleted soon.
  */
 
 #include <boost/foreach.hpp>

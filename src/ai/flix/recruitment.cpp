@@ -1,43 +1,47 @@
 /*
- * recruitment.cpp
+   Copyright (C) 2013 by Felix Bauer
+   Part of the Battle for Wesnoth Project http://www.wesnoth.org/
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY.
+
+   See the COPYING file for more details.
+*/
+
+/**
+ * Experimental Recruitment Engine by Flix
+ * Uses Game Theory to find the best mix to recruit
+ * when only the enemies recruitment-list is available.
  *
- *  Created on: Apr 16, 2013
- *      Author: fehlx
+ * See http://wiki.wesnoth.org/User:Flixx/Game_Theory_for_Recruiting
+ * for a full explanation
+ * @file
  */
 
-#include <boost/foreach.hpp>
-#include <map>
 
-#include "../../actions/attack.hpp"
-#include "../../attack_prediction.hpp"
 #include "../../resources.hpp"
-#include "../../log.hpp"
 #include "../../map.hpp"
-#include "../../team.hpp"
-#include "../../unit_display.hpp"
 #include "../../unit_map.hpp"
 #include "../../unit_types.hpp"
-#include "../composite/rca.hpp"
-#include "../default/ai.hpp"
-#include <math.h>
-#include <iomanip>
-#include "recruitment.hpp"
-
-#include "../actions.hpp"
-#include "../manager.hpp"
-#include "../composite/engine.hpp"
-#include "../composite/rca.hpp"
-#include "../composite/stage.hpp"
-#include "../../gamestatus.hpp"
 #include "../../log.hpp"
-#include "../../map.hpp"
-#include "../../resources.hpp"
 #include "../../team.hpp"
 
+#include "../composite/rca.hpp"
+#include "../actions.hpp"
+
+#include "recruitment.hpp"
+
+#include <boost/foreach.hpp>
+#include <math.h>
+#include <iomanip>
+
 static lg::log_domain log_ai_flix("ai/flix");
-#define DBG_AI_FLIX LOG_STREAM(debug, log_ai_flix)
 #define LOG_AI_FLIX LOG_STREAM(info, log_ai_flix)
-#define WRN_AI_FLIX LOG_STREAM(warn, log_ai_flix)
+#define DBG_AI_FLIX LOG_STREAM(debug, log_ai_flix)
 #define ERR_AI_FLIX LOG_STREAM(err, log_ai_flix)
 
 #ifdef _MSC_VER
@@ -74,30 +78,27 @@ namespace flix_recruitment {
 
 void recruitment::print_table(effectivness_table& table) const {
 
-
 	//std::setw() does big magic here to make everything look good.
 
 	std::stringstream out;
+	out << std::setprecision(4);
 
 	//first line
-	out << std::setprecision(4);
 	out << "          my/enemy";
 	std::map<std::string, double> first_line = (table.begin())->second;
-	for (std::map<std::string, double>::const_iterator i = first_line.begin();
-			i != first_line.end(); ++i) {
+	for (std::map<std::string, double>::const_iterator i = first_line.begin(); i != first_line.end(); ++i) {
 		out << "|" << std::setw(15) << i->first << std::setw(3);
 	}
+
 	//other lines
-	for (effectivness_table::const_iterator i = table.begin(); i != table.end();
-			++i) {
+	for (effectivness_table::const_iterator i = table.begin(); i != table.end(); ++i) {
 		out << "\n" << std::setw(18) << i->first;
-		for (std::map<std::string, double>::const_iterator j = (i->second).begin();
-				j != (i->second).end(); ++j) {
-			//out << "|      " << j->second << std::setw(13 - floor(log10(double(j->second))));
+		for (std::map<std::string, double>::const_iterator j = (i->second).begin(); j != (i->second).end(); ++j) {
 			out << "|" << std::setw(10) << j->second << std::setw(8);
 		}
 	}
-	LOG_AI_FLIX<< "\n" << out.str() << "\n";
+
+	DBG_AI_FLIX<< "\n" << out.str() << "\n";
 }
 
 void recruitment::execute() {
@@ -109,7 +110,7 @@ void recruitment::execute() {
 		std::set<std::string> enemy_recruits;
 
 		//for now we only use the recruit list of one enemy (the first found)
-		//later one can think about including all enemies
+		//later one can think about including multiple enemies
 		for(std::vector<team>::const_iterator i = teams.begin(); i != teams.end(); ++i) {
 			if(current_team().is_enemy(i->side())){
 				enemy_recruits = i->recruits();
@@ -129,23 +130,21 @@ void recruitment::execute() {
 				const double own_effectiveness_vs_enemy = average_resistance_against(*enemy_unit,*own_unit);
 				const double enemy_effectiveness_vs_own = average_resistance_against(*own_unit, *enemy_unit);
 
-				//weight in the cost difference
-				//int cost_weight = 400 * (enemy_unit->cost() - own_unit->cost());
-				//table[*own_unit_s][*enemy_unit_s] = compare_unit_types(*own_unit, *enemy_unit) + cost_weight;
-				//table[*own_unit_s][*enemy_unit_s] = rand() % 20;
-
-				//table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy / own_unit->cost() - enemy_effectiveness_vs_own / enemy_unit->cost(); // * own_unit->cost() / enemy_unit->cost();
 				table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy - enemy_effectiveness_vs_own;
-				LOG_AI_FLIX << *own_unit_s << " : " << *enemy_unit_s << " << " << own_effectiveness_vs_enemy << " - " << enemy_effectiveness_vs_own << " = " << table[*own_unit_s][*enemy_unit_s] << "\n";
+				DBG_AI_FLIX << *own_unit_s << " : " << *enemy_unit_s << " << " << own_effectiveness_vs_enemy << " - " << enemy_effectiveness_vs_own << " = " << table[*own_unit_s][*enemy_unit_s] << "\n";
 			}
 		}
 
 		print_table(table);
+
 		std::map<std::string, double>* strategy = findEquilibrium(table);
 		recruit_result_ptr recruit_result;
 		do{
+			//the following code will choose a random recruit
+			//with probabilities according to strategy.
 			int random = rand() % 100;
 			std::string recruit;
+
 			for(std::map<std::string, double>::const_iterator i = strategy->begin(); i != strategy->end(); ++i){
 				random -= (i->second * 100);
 				if(random <= 0){
@@ -153,8 +152,12 @@ void recruitment::execute() {
 					break;
 				}
 			}
-			recruit_result = execute_recruit_action(recruit);
-			LOG_AI_FLIX << "Recruited " << recruit << std::endl;
+
+			recruit_result = check_recruit_action(recruit);
+			if(recruit_result->is_ok()){
+				recruit_result->execute();
+				LOG_AI_FLIX << "Recruited " << recruit << std::endl;
+			}
 		} while(recruit_result->is_ok());
 	}
 
@@ -163,87 +166,28 @@ void recruitment::execute() {
 	}
 
 	/**
-	int recruitment::average_resistance_against(const unit_type& a, const unit_type& b) const
-	{
-		int weighting_sum = 0, defense = 0;
-		const std::map<t_translation::t_terrain, size_t>& terrain =
-			resources::game_map->get_weighted_terrain_frequencies();
-
-		for (std::map<t_translation::t_terrain, size_t>::const_iterator j = terrain.begin(),
-		     j_end = terrain.end(); j != j_end; ++j)
-		{
-			// Use only reachable tiles when computing the average defense.
-		  if (a.movement_type().movement_cost(j->first) < movetype::UNREACHABLE) {
-				defense += a.movement_type().defense_modifier(j->first) * j->second;
-				weighting_sum += j->second;
-			}
-		}
-
-		if (weighting_sum == 0) {
-			// This unit can't move on this map, so just get the average weighted
-			// of all available terrains. This still is a kind of silly
-			// since the opponent probably can't recruit this unit and it's a static unit.
-			for (std::map<t_translation::t_terrain, size_t>::const_iterator jj = terrain.begin(),
-					jj_end = terrain.end(); jj != jj_end; ++jj)
-			{
-				defense += a.movement_type().defense_modifier(jj->first) * jj->second;
-				weighting_sum += jj->second;
-			}
-		}
-
-		if(weighting_sum != 0) {
-			defense /= weighting_sum;
-		} else {
-			LOG_AI_FLIX << "The weighting sum is 0 and is ignored.\n";
-		}
-
-		LOG_AI_FLIX << "average defense of '" << a.id() << "': " << defense << "\n";
-
-		int sum = 0, weight_sum = 0;
-
-		// calculation of the average damage taken
-		bool steadfast = a.has_ability_by_id("steadfast");
-		bool poisonable = !a.musthave_status("unpoisonable");
-		const std::vector<attack_type>& attacks = b.attacks();
-		for (std::vector<attack_type>::const_iterator i = attacks.begin(),
-		     i_end = attacks.end(); i != i_end; ++i)
-		{
-			int resistance = a.movement_type().resistance_against(*i);
-			// Apply steadfast resistance modifier.
-			if (steadfast && resistance < 100)
-				resistance = std::max<int>(resistance * 2 - 100, 50);
-			// Do not look for filters or values, simply assume 70% if CTH is customized.
-			int cth = i->get_special_bool("chance_to_hit", true) ? 70 : defense;
-			int weight = i->damage() * i->num_attacks();
-			// if cth == 0 the division will do 0/0 so don't execute this part
-			if (poisonable && cth != 0 && i->get_special_bool("poison", true)) {
-				// Compute the probability of not poisoning the unit.
-				int prob = 1;
-				for (int j = 0; j < i->num_attacks(); ++j)
-					prob = prob * (100 - cth) /100;
-				// Assume poison works one turn.
-				weight += game_config::poison_amount * (100 - prob) / 100;
-			}
-			sum += cth * resistance * weight * weight; // average damage * weight
-			weight_sum += weight;
-		}
-
-		// normalize by HP
-		sum /= std::max<int>(1,std::min<int>(a.hitpoints(),1000)); // avoid values really out of range
-
-		// Catch division by zero here if the attacking unit
-		// has zero attacks and/or zero damage.
-		// If it has no attack at all, the ai shouldn't prefer
-		// that unit anyway.
-		if (weight_sum == 0) {
-			return sum;
-		}
-		return sum/weight_sum;
-	}
-	**/
-
-
-
+	 * This function is basically *stolen* from ca.*pp
+	 *
+	 * It used to find a weighted average of the damage
+	 * from all attacks of unit b to unit a.
+	 *
+	 * Now it considers only the attack the attacker b will
+	 * most likely do because the difference between attacker
+	 * damage and defender damage is the greatest.
+	 *
+	 * Also it will weight the damage by the unit cost.
+	 *
+	 * The simplified output is:
+	 * attack_damage_to_a / hp_of_a / cost_of_b - defense_demage_to_b / hp_of_b / cost_of_a;
+	 *
+	 * whereas the damages corresponds to the attacks the attacker will most likely choose.
+	 *
+	 * Note that this function needs a refactoring
+	 * (the variable names are inconsistent and sometimes confunsing)
+	 *
+	 *a: defender
+	 *b: attacker
+	 */
 	int recruitment::average_resistance_against(const unit_type& a, const unit_type& b) const
 	{
 		int weighting_sum_a = 0, defense_a = 0, weighting_sum_b = 0, defense_b = 0;
@@ -296,9 +240,6 @@ void recruitment::execute() {
 			ERR_AI_FLIX << "The weighting sum is 0 and is ignored.\n";
 		}
 
-		//LOG_AI_FLIX << "average defense of '" << a.id() << "': " << defense_a << "\n";
-		//LOG_AI_FLIX << "average defense of '" << b.id() << "': " << defense_b << "\n";
-
 		int best_attack_damage = -99999;
 		const attack_type * best_attack = NULL;
 
@@ -308,8 +249,7 @@ void recruitment::execute() {
 		bool steadfast_b = b.has_ability_by_id("steadfast");
 		bool poisonable_b = !b.musthave_status("unpoisonable");
 		const std::vector<attack_type>& attacks_b = b.attacks();
-		for (std::vector<attack_type>::const_iterator i = attacks_b.begin(),
-		     i_end = attacks_b.end(); i != i_end; ++i)
+		for (std::vector<attack_type>::const_iterator i = attacks_b.begin(), i_end = attacks_b.end(); i != i_end; ++i)
 		{
 			int resistance_a = a.movement_type().resistance_against(*i);
 			// Apply steadfast resistance modifier.
@@ -328,16 +268,15 @@ void recruitment::execute() {
 				plain_damage_to_a += game_config::poison_amount * prob;
 			}
 			LOG_AI_FLIX << "<<" << "a:" << a.type_name() << " b:" << b.type_name() << " << Attacker damage calc: cth * res * plain  " << cth_a << " * " << resistance_a << " * " << plain_damage_to_a << " = " << (cth_a * resistance_a * plain_damage_to_a) << "\n";
-			int damage_to_a = cth_a * resistance_a * plain_damage_to_a; // average damage * weight
+			int damage_to_a = cth_a * resistance_a * plain_damage_to_a;
 
 			//now calculate the defense damage
 			int max_defense_demage = 0;
 			const attack_type * best_defense = NULL;
 			const std::vector<attack_type>& attacks_a = a.attacks();
-			for (std::vector<attack_type>::const_iterator j = attacks_a.begin(),
-					     j_end = attacks_a.end(); j != j_end; ++j)
+			for (std::vector<attack_type>::const_iterator j = attacks_a.begin(), j_end = attacks_a.end(); j != j_end; ++j)
 			{
-				//check if defence weappon is of the same type as attack weappon
+				//check if defense weapon is of the same type as attack weapon
 				if(i->range() != j->range()){
 					continue;
 				}
@@ -375,14 +314,8 @@ void recruitment::execute() {
 			damage_to_a /= std::max<int>(1,std::min<int>(a.hitpoints(),1000)); // avoid values really out of range
 
 			//normalize damage by costs
-			//V3 damage_to_a = damage_to_a * a.cost() / b.cost();
-
-
 			damage_to_a /= b.cost();
 			max_defense_demage /= a.cost();
-
-			//maybe the defender cannot fight back because he's dead.
-			//max_defense_demage /= 1.5;
 
 			int attack_damage = damage_to_a - max_defense_demage;
 
@@ -394,29 +327,18 @@ void recruitment::execute() {
 
 		LOG_AI_FLIX << "a:" << a.type_name() << " b:" << b.type_name() << " << Best_attack: " << ((best_attack) ? best_attack->name() : "#") << ": " << best_attack_damage << "\n";
 
-
-
-		// Catch division by zero here if the attacking unit
-		// has zero attacks and/or zero damage.
-		// If it has no attack at all, the ai shouldn't prefer
-		// that unit anyway.
-//		if (weight_sum == 0) {
-//			return sum;
-//		}
 		return best_attack_damage;
 	}
 
-
-	int recruitment::compare_unit_types(const unit_type& a, const unit_type& b) const
-	{
-		const int a_effectiveness_vs_b = average_resistance_against(b,a);
-		const int b_effectiveness_vs_a = average_resistance_against(a,b);
-
-		LOG_AI_FLIX << "comparison of '" << a.id() << " vs " << b.id() << ": "
-			<< a_effectiveness_vs_b << " - " << b_effectiveness_vs_a << " = "
-			<< (a_effectiveness_vs_b - b_effectiveness_vs_a) << '\n';
-		return a_effectiveness_vs_b - b_effectiveness_vs_a;
-	}
+	/**
+	 * This algorithm is based on
+	 * http://www.rand.org/content/dam/rand/pubs/commercial_books/2007/RAND_CB113-1.pdf
+	 * Site 219.
+	 *
+	 * The "steps" in this function are the same as in the book
+	 *
+	 * It will output a mixed strategy. (Unit-type => Percentage)
+	 */
 
 	std::map<std::string, double>* recruitment::findEquilibrium(effectivness_table& table) const{
 
@@ -446,7 +368,6 @@ void recruitment::execute() {
 			names_above[i->first] = i->first;
 			names_below[i->first] = "";
 		}
-
 
 		/**
 		 * Step1: Add offset so all values are not negative.
@@ -497,6 +418,7 @@ void recruitment::execute() {
 		print_table(table);
 		LOG_AI_FLIX << "D = " << D << "\n";
 
+		//this is the mainloop from step 3 to step 6.
 		bool found;
 		do{
 			/**

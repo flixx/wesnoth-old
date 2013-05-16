@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2009 - 2013 by Yurii Chernyi <terraninfo@terraninfo.net>
+   Copyright (C) 2013 by Felix Bauer
    Part of the Battle for Wesnoth Project http://www.wesnoth.org/
 
    This program is free software; you can redistribute it and/or modify
@@ -13,15 +13,17 @@
 */
 
 /**
+ * Experimental Recruitment Engine by Flix
+ * Uses Game Theory to find the best mix to recruit
+ * when only the enemies recruitment-list is available.
+ *
+ * See http://wiki.wesnoth.org/User:Flixx/Game_Theory_for_Recruiting
+ * for a full explanation
  * @file
- * Strategic recruitment routine, for experimentation
  */
 
 #ifndef AI_FLIX_RECRUITMENT_HPP_INCLUDED
 #define AI_FLIX_RECRUITMENT_HPP_INCLUDED
-
-#include "../composite/rca.hpp"
-#include "../../team.hpp"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -43,23 +45,11 @@ public:
 	virtual void execute();
 private:
 	/**
-	 * The following functions are copied from ca.*
-	 * In general it would be nicer to declare those
-	 * functions as public static in ca.* (or even somewhere else)
-	 * But I did't want to alter ca.* yet.
-	 */
-
-	/**
-	 * Rates two unit types for their suitability against each other.
-	 * Returns 0 if the units are equally matched,
-	 * a positive number if a is suited against b,
-	 * and a negative number if b is suited against a.
-	 */
-	int compare_unit_types(const unit_type& a, const unit_type& b) const;
-
-	/**
-	 * calculates the average resistance unit type a has against the attacks of
-	 * unit type b.
+	 * This is a modified version of
+	 * average_resistance_against in ai/testing/ca.*pp
+	 *
+	 * calculates the average resistance unit type a
+	 * has against the attacks of unit type b.
 	 */
 	int average_resistance_against(const unit_type& a, const unit_type& b) const;
 
