@@ -35,7 +35,15 @@ namespace ai {
 
 namespace flix_recruitment {
 
-typedef std::map<std::string, std::map<std::string, double> > effectivness_table;
+typedef std::map<std::string, double> table_row;
+typedef std::map<std::string, table_row> effectivness_table;
+
+//this is a pair of <columnname, effectiveness>
+typedef table_row::value_type table_cell;
+
+//this is a pair of <rowname, table_row>
+typedef effectivness_table::value_type table_row_pair;
+
 
 class recruitment : public candidate_action {
 public:
@@ -58,7 +66,7 @@ private:
 	//This algorithm is based on
 	//http://www.rand.org/content/dam/rand/pubs/commercial_books/2007/RAND_CB113-1.pdf
 	//Site 219.
-	std::map<std::string, double>* findEquilibrium(effectivness_table& table) const;
+	const std::map<std::string, double> findEquilibrium(effectivness_table& table) const;
 };
 
 } // of namespace testing_ai_default

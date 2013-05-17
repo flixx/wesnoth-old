@@ -83,18 +83,22 @@ void recruitment::print_table(effectivness_table& table) const {
 	std::stringstream out;
 	out << std::setprecision(4);
 
-	//first line
+	//first row
 	out << "          my/enemy";
-	std::map<std::string, double> first_line = (table.begin())->second;
-	for (std::map<std::string, double>::const_iterator i = first_line.begin(); i != first_line.end(); ++i) {
-		out << "|" << std::setw(15) << i->first << std::setw(3);
+	table_row first_row = (table.begin())->second;
+	BOOST_FOREACH(table_cell& i, first_row){
+		std::string col_name = i.first;
+		out << "|" << std::setw(15) << col_name << std::setw(3);
 	}
 
-	//other lines
-	for (effectivness_table::const_iterator i = table.begin(); i != table.end(); ++i) {
-		out << "\n" << std::setw(18) << i->first;
-		for (std::map<std::string, double>::const_iterator j = (i->second).begin(); j != (i->second).end(); ++j) {
-			out << "|" << std::setw(10) << j->second << std::setw(8);
+	//other rows
+	BOOST_FOREACH(table_row_pair& i, table){
+		std::string row_name = i.first;
+		table_row row = i.second;
+		out << "\n" << std::setw(18) << row_name;
+		BOOST_FOREACH(table_cell& cell, row){
+			double val = cell.second;
+			out << "|" << std::setw(10) << val << std::setw(8);
 		}
 	}
 
@@ -111,9 +115,9 @@ void recruitment::execute() {
 
 		//for now we only use the recruit list of one enemy (the first found)
 		//later one can think about including multiple enemies
-		for(std::vector<team>::const_iterator i = teams.begin(); i != teams.end(); ++i) {
-			if(current_team().is_enemy(i->side())){
-				enemy_recruits = i->recruits();
+		BOOST_FOREACH(const team& team, teams){
+			if(current_team().is_enemy(team.side())){
+				enemy_recruits = team.recruits();
 			}
 		}
 
@@ -122,31 +126,32 @@ void recruitment::execute() {
 		std::set<std::string>::const_iterator own_unit_s;
 		std::set<std::string>::const_iterator enemy_unit_s;
 
-		for(own_unit_s = own_recruits.begin(); own_unit_s != own_recruits.end(); ++own_unit_s){
-			for(enemy_unit_s = enemy_recruits.begin(); enemy_unit_s != enemy_recruits.end(); ++enemy_unit_s){
-				const unit_type *own_unit = unit_types.find(*own_unit_s);
-				const unit_type *enemy_unit = unit_types.find(*enemy_unit_s);
+		BOOST_FOREACH(const std::string& own_unit_s, own_recruits){
+			BOOST_FOREACH(const std::string& enemy_unit_s, enemy_recruits){
+				const unit_type *own_unit = unit_types.find(own_unit_s);
+				const unit_type *enemy_unit = unit_types.find(enemy_unit_s);
 
 				const double own_effectiveness_vs_enemy = average_resistance_against(*enemy_unit,*own_unit);
 				const double enemy_effectiveness_vs_own = average_resistance_against(*own_unit, *enemy_unit);
 
-				table[*own_unit_s][*enemy_unit_s] = own_effectiveness_vs_enemy - enemy_effectiveness_vs_own;
-				DBG_AI_FLIX << *own_unit_s << " : " << *enemy_unit_s << " << " << own_effectiveness_vs_enemy << " - " << enemy_effectiveness_vs_own << " = " << table[*own_unit_s][*enemy_unit_s] << "\n";
+				table[own_unit_s][enemy_unit_s] = own_effectiveness_vs_enemy - enemy_effectiveness_vs_own;
+				DBG_AI_FLIX << own_unit_s << " : " << enemy_unit_s << " << " << own_effectiveness_vs_enemy << " - " << enemy_effectiveness_vs_own << " = " << table[own_unit_s][enemy_unit_s] << "\n";
 			}
 		}
 
 		print_table(table);
 
-		std::map<std::string, double>* strategy = findEquilibrium(table);
+		std::map<std::string, double> strategy = findEquilibrium(table);
+
 		recruit_result_ptr recruit_result;
 		do{
 			//the following code will choose a random recruit
 			//with probabilities according to strategy.
-			int random = rand() % 100;
+			int random = rand() % 10000;
 			std::string recruit;
 
-			for(std::map<std::string, double>::const_iterator i = strategy->begin(); i != strategy->end(); ++i){
-				random -= (i->second * 100);
+			for(std::map<std::string, double>::const_iterator i = strategy.begin(); i != strategy.end(); ++i){
+				random -= (i->second * 10000);
 				if(random <= 0){
 					recruit = i->first;
 					break;
@@ -166,7 +171,8 @@ void recruitment::execute() {
 	}
 
 	/**
-	 * This function is basically *stolen* from ca.*pp
+	 * This function is basically a modified version of the same
+	 * function in ca.*pp
 	 *
 	 * It used to find a weighted average of the damage
 	 * from all attacks of unit b to unit a.
@@ -340,9 +346,10 @@ void recruitment::execute() {
 	 * It will output a mixed strategy. (Unit-type => Percentage)
 	 */
 
-	std::map<std::string, double>* recruitment::findEquilibrium(effectivness_table& table) const{
+	const std::map<std::string, double> recruitment::findEquilibrium(effectivness_table& table) const{
 
 		std::stringstream s;
+		table_row first_row = (table.begin())->second;
 
 		/**
 		 * Preparing some datastructures for Step 5
@@ -355,18 +362,16 @@ void recruitment::execute() {
 		std::map<std::string, std::string> names_left;
 		std::map<std::string, std::string> names_right;
 
-		//iterating over all rows
-		for(effectivness_table::const_iterator i = table.begin(); i != table.end(); ++i){
-
-			names_left[i->first] = i->first;
-			names_right[i->first] = "";
+		BOOST_FOREACH(table_row_pair& i, table){
+			std::string row_name = i.first;
+			names_left[row_name] = row_name;
+			names_right[row_name] = "";
 		}
-		//iterating over first row
-		std::map<std::string, double> first_row = (table.begin())->second;
-		for(std::map<std::string, double>::const_iterator i = first_row.begin(); i != first_row.end(); ++i){
 
-			names_above[i->first] = i->first;
-			names_below[i->first] = "";
+		BOOST_FOREACH(table_cell& i, first_row){
+			std::string col_name = i.first;
+			names_above[col_name] = col_name;
+			names_below[col_name] = "";
 		}
 
 		/**
@@ -375,20 +380,23 @@ void recruitment::execute() {
 
 		double min = 0;
 
-		//iterating over all elements in the table
-		for(effectivness_table::const_iterator i = table.begin(); i != table.end(); ++i){
-			for(std::map<std::string, double>::const_iterator j = (i->second).begin(); j != (i->second).end(); ++j){
-				if(j->second < min){
-					min = j->second;
+
+		BOOST_FOREACH(table_row_pair& i, table){
+			table_row row = i.second;
+			BOOST_FOREACH(table_cell& j, row){
+				double val = j.second;
+				if(val < min){
+					min = val;
 				}
 			}
 		}
 
 		if(min < 0){
-			//iterating over all elements in the table
-			for(effectivness_table::iterator i = table.begin(); i != table.end(); ++i){
-				for(std::map<std::string, double>::iterator j = (i->second).begin(); j != (i->second).end(); ++j){
-					j->second = j->second - min;
+			BOOST_FOREACH(table_row_pair& i, table){
+				table_row& row = i.second;
+				BOOST_FOREACH(table_cell& j, row){
+					double& val = j.second;
+					val = val - min; //this will alter the table
 				}
 			}
 		}
@@ -400,14 +408,14 @@ void recruitment::execute() {
 		 * Step 2: Adding cells, init D.
 		 */
 
-		//iterating over first row
-		for(std::map<std::string, double>::const_iterator i = first_row.begin(); i != first_row.end(); ++i){
-			table["_"][i->first] = -1;
+		BOOST_FOREACH(table_cell& i, first_row){
+			std::string col_name = i.first;
+			table["_"][col_name] = -1;
 		}
 
-		//iterating over all lines
-		for(effectivness_table::iterator i = table.begin(); i != table.end(); ++i){
-			(i->second)["_"] = 1;
+		BOOST_FOREACH(table_row_pair& i, table){
+			std::string row_name = i.first;
+			table[row_name]["_"] = 1;
 		}
 
 		table["_"]["_"] = 0;
@@ -430,9 +438,10 @@ void recruitment::execute() {
 			std::map<std::string, std::pair<std::string, double> > column_mins;
 
 			//iterate over columns
-			for(std::map<std::string, double>::const_iterator i = first_row.begin(); i != first_row.end(); ++i){
+			BOOST_FOREACH(table_cell& i, first_row){
+				std::string col_name = i.first;
 				//The number at the foot of the column must be negative
-				if(table["_"][i->first] >= 0){
+				if(table["_"][col_name] >= 0){
 					continue;
 				}
 
@@ -440,21 +449,24 @@ void recruitment::execute() {
 				std::string column_min_row_name;
 
 				//iterate over rows
-				for(effectivness_table::const_iterator j = table.begin(); j != table.end(); ++j){
+				BOOST_FOREACH(table_row_pair& j, table){ //for(effectivness_table::const_iterator j = table.begin(); j != table.end(); ++j){
+					std::string row_name = j.first;
+
 					//candidate pivot must be positive
-					if(j->first == "_" || table[j->first][i->first] <= 0){
+					if(row_name == "_" || table[row_name][col_name] <= 0){
 						continue;
 					}
 					//candidate = -(r * c) / p
-					double candidate = -(table[j->first]["_"] * table["_"][i->first]) / static_cast<double>(table[j->first][i->first]);
+					double candidate = -(table[row_name]["_"] * table["_"][col_name]) / table[row_name][col_name];
 
 					if(candidate < column_min){
 						column_min = candidate;
-						column_min_row_name = j->first;
+						column_min_row_name = row_name;
 					}
 				}//iterate over rows
 
-				column_mins[i->first] = std::make_pair(column_min_row_name, column_min);
+				column_mins[col_name] = std::make_pair(column_min_row_name, column_min);
+
 			}//iterate over columns
 
 			//find Maximum in columnMins
@@ -462,6 +474,7 @@ void recruitment::execute() {
 			std::pair<std::string, std::string> pivot_index;
 			for(std::map<std::string, std::pair<std::string, double> >::const_iterator i = column_mins.begin(); i != column_mins.end(); ++i){
 				if((i->second).second > max){
+					max = (i->second).second;
 					pivot_index = std::make_pair((i->second).first, i->first);
 				}
 			}
@@ -494,28 +507,35 @@ void recruitment::execute() {
 
 			//Step 4.4
 			//iterating over each cell
-			for(effectivness_table::iterator i = table.begin(); i != table.end(); ++i){
-				for(std::map<std::string, double>::iterator j = (i->second).begin(); j != (i->second).end(); ++j){
-					if(i->first == pivot_index.first || j->first == pivot_index.second){
+			BOOST_FOREACH(table_row_pair& i, table){
+				std::string row_name = i.first;
+				table_row& row = i.second;
+
+				BOOST_FOREACH(table_cell& j, row){
+					std::string col_name = j.first;
+					double& val = j.second;
+
+					if(row_name == pivot_index.first || col_name == pivot_index.second){
 						continue;
 					}
 
-					double N = j->second;
+					double N = val;
 					double P = pivot;
-					double R = table[pivot_index.first][j->first];
-					double C = table[i->first][pivot_index.second];
+					double R = table[pivot_index.first][col_name];
+					double C = table[row_name][pivot_index.second];
 
-					j->second = ((N * P) - (R * C)) / D;
+					val = ((N * P) - (R * C)) / D; //this will alter the table
 				}
 			} //iterating over each cell
 
 			//Step 4.3 : Negating Column
-			//iterating over column with pivot
-			for(effectivness_table::iterator i = table.begin(); i != table.end(); ++i){
-				if(i->first == pivot_index.first){
+			BOOST_FOREACH(table_row_pair& i, table){
+				std::string row_name = i.first;
+
+				if(row_name == pivot_index.first){
 					continue;
 				}
-				(i->second)[pivot_index.second] = - (i->second)[pivot_index.second];
+				table[row_name][pivot_index.second] = - table[row_name][pivot_index.second];
 			}
 
 			//Step 4.5
@@ -567,40 +587,43 @@ void recruitment::execute() {
 
 			found = true;
 
-			//iterate over rows
-			for(effectivness_table::const_iterator i = table.begin(); i != table.end(); ++i){
-				if(table[i->first]["_"] < 0){
+			BOOST_FOREACH(table_row_pair& i, table){
+				std::string row_name = i.first;
+				if(table[row_name]["_"] < 0){
 					found = false;
 				}
 			}
 
-			//iterate over colums
-			for(std::map<std::string, double>::const_iterator i = first_row.begin(); i != first_row.end(); ++i){
-				if(table["_"][i->first] < 0){
+			BOOST_FOREACH(table_cell& i, first_row){
+				std::string col_name = i.first;
+				if(table["_"][col_name] < 0){
 					found = false;
 				}
 			}
+
 		} while(!found);
 
 		LOG_AI_FLIX << "Found Equilibrium!\n";
 
 		//build Strategy
-		std::map<std::string, double>* strategy = new std::map<std::string, double>();
+		std::map<std::string, double> strategy = std::map<std::string, double>();
 		double sum = 0;
 
 		//iterate over names_below
 		for(std::map<std::string, std::string>::const_iterator i = names_below.begin(); i != names_below.end(); ++i){
 			if(i->second != ""){
-				(*strategy)[i->second] = table["_"][i->first];
+				strategy[i->second] = table["_"][i->first];
 				sum += table["_"][i->first];
 			}
 		}
 
 		s.str("");
 		s << "Strategy is: ";
-		//normalize so sum of probabilities is 1
-		for(std::map<std::string, double>::iterator i = strategy->begin(); i != strategy->end(); ++i){
+
+		for(std::map<std::string, double>::iterator i = strategy.begin(); i != strategy.end(); ++i){
+			//normalize so sum of probabilities is 1
 			i->second /= sum;
+
 			s << i->first << ": " << (i->second * 100) << "%  ";
 		}
 		LOG_AI_FLIX << s.str() << "\n";
