@@ -55,7 +55,10 @@ namespace ai {
 namespace flix_recruitment {
 
 	recruitment::recruitment( rca_context &context , const config &cfg ):
-		candidate_action(context, cfg){ 	}
+		candidate_action(context, cfg){
+		cfg_poisson_turns_ = (cfg.has_attribute("poisson_turns")) ? cfg["poisson_turns"] : 1;
+		LOG_AI_FLIX << "poisson_turns = " << cfg_poisson_turns_ << "\n";
+	}
 	double recruitment::evaluate(){
 		std::vector<unit_map::unit_iterator> leaders = resources::units->find_leaders(get_side());
 

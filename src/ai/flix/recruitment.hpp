@@ -52,6 +52,7 @@ public:
 	virtual double evaluate();
 	virtual void execute();
 private:
+	int cfg_poisson_turns_;
 	/**
 	 * This is a modified version of
 	 * average_resistance_against in ai/testing/ca.*pp
