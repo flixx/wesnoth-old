@@ -41,16 +41,16 @@ def construct_command_line(cfg,ai1,ai2,f1,f2,map):
 	options= cfg.get('default','additional_arguments')
 	ai_config1='--ai-config 1:'+ai1
 	ai_config2='--ai-config 2:'+ai2
-	if sys.argv[1]=='-p':
-		gui=''
+	if len(sys.argv) > 1 and sys.argv[1] == '-p':
+		gui='--debug'
 	else:
-		gui='--nogui'	
+		gui='--nogui'
 
 	if (map==''):
 		optmap=''
 	else:
 		optmap='--scenario='+map
-	
+
 	statics='--log-info=ai/testing,mp/connect --multiplayer'
 	return wesnoth+' '+options+' '+optmap+' '+ai_config1+' '+ai_config2+' '+gui+' '+statics
 
@@ -158,18 +158,23 @@ def tests(cfg):
 	f1=cfg.get('default','faction1').strip()
 	f2=cfg.get('default','faction2').strip()
 	n=cfg.getint('default','number_of_tests')
+	randomize=cfg.getboolean('default', 'randomize_sides')
 	maplist = []
 	for map in maps(cfg):
 		maplist.append(map)
 	random.seed()
 	for i in range(0, n):
 		map = random.choice(maplist)
-		#d = random.randint(0,1)
-		d = 0
-		print 'TEST: map '+map+' i='+str(i)+' d='+str(d)
+		if randomize:
+			d=random.randint(0,1)
+		else:
+			d=0
+
 		if (d==0):
+			print 'TEST '+str(i+1)+' :: MAP: '+map+' SIDE1: '+ai1+' SIDE2: '+ai2
 			game_result = GameResult(ai1,ai2,f1,f2,map,'default')
 		else:
+			print 'TEST '+str(i+1)+' :: MAP: '+map+' SIDE1: '+ai2+' SIDE2: '+ai1
 			game_result = GameResult(ai2,ai1,f2,f1,map,'default')
 		yield game_result
 
@@ -179,7 +184,7 @@ cfg = ConfigParser.ConfigParser()
 cfg.read('ai_test2.cfg')
 
 # only 'test the test' with GUI / start one game then exit
-if sys.argv[1] == '-p':
+if len(sys.argv) > 1 and sys.argv[1] == '-p':
 	test = tests(cfg).next()
 	run_game(cfg, test)
 	sys.exit(0)
@@ -189,16 +194,30 @@ log_file = open(datetime.now().strftime(cfg.get('default','log_file').strip())  
 log_file.write('"ai_config1"'+', '+'"ai_config2"'+', '+'"ai_ident1"'+', '+'"ai_ident2"'+', '+ '"duration"'+', '+'"faction1"'+', '+'"faction2"'+', '+'"is_success"'+', '+'"local_modifications"'+', '+'"map"'+', '+'"repo_release"'+', '+'"test"'+', '+'"end_turn"'+', '+'"version_string"'+', '+'"winner_side"'+'\n');
 log_file.flush();
 
+#the following variables are for generating a print output only
+ai1=cfg.get('default','ai_config1').strip()
+ai2=cfg.get('default','ai_config2').strip()
 total = 0
-s1 = 0
-s2 = 0
+ai1_won = 0
+ai2_won = 0
 draw = 0
 
 for test in tests(cfg):
 	game_result = run_game(cfg,test)
-	total = total + 1
-	if(game_result.winner_side == '1'): s1 = s1 + 1
-	if(game_result.winner_side == '2'): s2 = s2 + 1
-	if(game_result.winner_side == '0'): draw = draw + 1
-	print '=====Total games: ' + str(total) + ' Side 1 won: ' + str(s1) + "/" + str(s1 * 100 / total) + '% Side 2 won: ' + str(s2) + "/" + str(s2 * 100 / total) + '%' + '% Draws: ' + str(draw) + "/" + str(draw * 100 / total) + '%' 
 	save_result(cfg,log_file,game_result)
+
+	#generating print output
+	total = total + 1
+	winner = game_result.winner_side
+	if(winner == '0'):
+		draw = draw + 1
+	elif((winner == '1' and ai1 == game_result.ai_config1) or (winner == '2' and ai1 == game_result.ai_config2)):
+		ai1_won = ai1_won + 1
+	else:
+		ai2_won = ai2_won + 1
+
+	print '\n=====Status====='
+	print 'Total games: ' + str(total)
+	print 'AI1(' + ai1 + ') won: ' + str(ai1_won) + "/" + str(ai1_won * 100 / total) + '%'
+	print 'AI2(' + ai2 + ') won: ' + str(ai2_won) + "/" + str(ai2_won * 100 / total) + '%'
+	print 'Draws: ' + str(draw) + "/" + str(draw * 100 / total) + '%\n'
