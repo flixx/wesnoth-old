@@ -20,6 +20,7 @@ include_directories( ${PANGOCAIRO_INCLUDE_DIRS} )
 include_directories( ${GETTEXT_INCLUDE_DIR} )
 include_directories( ${LIBDBUS_INCLUDE_DIRS} )
 include_directories( ${LIBINTL_INCLUDE_DIR} )
+include_directories( ${VORBISFILE_INCLUDE_DIR} )
 
 #optional dependencies
 if(SDLIMAGE_INCLUDE_DIR)
@@ -90,6 +91,7 @@ set(game-external-libs
 	${PANGOCAIRO_LIBRARIES}
 	${FONTCONFIG_LIBRARIES}
 	${LIBDBUS_LIBRARIES}
+	${VORBISFILE_LIBRARIES}
 )
 
 if(MSVC)
@@ -629,6 +631,7 @@ set(wesnoth-main_SRC
 	ai/interface.cpp
 	ai/lua/core.cpp
 	ai/lua/lua_object.cpp
+	ai/lua/unit_advancements_aspect.cpp
 	ai/manager.cpp
 	ai/registry.cpp
 	ai/testing.cpp
@@ -648,10 +651,12 @@ set(wesnoth-main_SRC
 	controller_base.cpp
 	dialogs.cpp
 	editor/action/action.cpp
+	editor/action/action_item.cpp
 	editor/action/action_label.cpp
 	editor/action/action_unit.cpp
 	editor/action/action_village.cpp
 	editor/action/mouse/mouse_action.cpp
+	editor/action/mouse/mouse_action_item.cpp
 	editor/action/mouse/mouse_action_map_label.cpp
 	editor/action/mouse/mouse_action_unit.cpp
 	editor/action/mouse/mouse_action_village.cpp
@@ -662,6 +667,7 @@ set(wesnoth-main_SRC
 	editor/palette/tristate_button.cpp
 	editor/toolkit/brush.cpp
 	editor/palette/editor_palettes.cpp
+	editor/palette/item_palette.cpp
 	editor/palette/terrain_palettes.cpp
 	editor/palette/unit_palette.cpp
 	editor/editor_controller.cpp

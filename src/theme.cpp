@@ -504,12 +504,14 @@ theme::slider::slider() :
 		title_(),
 		tooltip_(),
 		image_(),
-		overlay_()
+		overlay_(),
+		black_line_(false)
 {}
 theme::slider::slider(const config &cfg):
 	object(cfg),
 	title_(cfg["title"].str() + cfg["title_literal"].str()),
-	tooltip_(cfg["tooltip"]), image_(cfg["image"]), overlay_(cfg["overlay"])
+	tooltip_(cfg["tooltip"]), image_(cfg["image"]), overlay_(cfg["overlay"]),
+	black_line_(cfg["black_line"].to_bool(false))
 {}
 
 theme::menu::menu() :
@@ -543,6 +545,8 @@ theme::menu::menu(const config &cfg):
 theme::action::action() :
 	object(),
 	context_(false),
+	auto_tooltip_(false),
+	tooltip_name_prepend_(false),
 	title_(),
 	tooltip_(),
 	image_(),
@@ -553,15 +557,29 @@ theme::action::action() :
 
 theme::action::action(const config &cfg):
 	object(cfg), context_(cfg["is_context_menu"].to_bool()),
+	auto_tooltip_(cfg["auto_tooltip"].to_bool(false)),
+	tooltip_name_prepend_(cfg["tooltip_name_prepend"].to_bool(false)),
 	title_(cfg["title"].str() + cfg["title_literal"].str()),
 	tooltip_(cfg["tooltip"]), image_(cfg["image"]), overlay_(cfg["overlay"]), type_(cfg["type"]),
 	items_(utils::split(cfg["items"]))
-{
-	if (cfg["auto_tooltip"].to_bool() && tooltip_.empty() && items_.size() == 1) {
-		tooltip_ = hotkey::get_description(items_[0]) + "  hotkeys: " + hotkey::get_names(items_[0]) +  "\n" + hotkey::get_tooltip(items_[0]);
-	} else if (cfg["tooltip_name_prepend"].to_bool() && items_.size() == 1) {
-		tooltip_ = hotkey::get_description(items_[0]) + "  hotkeys: " + hotkey::get_names(items_[0]) + "\n" + tooltip_;
+{}
+
+const std::string theme::action::tooltip(size_t index) const {
+
+	std::stringstream result;
+	if (auto_tooltip_ && tooltip_.empty() && items_.size() > index) {
+		result << hotkey::get_description(items_[index]);
+		if (!hotkey::get_names(items_[index]).empty())
+			result << "\n" << N_("Hotkey(s): ") << hotkey::get_names(items_[index]);
+		result << "\n" << hotkey::get_tooltip(items_[index]);
+	} else if (tooltip_name_prepend_ && items_.size() == 1) {
+		result << hotkey::get_description(items_[index]);
+		if (!hotkey::get_names(items_[index]).empty())
+			result << "\n" << N_("Hotkey(s): ") << hotkey::get_names(items_[index]);
+	    result << "\n" << tooltip_;
 	}
+
+	return result.str();
 }
 
 theme::theme(const config& cfg, const SDL_Rect& screen) :

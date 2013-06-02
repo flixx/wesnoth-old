@@ -73,7 +73,7 @@ return {
             if not leader then
                 -- CA is irrelevant if no leader or the leader may have moved from another CA
                 self.data.leader_target = nil
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
 
@@ -88,7 +88,7 @@ return {
 
             local width,height,border = wesnoth.get_map_size()
             local keeps = wesnoth.get_locations {
-                terrain = "K*^*,*^Kov", -- Keeps
+                terrain = 'K*,K*^*,*^K*', -- Keeps
                 x = '1-'..width,
                 y = '1-'..height,
                 { "not", { {"filter", {}} }}, -- That have no unit
@@ -96,18 +96,18 @@ return {
 	                { "filter_side", { { "enemy_of", {side = wesnoth.current.side} } } }
                 }} }}, -- That are not too close to an enemy leader
                 { "not", {
-                    x = leader.x, y = leader.y, terrain = "K*^*,*^Kov",
+                    x = leader.x, y = leader.y, terrain = 'K*,K*^*,*^K*',
                     radius = 3,
-                    { "filter_radius", { terrain = 'C*^*,K*^*,*^Kov,*^Cov' } }
+                    { "filter_radius", { terrain = 'C*,K*,C*^*,K*^*,*^K*,*^C*' } }
                 }}, -- That are not close and connected to a keep the leader is on
                 { "filter_adjacent_location", {
-                    terrain = 'C*^*,K*^*,*^Kov,*^Cov'
+                    terrain = 'C*,K*,C*^*,K*^*,*^K*,*^C*'
                 }} -- That are not one-hex keeps
             }
             if #keeps < 1 then
                 -- Skip if there aren't extra keeps to evaluate
                 -- In this situation we'd only switch keeps if we were running away
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
 
@@ -198,7 +198,7 @@ return {
                         x = "1-"..width, y = "1-"..height,
                         { "and", {
                             x = leader.x, y = leader.y, radius = 200,
-                            { "filter_radius", { terrain = 'C*^*,K*^*,*^Kov,*^Cov' } }
+                            { "filter_radius", { terrain = 'C*,K*,C*^*,K*^*,*^K*,*^C*' } }
                         }}
                     }
                     local should_wait = false
@@ -216,11 +216,11 @@ return {
                     end
                 end
 
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return self.data.leader_score
             end
 
-            AH.done_eval_messages(start_time, ca_name)
+            --AH.done_eval_messages(start_time, ca_name)
             return 0
         end
 
@@ -245,7 +245,7 @@ return {
                 formula = '$this_unit.moves > 0'
             }
             if (not units[1]) then
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
 
@@ -256,7 +256,7 @@ return {
             local villages = wesnoth.get_villages()
             -- Just in case:
             if (not villages[1]) then
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
             --print('#units, #enemies', #units, #enemies)
@@ -345,14 +345,14 @@ return {
             if (max_rating > -9e99) then
                 self.data.unit, self.data.village = best_unit, best_village
                 if (max_rating >= 1000) then
-                    AH.done_eval_messages(start_time, ca_name)
+                    --AH.done_eval_messages(start_time, ca_name)
                     return return_value
                 else
-                    AH.done_eval_messages(start_time, ca_name)
+                    --AH.done_eval_messages(start_time, ca_name)
                     return 0
                 end
             end
-            AH.done_eval_messages(start_time, ca_name)
+            --AH.done_eval_messages(start_time, ca_name)
             return 0
         end
 
@@ -385,14 +385,14 @@ return {
             }
             --print('#poisoners', #poisoners)
             if (not poisoners[1]) then
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
 
             local attacks = AH.get_attacks(poisoners)
             --print('#attacks', #attacks)
             if (not attacks[1]) then
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 0
             end
 
@@ -442,10 +442,10 @@ return {
 
             if (max_rating > -9e99) then
                 self.data.attack = best_attack
-                AH.done_eval_messages(start_time, ca_name)
+                --AH.done_eval_messages(start_time, ca_name)
                 return 190000
             end
-            AH.done_eval_messages(start_time, ca_name)
+            --AH.done_eval_messages(start_time, ca_name)
             return 0
         end
 

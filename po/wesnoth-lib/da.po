@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Battle for Wesnoth 0.9.5+CVS\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-12 19:12+0200\n"
+"POT-Creation-Date: 2013-05-22 22:04-0400\n"
 "PO-Revision-Date: 2008-01-13 20:06+0100\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Dansk-gruppen <dansk@dansk-gruppen.dk>\n"
@@ -1407,7 +1407,7 @@ msgstr "Fjern"
 #. [button]: id=help
 #. [button]: id=show_help
 #: data/gui/default/window/addon_connect.cfg:188
-#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:234
+#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:235
 msgid "Help"
 msgstr "Hjælp"
 
@@ -1433,7 +1433,7 @@ msgstr ""
 #: data/gui/default/window/editor_new_map.cfg:125
 #: data/gui/default/window/editor_resize_map.cfg:284
 #: data/gui/default/window/editor_set_starting_position.cfg:175
-#: data/gui/default/window/editor_settings.cfg:262
+#: data/gui/default/window/editor_settings.cfg:241
 #: data/gui/default/window/folder_create.cfg:134
 #: data/gui/default/window/game_load.cfg:477
 #: data/gui/default/window/game_save.cfg:135
@@ -1630,7 +1630,7 @@ msgstr "Smart udfoldning"
 #: data/gui/default/window/edit_text.cfg:116
 #: data/gui/default/window/editor_edit_label.cfg:177
 #: data/gui/default/window/editor_set_starting_position.cfg:162
-#: data/gui/default/window/editor_settings.cfg:252
+#: data/gui/default/window/editor_settings.cfg:231
 #: data/gui/default/window/folder_create.cfg:120
 #: data/gui/default/window/game_load.cfg:463
 #: data/gui/default/window/game_load.cfg:464
@@ -1839,7 +1839,7 @@ msgstr "Gem spil"
 
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [label]
-#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:208
+#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:209
 msgid "Resize Map"
 msgstr "Skift størrelse på kort"
 
@@ -1933,14 +1933,9 @@ msgstr "Frekvens:"
 msgid "Blue:"
 msgstr ""
 
-#. [toggle_button]: id=use_mdi
-#: data/gui/default/window/editor_settings.cfg:231
-msgid "Allow multiple maps to be open simultaneously"
-msgstr ""
-
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [button]: id=apply
-#: data/gui/default/window/editor_settings.cfg:272
+#: data/gui/default/window/editor_settings.cfg:251
 #: src/game_preferences_display.cpp:211
 msgid "Apply"
 msgstr "Anvende"
@@ -2021,8 +2016,8 @@ msgstr ""
 #. [grid]
 #: data/gui/default/window/formula_debugger.cfg:234
 #: data/gui/default/window/lobby_main.cfg:660
-#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:883
-#: src/hotkeys.cpp:1233
+#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:884
+#: src/hotkeys.cpp:1234
 msgid "Quit"
 msgstr "Afslut"
 
@@ -2903,19 +2898,19 @@ msgstr "Sletning af filen mislykkedes."
 msgid "Creation of the directory failed."
 msgstr "Oprettelse af katalog mislykkedes."
 
-#: src/game_preferences.cpp:323
+#: src/game_preferences.cpp:349
 msgid "No server has been defined."
 msgstr "Ingen server er defineret."
 
-#: src/game_preferences.cpp:403
+#: src/game_preferences.cpp:429
 msgid "player"
 msgstr "spiller"
 
-#: src/game_preferences.cpp:895
+#: src/game_preferences.cpp:921
 msgid "%H:%M"
 msgstr ""
 
-#: src/game_preferences.cpp:898
+#: src/game_preferences.cpp:924
 msgid "%I:%M %p"
 msgstr ""
 
@@ -3256,12 +3251,16 @@ msgid "Back to the multiplayer options"
 msgstr "Tilbage til flerspillerindstillinger"
 
 #: src/game_preferences_display.cpp:392
-msgid "Add this username to your friends list"
-msgstr "Tilføj dette brugernavn til din venneliste"
+msgid ""
+"Add this username to your friends list (add optional notes, e.g., "
+"'player_name notes on friend')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:393
-msgid "Add this username to your ignores list"
-msgstr "Tilføj dette brugernavn til din ignorerliste"
+msgid ""
+"Add this username to your ignores list (add optional reason, e.g., "
+"'player_name reason ignored')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:394
 msgid "Remove this username from your list"
@@ -3336,65 +3335,65 @@ msgstr "uendelig"
 msgid "Chat lines: "
 msgstr "Snakkelinjer: "
 
-#: src/game_preferences_display.cpp:960 src/game_preferences_display.cpp:968
+#: src/game_preferences_display.cpp:969 src/game_preferences_display.cpp:986
 msgid "Invalid username"
 msgstr "Ugyldig brugernavn"
 
-#: src/game_preferences_display.cpp:1071
+#: src/game_preferences_display.cpp:1088
 msgid "yes"
 msgstr "ja"
 
-#: src/game_preferences_display.cpp:1073
+#: src/game_preferences_display.cpp:1090
 msgid "no"
 msgstr "nej"
 
-#: src/game_preferences_display.cpp:1107
+#: src/game_preferences_display.cpp:1122
 #, fuzzy
 msgid "friend"
 msgstr "Venneliste"
 
-#: src/game_preferences_display.cpp:1113
+#: src/game_preferences_display.cpp:1126
 msgid "ignored"
 msgstr ""
 
-#: src/game_preferences_display.cpp:1117
+#: src/game_preferences_display.cpp:1140
 msgid "(empty list)"
 msgstr "(tom liste)"
 
-#: src/game_preferences_display.cpp:1241
+#: src/game_preferences_display.cpp:1264
 #: src/hotkey_preferences_display.cpp:214
 msgid "Prefs section^General"
 msgstr "Generelt"
 
-#: src/game_preferences_display.cpp:1242
+#: src/game_preferences_display.cpp:1265
 msgid "Prefs section^Display"
 msgstr "Skærm"
 
-#: src/game_preferences_display.cpp:1243
+#: src/game_preferences_display.cpp:1266
 msgid "Prefs section^Sound"
 msgstr "Lyd"
 
-#: src/game_preferences_display.cpp:1244
+#: src/game_preferences_display.cpp:1267
 msgid "Prefs section^Multiplayer"
 msgstr "Flerspiller"
 
-#: src/game_preferences_display.cpp:1245
+#: src/game_preferences_display.cpp:1268
 msgid "Advanced section^Advanced"
 msgstr "Avanceret"
 
-#: src/game_preferences_display.cpp:1279
+#: src/game_preferences_display.cpp:1302
 msgid "Choose Theme"
 msgstr ""
 
-#: src/game_preferences_display.cpp:1294
+#: src/game_preferences_display.cpp:1317
 msgid "New theme will take effect on next new or loaded game."
 msgstr "Nyt tema vil være aktivt i næste nye eller hentede spil."
 
-#: src/game_preferences_display.cpp:1298
+#: src/game_preferences_display.cpp:1321
 msgid "No known themes. Try changing from within an existing game."
 msgstr "Ingen kendte temaer. Prøv at ændre inde fra et eksisterende spil."
 
-#: src/game_preferences_display.cpp:1341
+#: src/game_preferences_display.cpp:1364
 msgid "Find $filename server binary to host networked games"
 msgstr ""
 
@@ -3584,7 +3583,7 @@ msgstr "Opdater overgange"
 
 #: src/gui/dialogs/addon_list.cpp:256
 #: src/gui/dialogs/network_transmission.cpp:54
-#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1190
+#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1191
 msgid "unit_byte^B"
 msgstr ""
 
@@ -3897,7 +3896,7 @@ msgstr "Standard zoom"
 msgid "Toggle Full Screen"
 msgstr "Skift til/fra fuldskærm"
 
-#: src/hotkeys.cpp:83 src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:83 src/hotkeys.cpp:1185
 msgid "Screenshot"
 msgstr "Skærmbillede"
 
@@ -4163,7 +4162,7 @@ msgid "Switch Side"
 msgstr "Næste side"
 
 #: src/hotkeys.cpp:160
-msgid "Swap Foreground/Background Terrains"
+msgid "Swap Foreground/Background Palette Item"
 msgstr ""
 
 #: src/hotkeys.cpp:161
@@ -4178,470 +4177,476 @@ msgstr ""
 msgid "Scroll Palette Right"
 msgstr ""
 
-#: src/hotkeys.cpp:166
+#: src/hotkeys.cpp:165
+#, fuzzy
+#| msgid "Next Side"
+msgid "Switch Time of Day"
+msgstr "Næste side"
+
+#: src/hotkeys.cpp:167
 #, fuzzy
 msgid "Next Tool"
 msgstr "Næste runde"
 
-#: src/hotkeys.cpp:168
+#: src/hotkeys.cpp:169
 msgid "Paint Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:168 src/hotkeys.cpp:169
+#: src/hotkeys.cpp:169 src/hotkeys.cpp:170
 msgid ""
 "Use left/right mouse button to draw fore-/background terrain. Hold Shift to "
 "paint base layer only. Ctrl+click to sample terrain under cursor."
 msgstr ""
 
-#: src/hotkeys.cpp:169
+#: src/hotkeys.cpp:170
 msgid "Fill Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 msgid ""
-"Left mouse button selects, right deselects. Hold Shift for magic-wand "
-"selection of tiles with same terrain."
+"Left mouse button selects or deselects, right brings up a context menu. Hold "
+"Shift for magic-wand selection of tiles with same terrain."
 msgstr ""
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 #, fuzzy
 msgid "Selection Tool"
 msgstr "Vælg alt"
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 msgid ""
 "Left mouse button displays player selection, right clears. Number keys "
 "scroll to the starting position, alt+number sets respective starting "
 "position under cursor, delete clears."
 msgstr ""
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 msgid "Starting Positions Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 #, fuzzy
 msgid "Label Tool"
 msgstr "Næste runde"
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 msgid "Left mouse button sets or drags a label, right clears."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 msgid ""
 "Left mouse button sets a new unit or moves a unit via drag and drop, right "
-"clears. Not implemented yet."
+"brings up a context menu. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 #, fuzzy
 msgid "Unit Tool"
 msgstr "Næste runde"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 #, fuzzy
 msgid "Item Tool"
 msgstr "Næste runde"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 msgid ""
 "Left mouse button sets a new item or moves it via drag and drop, right "
 "clears. Not implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid ""
 "Left mouse button sets or drags a sound source, right clears. Not "
 "implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid "Soundsource Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 msgid ""
 "Left mouse button sets the village ownership to the current side, right "
-"clears. Not implemented yet."
+"clears. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 #, fuzzy
 msgid "Village Tool"
 msgstr "Landsby"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 #, fuzzy
 #| msgid "Recruit"
 msgid "Canrecruit"
 msgstr "Rekrutter"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 msgid "Toggle the recruit attribute of a unit."
 msgstr ""
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 #, fuzzy
 msgid "Can be renamed"
 msgstr "Sæt et brugernavn ind"
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 msgid "Toggle the unit being renameable."
 msgstr ""
 
-#: src/hotkeys.cpp:181
+#: src/hotkeys.cpp:182
 #, fuzzy
 #| msgid "Change Hotkey"
 msgid "Change Unit ID"
 msgstr "Skift genvejstast"
 
-#: src/hotkeys.cpp:182
+#: src/hotkeys.cpp:183
 msgid "Loyal"
 msgstr ""
 
-#: src/hotkeys.cpp:185
+#: src/hotkeys.cpp:186
 #, fuzzy
 msgid "Next Brush"
 msgstr "Næste runde"
 
-#: src/hotkeys.cpp:186
+#: src/hotkeys.cpp:187
 #, fuzzy
 msgid "Default Brush"
 msgstr "Standard zoom"
 
-#: src/hotkeys.cpp:187
+#: src/hotkeys.cpp:188
 msgid "Single Tile"
 msgstr ""
 
-#: src/hotkeys.cpp:188
+#: src/hotkeys.cpp:189
 msgid "Radius One"
 msgstr ""
 
-#: src/hotkeys.cpp:189
+#: src/hotkeys.cpp:190
 msgid "Radius Two"
 msgstr ""
 
-#: src/hotkeys.cpp:190
+#: src/hotkeys.cpp:191
 msgid "Brush NW-SE"
 msgstr ""
 
-#: src/hotkeys.cpp:191
+#: src/hotkeys.cpp:192
 msgid "Brush SW-NE"
 msgstr ""
 
-#: src/hotkeys.cpp:192
+#: src/hotkeys.cpp:193
 msgid "Cut"
 msgstr "Klip"
 
-#: src/hotkeys.cpp:193
+#: src/hotkeys.cpp:194
 msgid "Copy"
 msgstr "Kopier"
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid ""
 "Left mouse button pastes from the clipboard, right brings up a context menu."
 msgstr ""
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid "Paste"
 msgstr "Indsæt"
 
-#: src/hotkeys.cpp:195
+#: src/hotkeys.cpp:196
 msgid "Export Selected Coordinates to System Clipboard"
 msgstr ""
 
-#: src/hotkeys.cpp:196
+#: src/hotkeys.cpp:197
 msgid "Select All"
 msgstr "Vælg alt"
 
-#: src/hotkeys.cpp:197
+#: src/hotkeys.cpp:198
 msgid "Select Inverse"
 msgstr ""
 
-#: src/hotkeys.cpp:198
+#: src/hotkeys.cpp:199
 #, fuzzy
 msgid "Select None"
 msgstr "Vælg alt"
 
-#: src/hotkeys.cpp:199
+#: src/hotkeys.cpp:200
 msgid "Rotate Clipboard Clockwise"
 msgstr ""
 
-#: src/hotkeys.cpp:200
+#: src/hotkeys.cpp:201
 msgid "Rotate Clipboard Counter-Clockwise"
 msgstr ""
 
-#: src/hotkeys.cpp:201
+#: src/hotkeys.cpp:202
 msgid "Flip Clipboard Horizontally"
 msgstr ""
 
-#: src/hotkeys.cpp:202
+#: src/hotkeys.cpp:203
 msgid "Flip Clipboard Vertically"
 msgstr ""
 
-#: src/hotkeys.cpp:203
+#: src/hotkeys.cpp:204
 msgid "Rotate Selection"
 msgstr "Roter det markerede"
 
-#: src/hotkeys.cpp:204
+#: src/hotkeys.cpp:205
 #, fuzzy
 msgid "Flip Selection"
 msgstr "Udfyld det markerede"
 
-#: src/hotkeys.cpp:205
+#: src/hotkeys.cpp:206
 msgid "Fill Selection"
 msgstr "Udfyld det markerede"
 
-#: src/hotkeys.cpp:206
+#: src/hotkeys.cpp:207
 #, fuzzy
 msgid "Generate Tiles In Selection"
 msgstr "Roter det markerede"
 
-#: src/hotkeys.cpp:207
+#: src/hotkeys.cpp:208
 msgid "Randomize Tiles In Selection"
 msgstr ""
 
-#: src/hotkeys.cpp:209
+#: src/hotkeys.cpp:210
 #, fuzzy
 msgid "Rotate Map"
 msgstr "Indlæs kort"
 
-#: src/hotkeys.cpp:210
+#: src/hotkeys.cpp:211
 #, fuzzy
 msgid "Generate Map"
 msgstr "Lav nyt kort"
 
-#: src/hotkeys.cpp:211
+#: src/hotkeys.cpp:212
 msgid "Apply a Mask"
 msgstr ""
 
-#: src/hotkeys.cpp:212
+#: src/hotkeys.cpp:213
 #, fuzzy
 msgid "Create Mask"
 msgstr "Gem spil"
 
-#: src/hotkeys.cpp:213
+#: src/hotkeys.cpp:214
 #, fuzzy
 msgid "Refresh Display"
 msgstr "Skærm"
 
-#: src/hotkeys.cpp:214
+#: src/hotkeys.cpp:215
 #, fuzzy
 msgid "Update Terrain Transitions"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:216
+#: src/hotkeys.cpp:217
 #, fuzzy
 msgid "Toggle Terrain Transition Update"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:217
+#: src/hotkeys.cpp:218
 #, fuzzy
 msgid "Auto-update Terrain Transitions"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:219
+#: src/hotkeys.cpp:220
 #, fuzzy
 msgid "Auto-update Terrain Transitions: No"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:220
+#: src/hotkeys.cpp:221
 #, fuzzy
 msgid "Auto-update Terrain Transitions: Partial"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:222
+#: src/hotkeys.cpp:223
 msgid "Refresh Image Cache"
 msgstr "Opfrisk billed-cache"
 
-#: src/hotkeys.cpp:223
+#: src/hotkeys.cpp:224
 msgid "Draw Hex Coordinates"
 msgstr ""
 
-#: src/hotkeys.cpp:224
+#: src/hotkeys.cpp:225
 #, fuzzy
 msgid "Draw Terrain Codes"
 msgstr "Tegn terræn"
 
-#: src/hotkeys.cpp:226
+#: src/hotkeys.cpp:227
 msgid "Define (Time) Area"
 msgstr ""
 
-#: src/hotkeys.cpp:228
+#: src/hotkeys.cpp:229
 msgid "Delay Shroud Updates"
 msgstr "Udskyd sløringsopdateringer"
 
-#: src/hotkeys.cpp:229
+#: src/hotkeys.cpp:230
 msgid "Update Shroud Now"
 msgstr "Opdater sløring"
 
-#: src/hotkeys.cpp:230
+#: src/hotkeys.cpp:231
 msgid "Continue Move"
 msgstr "Fortsæt bevægelse"
 
-#: src/hotkeys.cpp:231
+#: src/hotkeys.cpp:232
 msgid "Find Label or Unit"
 msgstr "Find mærkat eller enhed"
 
-#: src/hotkeys.cpp:232
+#: src/hotkeys.cpp:233
 msgid "Speak to Ally"
 msgstr "Tal til allierede"
 
-#: src/hotkeys.cpp:233
+#: src/hotkeys.cpp:234
 msgid "Speak to All"
 msgstr "Tal til alle"
 
-#: src/hotkeys.cpp:235
+#: src/hotkeys.cpp:236
 msgid "View Chat Log"
 msgstr "Vis snakke-log"
 
-#: src/hotkeys.cpp:236
+#: src/hotkeys.cpp:237
 #, fuzzy
 msgid "Change Language"
 msgstr "Skift sprog"
 
-#: src/hotkeys.cpp:237
+#: src/hotkeys.cpp:238
 msgid "Enter User Command"
 msgstr "Indtast brugerkomando"
 
-#: src/hotkeys.cpp:238
+#: src/hotkeys.cpp:239
 #, fuzzy
 msgid "Custom Command"
 msgstr "Indtast brugerkomando"
 
-#: src/hotkeys.cpp:239
+#: src/hotkeys.cpp:240
 msgid "Run Formula"
 msgstr ""
 
-#: src/hotkeys.cpp:240
+#: src/hotkeys.cpp:241
 msgid "Clear Messages"
 msgstr "Ryd beskeder"
 
-#: src/hotkeys.cpp:241
+#: src/hotkeys.cpp:242
 #, fuzzy
 msgid "Refresh WML"
 msgstr "Skærm"
 
-#: src/hotkeys.cpp:242
+#: src/hotkeys.cpp:243
 msgid "Next Tip of the Day"
 msgstr ""
 
-#: src/hotkeys.cpp:243
+#: src/hotkeys.cpp:244
 #, fuzzy
 msgid "Previous Tip of the Day"
 msgstr "Forrige enhed"
 
-#: src/hotkeys.cpp:244
+#: src/hotkeys.cpp:245
 #, fuzzy
 msgid "Start Tutorial"
 msgstr "Rundedialog"
 
-#: src/hotkeys.cpp:245
+#: src/hotkeys.cpp:246
 #, fuzzy
 #| msgid "Smart expand"
 msgid "Start Campaign"
 msgstr "Smart udfoldning"
 
-#: src/hotkeys.cpp:246
+#: src/hotkeys.cpp:247
 #, fuzzy
 msgid "Start Multiplayer Game"
 msgstr "Flerspiller indstillinger"
 
-#: src/hotkeys.cpp:247
+#: src/hotkeys.cpp:248
 #, fuzzy
 msgid "Manage Add-ons"
 msgstr "Opdater overgange"
 
-#: src/hotkeys.cpp:248
+#: src/hotkeys.cpp:249
 #, fuzzy
 msgid "Start Editor"
 msgstr "Afslut redigeringsprogram"
 
-#: src/hotkeys.cpp:249
+#: src/hotkeys.cpp:250
 #, fuzzy
 #| msgid "Show grid"
 msgid "Show Credits"
 msgstr "Vis net"
 
-#: src/hotkeys.cpp:250
+#: src/hotkeys.cpp:251
 #, fuzzy
 msgid "Show Helptip"
 msgstr "spiller"
 
-#: src/hotkeys.cpp:253
+#: src/hotkeys.cpp:254
 msgid "Unrecognized Command"
 msgstr ""
 
-#: src/hotkeys.cpp:386 src/hotkeys.cpp:389
+#: src/hotkeys.cpp:387 src/hotkeys.cpp:390
 msgid "Button"
 msgstr ""
 
-#: src/hotkeys.cpp:386
+#: src/hotkeys.cpp:387
 msgid "Mouse"
 msgstr ""
 
-#: src/hotkeys.cpp:389 src/hotkeys.cpp:425
+#: src/hotkeys.cpp:390 src/hotkeys.cpp:426
 msgid "Joystick"
 msgstr ""
 
-#: src/hotkeys.cpp:395
+#: src/hotkeys.cpp:396
 msgid "Centered"
 msgstr ""
 
-#: src/hotkeys.cpp:398
+#: src/hotkeys.cpp:399
 msgid "Up"
 msgstr ""
 
-#: src/hotkeys.cpp:401
+#: src/hotkeys.cpp:402
 #, fuzzy
 #| msgid "Height:"
 msgid "Right"
 msgstr "Højde:"
 
-#: src/hotkeys.cpp:404
+#: src/hotkeys.cpp:405
 msgid "Down"
 msgstr ""
 
-#: src/hotkeys.cpp:407
+#: src/hotkeys.cpp:408
 msgid "Left"
 msgstr ""
 
-#: src/hotkeys.cpp:410
+#: src/hotkeys.cpp:411
 msgid "RightUp"
 msgstr ""
 
-#: src/hotkeys.cpp:413
+#: src/hotkeys.cpp:414
 msgid "RightDown"
 msgstr ""
 
-#: src/hotkeys.cpp:416
+#: src/hotkeys.cpp:417
 msgid "LeftUp"
 msgstr ""
 
-#: src/hotkeys.cpp:419
+#: src/hotkeys.cpp:420
 msgid "LeftDown"
 msgstr ""
 
-#: src/hotkeys.cpp:422
+#: src/hotkeys.cpp:423
 msgid "Unknown"
 msgstr ""
 
-#: src/hotkeys.cpp:425
+#: src/hotkeys.cpp:426
 #, fuzzy
 msgid "Hat"
 msgstr "Klip"
 
-#: src/hotkeys.cpp:884 src/hotkeys.cpp:1234
+#: src/hotkeys.cpp:885 src/hotkeys.cpp:1235
 msgid "Do you really want to quit?"
 msgstr "Er du sikker på at du vil afslutte?"
 
-#: src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:1185
 #, fuzzy
 msgid "Map-Screenshot"
 msgstr "Skærmbillede"
 
-#: src/hotkeys.cpp:1191 src/hotkeys.cpp:1193
+#: src/hotkeys.cpp:1192 src/hotkeys.cpp:1194
 #, fuzzy
 msgid "Screenshot done"
 msgstr "Skærmbillede"
@@ -4730,15 +4735,15 @@ msgstr ""
 "pixel for at afvikle spillet i et vindue. Din skærm skal understøtte "
 "1024x768x16 for at køre spillet i fuld skærm."
 
-#: src/preferences_display.cpp:326
+#: src/preferences_display.cpp:322
 msgid "There are no alternative video modes available"
 msgstr "Der er ingen alternative videomodes tilgængelige"
 
-#: src/preferences_display.cpp:357
+#: src/preferences_display.cpp:353
 msgid " (widescreen)"
 msgstr ""
 
-#: src/preferences_display.cpp:361
+#: src/preferences_display.cpp:357
 msgid "Choose Resolution"
 msgstr "Vælg opløsning"
 
@@ -4791,6 +4796,12 @@ msgid ""
 "The key '$deprecated_key' has been renamed to '$key'. Support for "
 "'$deprecated_key' will be removed in version $removal_version."
 msgstr ""
+
+#~ msgid "Add this username to your friends list"
+#~ msgstr "Tilføj dette brugernavn til din venneliste"
+
+#~ msgid "Add this username to your ignores list"
+#~ msgstr "Tilføj dette brugernavn til din ignorerliste"
 
 #, fuzzy
 #~ msgid "Auto-update Terrain Transitions: Yes"

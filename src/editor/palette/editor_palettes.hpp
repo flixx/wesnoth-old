@@ -50,6 +50,7 @@ public:
 		, selected_bg_item_()
 		, active_mouse_action_(active_mouse_action)
 		, buttons_()
+		, help_handle_(-1)
 	{
 	};
 
@@ -98,6 +99,8 @@ public:
 
 	void swap();
 
+	virtual std::string get_help_string() = 0;
+
 	/** Return the currently selected foreground/background item. */
 	const Item& selected_fg_item() const { return item_map_.find(selected_fg_item_)->second; };
 	const Item& selected_bg_item() const { return item_map_.find(selected_bg_item_)->second; };
@@ -126,6 +129,9 @@ private:
 
 	void hide(bool hidden) {
 		widget::hide(hidden);
+		if (!hidden)
+			help_handle_ = gui_.video().set_help_string(get_help_string());
+		else gui_.video().clear_help_string(help_handle_);
 		BOOST_FOREACH(gui::widget& w, buttons_) {
 			w.hide(hidden);
 		}
@@ -166,7 +172,8 @@ private:
 protected:
 	std::map<std::string, std::vector<std::string> > group_map_;
 
-	std::map<std::string, Item> item_map_;
+	typedef std::map<std::string, Item> item_map;
+	item_map item_map_;
 	size_t nitems_, nmax_items_, items_start_;
     std::set<std::string> non_core_items_;
 
@@ -177,6 +184,8 @@ private:
 
     mouse_action** active_mouse_action_;
     std::vector<gui::tristate_button> buttons_;
+
+    int help_handle_;
 };
 
 

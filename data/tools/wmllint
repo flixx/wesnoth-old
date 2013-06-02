@@ -845,7 +845,7 @@ def local_sanity_check(filename, nav, key, prefix, value, comment):
         if m and not m.group(1):
             print errlead + 'translatability mark before non-string'
     # Most tags are not allowed with [part]
-    if "[part]" in ancestors and parent not in ("[part]", "[image]", "[insert_tag]", "[if]", "[then]", "[else]", "[switch]", "[case]", "[variable]", "[deprecated_message]"):
+    if "[part]" in ancestors and parent not in ("[part]", "[image]", "[insert_tag]", "[if]", "[then]", "[else]", "[switch]", "[case]", "[variable]", "[deprecated_message]") and not parent.startswith("#"):
         print errlead + '%s not permitted within [part] tag' % parent
     # Most tags are not permitted inside [if]
     if len(ancestors) >= 2 and ancestors[-1] == "[if]":
@@ -864,7 +864,7 @@ def local_sanity_check(filename, nav, key, prefix, value, comment):
                    "recruitment_ignore_bad_combat",
                    "recruitment_pattern",
                    "villages_per_scout", "leader_value", "village_value",
-                   "aggression", "caution", "attack_depth", "grouping"):
+                   "aggression", "caution", "attack_depth", "grouping", "advancements"):
             print errlead + key + " outside [ai] scope"
     # Bad [recruit] attribute
     if parent in ("[allow_recruit]", "[disallow_recruit]") and key == "recruit":
@@ -2352,6 +2352,8 @@ if __name__ == '__main__':
                         elif revert:
                             print "wmllint: reverting %s" % backup
                             if not dryrun:
+                                if sys.platform == 'win32':
+                                    os.remove(fn)
                                 os.rename(backup, fn)
                 elif diffs:
                     # Display diffs
@@ -2373,6 +2375,8 @@ if __name__ == '__main__':
                         if changed:
                             print "wmllint: converting", fn
                             if not dryrun:
+                                if sys.platform == 'win32' and os.path.exists(backup):
+                                    os.remove(backup)
                                 os.rename(fn, backup)
                                 if fn.endswith(".gz"):
                                     ofp = gzip.open(fn, "w")

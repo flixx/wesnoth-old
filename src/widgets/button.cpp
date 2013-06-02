@@ -54,7 +54,7 @@ button::button(CVideo& video, const std::string& label, button::TYPE type,
 
 		switch (type_) {
 		case TYPE_PRESS:
-			button_image_name_ = "buttons/button";
+			button_image_name_ = "buttons/button_normal/button_copper_H22";
 			break;
 		case TYPE_TURBO:
 			button_image_name_ = "buttons/lite";
@@ -119,6 +119,8 @@ void button::load_images() {
 		if (overlayPressedDisabledImage_.null())
 				overlayPressedDisabledImage_ = blend_surface(greyscale_image(overlayPressedImage_),
 						disabled_btn_adjust, disabled_btn_color);
+	} else {
+		overlayImage_.assign(NULL);
 	}
 
 	if (disabled_image == NULL) {

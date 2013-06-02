@@ -38,6 +38,7 @@
 #include "tod_manager.hpp"
 #include "resources.hpp"
 #include "whiteboard/manager.hpp"
+#include "overlay.hpp"
 
 #include "SDL_image.h"
 
@@ -74,6 +75,50 @@ namespace {
 }
 
 int display::last_zoom_ = SmallZoom;
+
+void display::add_overlay(const map_location& loc, const std::string& img, const std::string& halo,const std::string& team_name, bool visible_under_fog)
+{
+	const int halo_handle = halo::add(get_location_x(loc) + hex_size() / 2,
+			get_location_y(loc) + hex_size() / 2, halo, loc);
+
+	const overlay item(img, halo, halo_handle, team_name, visible_under_fog);
+	overlays_.insert(overlay_map::value_type(loc,item));
+}
+
+void display::remove_overlay(const map_location& loc)
+{
+	typedef overlay_map::const_iterator Itor;
+	std::pair<Itor,Itor> itors = overlays_.equal_range(loc);
+	while(itors.first != itors.second) {
+		halo::remove(itors.first->second.halo_handle);
+		++itors.first;
+	}
+
+	overlays_.erase(loc);
+}
+
+void display::remove_single_overlay(const map_location& loc, const std::string& toDelete)
+{
+	//Iterate through the values with key of loc
+	typedef overlay_map::iterator Itor;
+	overlay_map::iterator iteratorCopy;
+	std::pair<Itor,Itor> itors = overlays_.equal_range(loc);
+	while(itors.first != itors.second) {
+		//If image or halo of overlay struct matches toDelete, remove the overlay
+		if(itors.first->second.image == toDelete || itors.first->second.halo == toDelete) {
+			iteratorCopy = itors.first;
+			++itors.first;
+			halo::remove(iteratorCopy->second.halo_handle);
+			overlays_.erase(iteratorCopy);
+		}
+		else {
+			++itors.first;
+		}
+	}
+}
+
+
+
 
 display::display(unit_map* units, CVideo& video, const gamemap* map, const std::vector<team>* t,const config& theme_cfg, const config& level) :
 	units_(units),
@@ -818,7 +863,7 @@ void display::create_buttons()
 	DBG_DP << "creating sliders...\n";
 	const std::vector<theme::slider>& sliders = theme_.sliders();
 	for(std::vector<theme::slider>::const_iterator i = sliders.begin(); i != sliders.end(); ++i) {
-		gui::slider s(screen_, i->image());
+		gui::slider s(screen_, i->image(), i->black_line());
 		DBG_DP << "drawing button " << i->get_id() << "\n";
 		s.set_id(i->get_id());
 		const SDL_Rect& loc = i->location(screen_area());
@@ -879,8 +924,8 @@ void display::create_buttons()
 		b.set_id(i->get_id());
 		const SDL_Rect& loc = i->location(screen_area());
 		b.set_location(loc.x,loc.y);
-		if (!i->tooltip().empty()){
-			b.set_tooltip_string(i->tooltip());
+		if (!i->tooltip(0).empty()){
+			b.set_tooltip_string(i->tooltip(0));
 		}
 		if(rects_overlap(b.location(),map_outside_area())) {
 			b.set_volatile(true);
@@ -1321,26 +1366,6 @@ static void draw_panel(CVideo& video, const theme::panel& panel, std::vector<gui
 		video.blit_surface(loc.x,loc.y,surf);
 		update_rect(loc);
 	}
-
-	//TODO this code seems to be no longer necessary, remove if this holds.
-//	static bool first_time = true;
-//	for(std::vector<gui::button>::iterator b = buttons.begin(); b != buttons.end(); ++b) {
-//		if(rects_overlap(b->location(),loc)) {
-//			b->set_dirty(true);
-//			if (first_time){
-//				/**
-//				 * @todo FixMe YogiHH:
-//				 * This is only made to have the buttons store their background
-//				 * information, otherwise the background will appear completely
-//				 * black. It would more straightforward to call bg_update, but
-//				 * that is not public and there seems to be no other way atm to
-//				 * call it. I will check if bg_update can be made public.
-//				 */
-//				b->hide(true);
-//				b->hide(false);
-//			}
-//		}
-//	}
 }
 
 static void draw_label(CVideo& video, surface target, const theme::label& label)
@@ -1944,8 +1969,8 @@ void display::set_zoom(int amount, bool absolute)
 			zoom_slider->set_value(new_zoom);
 		}
 		SDL_Rect const &area = map_area();
-		xpos_ += (xpos_ + area.w / 2) * amount / zoom_;
-		ypos_ += (ypos_ + area.h / 2) * amount / zoom_;
+		xpos_ += (xpos_ + area.w / 2) * (absolute ? new_zoom - zoom_ : amount) / zoom_;
+		ypos_ += (ypos_ + area.h / 2) * (absolute ? new_zoom - zoom_ : amount) / zoom_;
 
 		zoom_ = new_zoom;
 		bounds_check_position();
@@ -2467,6 +2492,20 @@ void display::draw_hex(const map_location& loc) {
 		}
 		// village-control flags.
 		drawing_buffer_add(LAYER_TERRAIN_BG, loc, xpos, ypos, get_flag(loc));
+	}
+
+	if(!shrouded(loc)) {
+		typedef overlay_map::const_iterator Itor;
+		std::pair<Itor,Itor> overlays = overlays_.equal_range(loc);
+		for( ; overlays.first != overlays.second; ++overlays.first) {
+			if ((overlays.first->second.team_name == "" ||
+					overlays.first->second.team_name.find((*teams_)[playing_team()].team_name()) != std::string::npos)
+					&& !(fogged(loc) && !overlays.first->second.visible_in_fog))
+			{
+				drawing_buffer_add(LAYER_TERRAIN_BG, loc, xpos, ypos,
+						image::get_image(overlays.first->second.image,image_type));
+			}
+		}
 	}
 
 	// Draw the time-of-day mask on top of the terrain in the hex.

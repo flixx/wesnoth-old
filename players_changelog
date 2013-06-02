@@ -2,9 +2,25 @@ This is meant to be a concise list of player-visible changes (very minor
 changes may be omitted). For a complete list of changes, see the main
 changelog: https://github.com/wesnoth/wesnoth-old/blob/master/changelog
 
-Version 1.11.3+dev:
+Version 1.11.4+dev:
+ * Campaigns:
+   * Legend of Wesmere:
+     * Scenario 05: Elvish Horse Archers can now carry the treasure
+     * Scenario 09: the player's loyal units stay in the recall list, instead of
+       being stored and then unstored in scenario 14
  * Language and i18n:
-   * Updated translations:
+   * Updated translations: Portuguese, Portuguese (Brazil).
+ * User interface:
+   * Added notification support for Windows
+   * Made it so that the "Back to Turn X" and "Back to Start" menu items work
+     with .bz2 saves
+
+
+Version 1.11.4:
+ * AI:
+   * Reverted new Lua AI persistent storage mechanism for external CAs that
+     would crash Wesnoth under certain circumstances in 1.11.3. This will be
+     re-committed in an upcoming release.
 
 
 Version 1.11.3:

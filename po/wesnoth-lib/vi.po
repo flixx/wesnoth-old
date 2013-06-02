@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-12 19:12+0200\n"
+"POT-Creation-Date: 2013-05-22 22:04-0400\n"
 "PO-Revision-Date: 2013-03-30 07:23+0700\n"
 "Last-Translator: Phạm Thành Nam <phamthanhnam.ptn@gmail.com>\n"
 "Language-Team: Vietnamese <>\n"
@@ -1278,7 +1278,7 @@ msgstr "Xóa phần bổ sung"
 #. [button]: id=help
 #. [button]: id=show_help
 #: data/gui/default/window/addon_connect.cfg:188
-#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:234
+#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:235
 msgid "Help"
 msgstr "Trợ giúp"
 
@@ -1304,7 +1304,7 @@ msgstr "Kết nối"
 #: data/gui/default/window/editor_new_map.cfg:125
 #: data/gui/default/window/editor_resize_map.cfg:284
 #: data/gui/default/window/editor_set_starting_position.cfg:175
-#: data/gui/default/window/editor_settings.cfg:262
+#: data/gui/default/window/editor_settings.cfg:241
 #: data/gui/default/window/folder_create.cfg:134
 #: data/gui/default/window/game_load.cfg:477
 #: data/gui/default/window/game_save.cfg:135
@@ -1492,7 +1492,7 @@ msgstr "Chơi một chiến dịch"
 #: data/gui/default/window/edit_text.cfg:116
 #: data/gui/default/window/editor_edit_label.cfg:177
 #: data/gui/default/window/editor_set_starting_position.cfg:162
-#: data/gui/default/window/editor_settings.cfg:252
+#: data/gui/default/window/editor_settings.cfg:231
 #: data/gui/default/window/folder_create.cfg:120
 #: data/gui/default/window/game_load.cfg:463
 #: data/gui/default/window/game_load.cfg:464
@@ -1686,7 +1686,7 @@ msgstr "Tạo"
 
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [label]
-#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:208
+#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:209
 msgid "Resize Map"
 msgstr "Thay đổi kích thước bản đồ"
 
@@ -1771,14 +1771,9 @@ msgstr "Xanh lục:"
 msgid "Blue:"
 msgstr "Xanh lam:"
 
-#. [toggle_button]: id=use_mdi
-#: data/gui/default/window/editor_settings.cfg:231
-msgid "Allow multiple maps to be open simultaneously"
-msgstr "Cho phép mở đồng thời nhiều bản đồ"
-
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [button]: id=apply
-#: data/gui/default/window/editor_settings.cfg:272
+#: data/gui/default/window/editor_settings.cfg:251
 #: src/game_preferences_display.cpp:211
 msgid "Apply"
 msgstr "Áp dụng"
@@ -1853,8 +1848,8 @@ msgstr "Dấu vết thi hành"
 #. [grid]
 #: data/gui/default/window/formula_debugger.cfg:234
 #: data/gui/default/window/lobby_main.cfg:660
-#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:883
-#: src/hotkeys.cpp:1233
+#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:884
+#: src/hotkeys.cpp:1234
 msgid "Quit"
 msgstr "Thoát"
 
@@ -2686,19 +2681,19 @@ msgstr "Xóa tập tin thất bại."
 msgid "Creation of the directory failed."
 msgstr "Tạo thư mục thất bại."
 
-#: src/game_preferences.cpp:323
+#: src/game_preferences.cpp:349
 msgid "No server has been defined."
 msgstr "Không xác định được máy chủ nào."
 
-#: src/game_preferences.cpp:403
+#: src/game_preferences.cpp:429
 msgid "player"
 msgstr "người chơi"
 
-#: src/game_preferences.cpp:895
+#: src/game_preferences.cpp:921
 msgid "%H:%M"
 msgstr "%H:%M"
 
-#: src/game_preferences.cpp:898
+#: src/game_preferences.cpp:924
 msgid "%I:%M %p"
 msgstr "%I:%M %p"
 
@@ -3028,12 +3023,16 @@ msgid "Back to the multiplayer options"
 msgstr "Trở lại tùy chọn nhiều người chơi"
 
 #: src/game_preferences_display.cpp:392
-msgid "Add this username to your friends list"
-msgstr "Thêm tên người dùng này vào danh sách bạn bè của bạn"
+msgid ""
+"Add this username to your friends list (add optional notes, e.g., "
+"'player_name notes on friend')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:393
-msgid "Add this username to your ignores list"
-msgstr "Thêm tên người dùng này vào danh sách từ chối của bạn"
+msgid ""
+"Add this username to your ignores list (add optional reason, e.g., "
+"'player_name reason ignored')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:394
 msgid "Remove this username from your list"
@@ -3107,65 +3106,65 @@ msgstr "vô hạn"
 msgid "Chat lines: "
 msgstr "Số dòng tán gẫu: "
 
-#: src/game_preferences_display.cpp:960 src/game_preferences_display.cpp:968
+#: src/game_preferences_display.cpp:969 src/game_preferences_display.cpp:986
 msgid "Invalid username"
 msgstr "Tên người dùng không hợp lệ"
 
-#: src/game_preferences_display.cpp:1071
+#: src/game_preferences_display.cpp:1088
 msgid "yes"
 msgstr "có"
 
-#: src/game_preferences_display.cpp:1073
+#: src/game_preferences_display.cpp:1090
 msgid "no"
 msgstr "không"
 
-#: src/game_preferences_display.cpp:1107
+#: src/game_preferences_display.cpp:1122
 msgid "friend"
 msgstr "bạn bè"
 
-#: src/game_preferences_display.cpp:1113
+#: src/game_preferences_display.cpp:1126
 msgid "ignored"
 msgstr "từ chối"
 
-#: src/game_preferences_display.cpp:1117
+#: src/game_preferences_display.cpp:1140
 msgid "(empty list)"
 msgstr "(danh sách rỗng)"
 
-#: src/game_preferences_display.cpp:1241
+#: src/game_preferences_display.cpp:1264
 #: src/hotkey_preferences_display.cpp:214
 msgid "Prefs section^General"
 msgstr "Chung"
 
-#: src/game_preferences_display.cpp:1242
+#: src/game_preferences_display.cpp:1265
 msgid "Prefs section^Display"
 msgstr "Hiển thị"
 
-#: src/game_preferences_display.cpp:1243
+#: src/game_preferences_display.cpp:1266
 msgid "Prefs section^Sound"
 msgstr "Âm thanh"
 
-#: src/game_preferences_display.cpp:1244
+#: src/game_preferences_display.cpp:1267
 msgid "Prefs section^Multiplayer"
 msgstr "Nhiều người chơi"
 
-#: src/game_preferences_display.cpp:1245
+#: src/game_preferences_display.cpp:1268
 msgid "Advanced section^Advanced"
 msgstr "Nâng cao"
 
-#: src/game_preferences_display.cpp:1279
+#: src/game_preferences_display.cpp:1302
 msgid "Choose Theme"
 msgstr "Chọn sắc thái"
 
-#: src/game_preferences_display.cpp:1294
+#: src/game_preferences_display.cpp:1317
 msgid "New theme will take effect on next new or loaded game."
 msgstr "Sắc thái mới sẽ có hiệu lực ở trò chơi mới hoặc tải lại kế tiếp."
 
-#: src/game_preferences_display.cpp:1298
+#: src/game_preferences_display.cpp:1321
 msgid "No known themes. Try changing from within an existing game."
 msgstr ""
 "Không có sắc thái nào. Thử thay đổi từ bên trong một trò chơi đang chạy."
 
-#: src/game_preferences_display.cpp:1341
+#: src/game_preferences_display.cpp:1364
 msgid "Find $filename server binary to host networked games"
 msgstr "Tìm trình phục vụ nhị phân $filename để làm chủ trò chơi mạng"
 
@@ -3348,7 +3347,7 @@ msgstr "Tất cả các phần bổ sung"
 
 #: src/gui/dialogs/addon_list.cpp:256
 #: src/gui/dialogs/network_transmission.cpp:54
-#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1190
+#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1191
 msgid "unit_byte^B"
 msgstr "B"
 
@@ -3651,7 +3650,7 @@ msgstr "Độ phóng mặc định"
 msgid "Toggle Full Screen"
 msgstr "Bật tắt toàn màn hình"
 
-#: src/hotkeys.cpp:83 src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:83 src/hotkeys.cpp:1185
 msgid "Screenshot"
 msgstr "Chụp màn hình"
 
@@ -3895,7 +3894,9 @@ msgid "Switch Side"
 msgstr "Chuyển đổi phe"
 
 #: src/hotkeys.cpp:160
-msgid "Swap Foreground/Background Terrains"
+#, fuzzy
+#| msgid "Swap Foreground/Background Terrains"
+msgid "Swap Foreground/Background Palette Item"
 msgstr "Tráo địa hình cận cảnh/hậu cảnh"
 
 #: src/hotkeys.cpp:161
@@ -3910,435 +3911,441 @@ msgstr "Cuộn bảng màu sang trái"
 msgid "Scroll Palette Right"
 msgstr "Cuộn bảng màu sang phải"
 
-#: src/hotkeys.cpp:166
+#: src/hotkeys.cpp:165
+#, fuzzy
+#| msgid "Switch Map"
+msgid "Switch Time of Day"
+msgstr "Chuyển đổi bản đồ"
+
+#: src/hotkeys.cpp:167
 msgid "Next Tool"
 msgstr "Công cụ kế tiếp"
 
-#: src/hotkeys.cpp:168
+#: src/hotkeys.cpp:169
 msgid "Paint Tool"
 msgstr "Công cụ Vẽ"
 
-#: src/hotkeys.cpp:168 src/hotkeys.cpp:169
+#: src/hotkeys.cpp:169 src/hotkeys.cpp:170
 msgid ""
 "Use left/right mouse button to draw fore-/background terrain. Hold Shift to "
 "paint base layer only. Ctrl+click to sample terrain under cursor."
 msgstr ""
 
-#: src/hotkeys.cpp:169
+#: src/hotkeys.cpp:170
 msgid "Fill Tool"
 msgstr "Công cụ Tô"
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 msgid ""
-"Left mouse button selects, right deselects. Hold Shift for magic-wand "
-"selection of tiles with same terrain."
+"Left mouse button selects or deselects, right brings up a context menu. Hold "
+"Shift for magic-wand selection of tiles with same terrain."
 msgstr ""
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 msgid "Selection Tool"
 msgstr "Công cụ Lựa chọn"
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 msgid ""
 "Left mouse button displays player selection, right clears. Number keys "
 "scroll to the starting position, alt+number sets respective starting "
 "position under cursor, delete clears."
 msgstr ""
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 msgid "Starting Positions Tool"
 msgstr "Công cụ Vị trí ban đầu"
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 msgid "Label Tool"
 msgstr "Công cụ Nhãn"
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 msgid "Left mouse button sets or drags a label, right clears."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 msgid ""
 "Left mouse button sets a new unit or moves a unit via drag and drop, right "
-"clears. Not implemented yet."
+"brings up a context menu. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 msgid "Unit Tool"
 msgstr "Công cụ Đơn vị"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 #, fuzzy
 #| msgid "Next Tool"
 msgid "Item Tool"
 msgstr "Công cụ kế tiếp"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 msgid ""
 "Left mouse button sets a new item or moves it via drag and drop, right "
 "clears. Not implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid ""
 "Left mouse button sets or drags a sound source, right clears. Not "
 "implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid "Soundsource Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 msgid ""
 "Left mouse button sets the village ownership to the current side, right "
-"clears. Not implemented yet."
+"clears. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 msgid "Village Tool"
 msgstr "Công cụ Làng"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 #, fuzzy
 #| msgid "Recruit"
 msgid "Canrecruit"
 msgstr "Tuyển quân"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 msgid "Toggle the recruit attribute of a unit."
 msgstr ""
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 msgid "Can be renamed"
 msgstr ""
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 msgid "Toggle the unit being renameable."
 msgstr ""
 
-#: src/hotkeys.cpp:181
+#: src/hotkeys.cpp:182
 #, fuzzy
 #| msgid "Change Control"
 msgid "Change Unit ID"
 msgstr "Thay đổi quyền điều khiển"
 
-#: src/hotkeys.cpp:182
+#: src/hotkeys.cpp:183
 msgid "Loyal"
 msgstr ""
 
-#: src/hotkeys.cpp:185
+#: src/hotkeys.cpp:186
 msgid "Next Brush"
 msgstr "Chổi vẽ kế tiếp"
 
-#: src/hotkeys.cpp:186
+#: src/hotkeys.cpp:187
 msgid "Default Brush"
 msgstr "Chổi vẽ mặc định"
 
-#: src/hotkeys.cpp:187
+#: src/hotkeys.cpp:188
 msgid "Single Tile"
 msgstr ""
 
-#: src/hotkeys.cpp:188
+#: src/hotkeys.cpp:189
 msgid "Radius One"
 msgstr ""
 
-#: src/hotkeys.cpp:189
+#: src/hotkeys.cpp:190
 msgid "Radius Two"
 msgstr ""
 
-#: src/hotkeys.cpp:190
+#: src/hotkeys.cpp:191
 msgid "Brush NW-SE"
 msgstr ""
 
-#: src/hotkeys.cpp:191
+#: src/hotkeys.cpp:192
 msgid "Brush SW-NE"
 msgstr ""
 
-#: src/hotkeys.cpp:192
+#: src/hotkeys.cpp:193
 msgid "Cut"
 msgstr "Cắt"
 
-#: src/hotkeys.cpp:193
+#: src/hotkeys.cpp:194
 msgid "Copy"
 msgstr "Chép"
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid ""
 "Left mouse button pastes from the clipboard, right brings up a context menu."
 msgstr ""
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid "Paste"
 msgstr "Dán"
 
-#: src/hotkeys.cpp:195
+#: src/hotkeys.cpp:196
 msgid "Export Selected Coordinates to System Clipboard"
 msgstr "Xuất tọa độ được chọn vào bảng chọn hệ thống"
 
-#: src/hotkeys.cpp:196
+#: src/hotkeys.cpp:197
 msgid "Select All"
 msgstr "Chọn tất cả"
 
-#: src/hotkeys.cpp:197
+#: src/hotkeys.cpp:198
 msgid "Select Inverse"
 msgstr "Đảo lựa chọn"
 
-#: src/hotkeys.cpp:198
+#: src/hotkeys.cpp:199
 msgid "Select None"
 msgstr "Không chọn gì"
 
-#: src/hotkeys.cpp:199
+#: src/hotkeys.cpp:200
 msgid "Rotate Clipboard Clockwise"
 msgstr "Quay bảng chọn theo chiều kim đồng hồ"
 
-#: src/hotkeys.cpp:200
+#: src/hotkeys.cpp:201
 msgid "Rotate Clipboard Counter-Clockwise"
 msgstr "Quay bảng chọn ngược chiều kim đồng hồ"
 
-#: src/hotkeys.cpp:201
+#: src/hotkeys.cpp:202
 msgid "Flip Clipboard Horizontally"
 msgstr "Lật ngang bảng chọn"
 
-#: src/hotkeys.cpp:202
+#: src/hotkeys.cpp:203
 msgid "Flip Clipboard Vertically"
 msgstr "Lật dọc bảng chọn"
 
-#: src/hotkeys.cpp:203
+#: src/hotkeys.cpp:204
 msgid "Rotate Selection"
 msgstr "Quay vùng chọn"
 
-#: src/hotkeys.cpp:204
+#: src/hotkeys.cpp:205
 msgid "Flip Selection"
 msgstr "Lật vùng chọn"
 
-#: src/hotkeys.cpp:205
+#: src/hotkeys.cpp:206
 msgid "Fill Selection"
 msgstr "Tô vùng chọn"
 
-#: src/hotkeys.cpp:206
+#: src/hotkeys.cpp:207
 msgid "Generate Tiles In Selection"
 msgstr "Tạo ô trong vùng chọn"
 
-#: src/hotkeys.cpp:207
+#: src/hotkeys.cpp:208
 msgid "Randomize Tiles In Selection"
 msgstr "Ngẫu nhiên hóa ô trong vùng chọn"
 
-#: src/hotkeys.cpp:209
+#: src/hotkeys.cpp:210
 msgid "Rotate Map"
 msgstr "Quay bản đồ"
 
-#: src/hotkeys.cpp:210
+#: src/hotkeys.cpp:211
 msgid "Generate Map"
 msgstr "Tạo bản đồ"
 
-#: src/hotkeys.cpp:211
+#: src/hotkeys.cpp:212
 msgid "Apply a Mask"
 msgstr "Áp dụng mặt nạ"
 
-#: src/hotkeys.cpp:212
+#: src/hotkeys.cpp:213
 msgid "Create Mask"
 msgstr "Tạo mặt nạ"
 
-#: src/hotkeys.cpp:213
+#: src/hotkeys.cpp:214
 msgid "Refresh Display"
 msgstr "Tải lại màn hình"
 
-#: src/hotkeys.cpp:214
+#: src/hotkeys.cpp:215
 msgid "Update Terrain Transitions"
 msgstr "Cập nhật chuyển tiếp địa hình"
 
-#: src/hotkeys.cpp:216
+#: src/hotkeys.cpp:217
 #, fuzzy
 #| msgid "Update Terrain Transitions"
 msgid "Toggle Terrain Transition Update"
 msgstr "Cập nhật chuyển tiếp địa hình"
 
-#: src/hotkeys.cpp:217
+#: src/hotkeys.cpp:218
 msgid "Auto-update Terrain Transitions"
 msgstr "Tự động cập nhật chuyển tiếp địa hình"
 
-#: src/hotkeys.cpp:219
+#: src/hotkeys.cpp:220
 msgid "Auto-update Terrain Transitions: No"
 msgstr "Tự động cập nhật chuyển tiếp địa hình: Không"
 
-#: src/hotkeys.cpp:220
+#: src/hotkeys.cpp:221
 msgid "Auto-update Terrain Transitions: Partial"
 msgstr "Tự động cập nhật chuyển tiếp địa hình: Một phần"
 
-#: src/hotkeys.cpp:222
+#: src/hotkeys.cpp:223
 msgid "Refresh Image Cache"
 msgstr "Tải lại bộ nhớ đệm ảnh"
 
-#: src/hotkeys.cpp:223
+#: src/hotkeys.cpp:224
 msgid "Draw Hex Coordinates"
 msgstr "Vẽ tọa độ ô lục giác"
 
-#: src/hotkeys.cpp:224
+#: src/hotkeys.cpp:225
 msgid "Draw Terrain Codes"
 msgstr "Vẽ mã địa hình"
 
-#: src/hotkeys.cpp:226
+#: src/hotkeys.cpp:227
 msgid "Define (Time) Area"
 msgstr ""
 
-#: src/hotkeys.cpp:228
+#: src/hotkeys.cpp:229
 msgid "Delay Shroud Updates"
 msgstr "Trễ cập nhật màn che"
 
-#: src/hotkeys.cpp:229
+#: src/hotkeys.cpp:230
 msgid "Update Shroud Now"
 msgstr "Cập nhật màn che ngay"
 
-#: src/hotkeys.cpp:230
+#: src/hotkeys.cpp:231
 msgid "Continue Move"
 msgstr "Tiếp tục di chuyển"
 
-#: src/hotkeys.cpp:231
+#: src/hotkeys.cpp:232
 msgid "Find Label or Unit"
 msgstr "Tìm nhãn hoặc đơn vị"
 
-#: src/hotkeys.cpp:232
+#: src/hotkeys.cpp:233
 msgid "Speak to Ally"
 msgstr "Nói với đồng minh"
 
-#: src/hotkeys.cpp:233
+#: src/hotkeys.cpp:234
 msgid "Speak to All"
 msgstr "Nói với tất cả"
 
-#: src/hotkeys.cpp:235
+#: src/hotkeys.cpp:236
 msgid "View Chat Log"
 msgstr "Xem nhật ký tán gẫu"
 
-#: src/hotkeys.cpp:236
+#: src/hotkeys.cpp:237
 msgid "Change Language"
 msgstr "Thay đổi ngôn ngữ"
 
-#: src/hotkeys.cpp:237
+#: src/hotkeys.cpp:238
 msgid "Enter User Command"
 msgstr "Nhập lệnh người dùng"
 
-#: src/hotkeys.cpp:238
+#: src/hotkeys.cpp:239
 msgid "Custom Command"
 msgstr "Lệnh tùy chỉnh"
 
-#: src/hotkeys.cpp:239
+#: src/hotkeys.cpp:240
 msgid "Run Formula"
 msgstr "Chạy công thức"
 
-#: src/hotkeys.cpp:240
+#: src/hotkeys.cpp:241
 msgid "Clear Messages"
 msgstr "Xóa tin nhắn"
 
-#: src/hotkeys.cpp:241
+#: src/hotkeys.cpp:242
 msgid "Refresh WML"
 msgstr "Tải lại WML"
 
-#: src/hotkeys.cpp:242
+#: src/hotkeys.cpp:243
 msgid "Next Tip of the Day"
 msgstr "Lời khuyên kế tiếp"
 
-#: src/hotkeys.cpp:243
+#: src/hotkeys.cpp:244
 msgid "Previous Tip of the Day"
 msgstr "Lời khuyên trước"
 
-#: src/hotkeys.cpp:244
+#: src/hotkeys.cpp:245
 msgid "Start Tutorial"
 msgstr "Bắt đầu phần hướng dẫn"
 
-#: src/hotkeys.cpp:245
+#: src/hotkeys.cpp:246
 msgid "Start Campaign"
 msgstr "Bắt đầu chiến dịch"
 
-#: src/hotkeys.cpp:246
+#: src/hotkeys.cpp:247
 msgid "Start Multiplayer Game"
 msgstr "Bắt đầu trò chơi nhiều người chơi"
 
-#: src/hotkeys.cpp:247
+#: src/hotkeys.cpp:248
 msgid "Manage Add-ons"
 msgstr "Quản lý phần bổ sung"
 
-#: src/hotkeys.cpp:248
+#: src/hotkeys.cpp:249
 msgid "Start Editor"
 msgstr "Khởi chạy trình chỉnh sửa bản đồ"
 
-#: src/hotkeys.cpp:249
+#: src/hotkeys.cpp:250
 msgid "Show Credits"
 msgstr "Hiện danh sách đóng góp"
 
-#: src/hotkeys.cpp:250
+#: src/hotkeys.cpp:251
 msgid "Show Helptip"
 msgstr "Hiện phần trợ giúp"
 
-#: src/hotkeys.cpp:253
+#: src/hotkeys.cpp:254
 msgid "Unrecognized Command"
 msgstr ""
 
-#: src/hotkeys.cpp:386 src/hotkeys.cpp:389
+#: src/hotkeys.cpp:387 src/hotkeys.cpp:390
 msgid "Button"
 msgstr "Nút"
 
-#: src/hotkeys.cpp:386
+#: src/hotkeys.cpp:387
 msgid "Mouse"
 msgstr "Chuột"
 
-#: src/hotkeys.cpp:389 src/hotkeys.cpp:425
+#: src/hotkeys.cpp:390 src/hotkeys.cpp:426
 msgid "Joystick"
 msgstr "Cần điều khiển"
 
-#: src/hotkeys.cpp:395
+#: src/hotkeys.cpp:396
 msgid "Centered"
 msgstr "Căn trung tâm"
 
-#: src/hotkeys.cpp:398
+#: src/hotkeys.cpp:399
 msgid "Up"
 msgstr "Trên"
 
-#: src/hotkeys.cpp:401
+#: src/hotkeys.cpp:402
 msgid "Right"
 msgstr "Phải"
 
-#: src/hotkeys.cpp:404
+#: src/hotkeys.cpp:405
 msgid "Down"
 msgstr "Dưới"
 
-#: src/hotkeys.cpp:407
+#: src/hotkeys.cpp:408
 msgid "Left"
 msgstr "Trái"
 
-#: src/hotkeys.cpp:410
+#: src/hotkeys.cpp:411
 msgid "RightUp"
 msgstr "Phải trên"
 
-#: src/hotkeys.cpp:413
+#: src/hotkeys.cpp:414
 msgid "RightDown"
 msgstr "Phải dưới"
 
-#: src/hotkeys.cpp:416
+#: src/hotkeys.cpp:417
 msgid "LeftUp"
 msgstr "Trái trên"
 
-#: src/hotkeys.cpp:419
+#: src/hotkeys.cpp:420
 msgid "LeftDown"
 msgstr "Trái dưới"
 
-#: src/hotkeys.cpp:422
+#: src/hotkeys.cpp:423
 msgid "Unknown"
 msgstr "Không xác định"
 
-#: src/hotkeys.cpp:425
+#: src/hotkeys.cpp:426
 msgid "Hat"
 msgstr "Mũ"
 
-#: src/hotkeys.cpp:884 src/hotkeys.cpp:1234
+#: src/hotkeys.cpp:885 src/hotkeys.cpp:1235
 msgid "Do you really want to quit?"
 msgstr "Bạn có thực sự muốn thoát không?"
 
-#: src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:1185
 msgid "Map-Screenshot"
 msgstr "Chụp màn hình bản đồ"
 
-#: src/hotkeys.cpp:1191 src/hotkeys.cpp:1193
+#: src/hotkeys.cpp:1192 src/hotkeys.cpp:1194
 msgid "Screenshot done"
 msgstr "Đã chụp màn hình"
 
@@ -4422,15 +4429,15 @@ msgstr ""
 "thiết lập thành 16 bit mỗi điểm ảnh để chạy trò chơi ở chế độ cửa sổ. Màn "
 "hình của bạn phải hỗ trợ 1024x768x16 để chạy trò chơi toàn màn hình."
 
-#: src/preferences_display.cpp:326
+#: src/preferences_display.cpp:322
 msgid "There are no alternative video modes available"
 msgstr "Không có chế độ video thay thế"
 
-#: src/preferences_display.cpp:357
+#: src/preferences_display.cpp:353
 msgid " (widescreen)"
 msgstr " (màn hình rộng)"
 
-#: src/preferences_display.cpp:361
+#: src/preferences_display.cpp:357
 msgid "Choose Resolution"
 msgstr "Chọn độ phân giải"
 
@@ -4485,6 +4492,15 @@ msgid ""
 msgstr ""
 "Khóa '$deprecated_key' đã được đổi tên thành '$key'. Hỗ trợ cho khóa "
 "'$deprecated_key' sẽ bị gỡ bỏ trong phiên bản $removal_version."
+
+#~ msgid "Allow multiple maps to be open simultaneously"
+#~ msgstr "Cho phép mở đồng thời nhiều bản đồ"
+
+#~ msgid "Add this username to your friends list"
+#~ msgstr "Thêm tên người dùng này vào danh sách bạn bè của bạn"
+
+#~ msgid "Add this username to your ignores list"
+#~ msgstr "Thêm tên người dùng này vào danh sách từ chối của bạn"
 
 #~ msgid "Auto-update Terrain Transitions: Yes"
 #~ msgstr "Tự động cập nhật chuyển tiếp địa hình: Có"

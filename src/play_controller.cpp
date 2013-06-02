@@ -1134,7 +1134,7 @@ void play_controller::expand_autosaves(std::vector<std::string>& items)
 				std::string name = gamestate_.classification().label + "-" + _("Auto-Save") + lexical_cast<std::string>(turn);
 				if (savegame::save_game_exists(name, preferences::compress_saves())) {
 					if(preferences::compress_saves()) {
-						newsaves.push_back(name + ".gz");
+						newsaves.push_back(name + (preferences::bzip2_savegame_compression() ? ".bz2" : ".gz"));
 					} else {
 						newsaves.push_back(name);
 					}
@@ -1145,7 +1145,7 @@ void play_controller::expand_autosaves(std::vector<std::string>& items)
 			const std::string& start_name = gamestate_.classification().label;
 			if(savegame::save_game_exists(start_name, preferences::compress_saves())) {
 				if(preferences::compress_saves()) {
-					newsaves.push_back(start_name + ".gz");
+					newsaves.push_back(start_name + (preferences::bzip2_savegame_compression() ? ".bz2" : ".gz"));
 				} else {
 					newsaves.push_back(start_name);
 				}
@@ -1208,7 +1208,7 @@ void play_controller::expand_wml_commands(std::vector<std::string>& items)
 	}
 }
 
-void play_controller::show_menu(const std::vector<std::string>& items_arg, int xloc, int yloc, bool context_menu)
+void play_controller::show_menu(const std::vector<std::string>& items_arg, int xloc, int yloc, bool context_menu, display& disp)
 {
 	std::vector<std::string> items = items_arg;
 	hotkey::HOTKEY_COMMAND command;
@@ -1244,7 +1244,7 @@ void play_controller::show_menu(const std::vector<std::string>& items_arg, int x
 	if(items.empty())
 		return;
 
-	command_executor::show_menu(items, xloc, yloc, context_menu, *gui_);
+	command_executor::show_menu(items, xloc, yloc, context_menu, disp);
 }
 
 bool play_controller::in_context_menu(hotkey::HOTKEY_COMMAND command) const

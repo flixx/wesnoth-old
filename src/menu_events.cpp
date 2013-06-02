@@ -146,131 +146,7 @@ void menu_handler::show_statistics(int side_num)
 
 void menu_handler::unit_list()
 {
-	const std::string heading = std::string(1,HEADING_PREFIX) +
-								_("Type")          + COLUMN_SEPARATOR + // 0
-								_("Name")          + COLUMN_SEPARATOR + // 1
-								_("Moves")         + COLUMN_SEPARATOR + // 2
-								_("Status")        + COLUMN_SEPARATOR + // 3
-								_("HP")            + COLUMN_SEPARATOR + // 4
-								_("Level^Lvl.")    + COLUMN_SEPARATOR + // 5
-								_("XP")            + COLUMN_SEPARATOR + // 6
-								_("unit list^Traits");                  // 7
-
-	gui::menu::basic_sorter sorter;
-	sorter.set_alpha_sort(0).set_alpha_sort(1).set_numeric_sort(2);
-	sorter.set_alpha_sort(3).set_numeric_sort(4).set_level_sort(5, 6);
-	sorter.set_xp_sort(6).set_alpha_sort(7);
-
-	std::vector<std::string> items;
-	items.push_back(heading);
-
-	std::vector<map_location> locations_list;
-	std::vector<unit> units_list;
-
-	int selected = 0;
-
-	for(unit_map::const_iterator i = units_.begin(); i != units_.end(); ++i) {
-		if (i->side() != gui_->viewing_side())
-			continue;
-
-		std::stringstream row;
-		// If a unit is already selected on the map, we do the same in the unit list dialog
-		if (gui_->selected_hex() == i->get_location()) {
-			 row << DEFAULT_ITEM;
-			 selected = units_list.size();
-		}
-		// If unit is leader, show name in special color, e.g. gold/silver
-		/** @todo TODO: hero just has overlay "misc/hero-icon.png" - needs an ability to query */
-
-		if (i->can_recruit() ) {
-			row << "<205,173,0>";   // gold3
-		}
-		row << i->type_name() << COLUMN_SEPARATOR;
-		if (i->can_recruit() ) {
-			row << "<205,173,0>";   // gold3
-		}
-		row << i->name()   << COLUMN_SEPARATOR;
-
-		// display move left (0=red, moved=yellow, not moved=green)
-		if (i->movement_left() == 0) {
-			row << font::RED_TEXT;
-		} else if (i->movement_left() < i->total_movement() ) {
-			row << "<255,255,0>";
-		} else {
-			row << font::GREEN_TEXT;
-		}
-		row << i->movement_left() << '/' << i->total_movement() << COLUMN_SEPARATOR;
-
-		// show icons if unit is slowed, poisoned, petrified, invisible:
-		if(i->get_state(unit::STATE_PETRIFIED))
-			row << IMAGE_PREFIX << "misc/petrified.png"    << IMG_TEXT_SEPARATOR;
-		if(i->get_state(unit::STATE_POISONED))
-			row << IMAGE_PREFIX << "misc/poisoned.png" << IMG_TEXT_SEPARATOR;
-		if(i->get_state(unit::STATE_SLOWED))
-			row << IMAGE_PREFIX << "misc/slowed.png"   << IMG_TEXT_SEPARATOR;
-		if(i->invisible(i->get_location(),false))
-			row << IMAGE_PREFIX << "misc/invisible.png";
-		row << COLUMN_SEPARATOR;
-
-		// Display HP
-		// see also unit_preview_pane in dialogs.cpp
-		row << font::color2markup(i->hp_color());
-		row << i->hitpoints()  << '/' << i->max_hitpoints() << COLUMN_SEPARATOR;
-
-		// Show units of level (0=gray, 1 normal, 2 bold, 2+ bold&wbright)
-		int level = i->level();
-		if(level < 1) {
-			row << "<150,150,150>";
-		} else if(level == 1) {
-			row << font::NORMAL_TEXT;
-		} else if(level == 2) {
-			row << font::BOLD_TEXT;
-		} else if(level > 2 ) {
-			row << font::BOLD_TEXT << "<255,255,255>";
-		}
-		row << level << COLUMN_SEPARATOR;
-
-		// Display XP
-		row << font::color2markup(i->xp_color());
-		row << i->experience() << "/";
-		if (i->can_advance()) {
-			row << i->max_experience();
-		} else {
-			row << "-";
-		}
-		row << COLUMN_SEPARATOR;
-
-		// TODO: show 'loyal' in green / xxx in red  //  how to handle translations ??
-		row << utils::join(i->trait_names(), ", ");
-		items.push_back(row.str());
-
-		locations_list.push_back(i->get_location());
-		units_list.push_back(*i);
-	}
-
-	{
-		dialogs::units_list_preview_pane unit_preview(units_list);
-		unit_preview.set_selection(selected);
-
-		gui::dialog umenu(*gui_, _("Unit List"), "", gui::NULL_DIALOG);
-		umenu.set_menu(items, &sorter);
-		umenu.add_pane(&unit_preview);
-		//sort by type name
-		umenu.get_menu().sort_by(0);
-
-		umenu.add_button(new gui::standard_dialog_button(gui_->video(), _("Scroll To"), 0, false),
-						 gui::dialog::BUTTON_STANDARD);
-		umenu.add_button(new gui::standard_dialog_button(gui_->video(), _("Close"), 1, true),
-						 gui::dialog::BUTTON_STANDARD);
-		umenu.set_basic_behavior(gui::OK_CANCEL);
-		selected = umenu.show();
-	} // this will kill the dialog before scrolling
-
-	if(selected >= 0 && selected < int(locations_list.size())) {
-		const map_location& loc = locations_list[selected];
-		gui_->scroll_to_tile(loc,game_display::WARP);
-		gui_->select_hex(loc);
-	}
+	dialogs::show_unit_list(*gui_);
 }
 
 namespace {
@@ -2411,18 +2287,18 @@ void chat_command_handler::do_log()
 void chat_command_handler::do_ignore()
 {
 	if (get_arg(1).empty()) {
-		const std::set<std::string>& tmp = preferences::get_ignores();
-		print(_("ignores list"), tmp.empty() ? _("(empty)") : utils::join(tmp));
+		const std::map<std::string, std::string>& tmp = preferences::get_acquaintances_nice("ignore");
+		print(_("ignores list"), tmp.empty() ? _("(empty)") : utils::join_map(tmp, ")\n", " (") + ")");
 	} else {
-		for(int i = 1; !get_arg(i).empty(); i++){
-			utils::string_map symbols;
-			symbols["nick"] = get_arg(i);
-			if (preferences::add_ignore(get_arg(i))) {
-				print(_("ignores list"),  VGETTEXT("Added to ignore list: $nick", symbols));
-				chat_handler_.user_relation_changed(get_arg(i));
-			} else {
-				command_failed(VGETTEXT("Invalid username: $nick", symbols));
-			}
+		std::string reason = get_data(2);
+		utils::string_map symbols;
+		symbols["nick"] = get_arg(1);
+
+		if (preferences::add_ignore(get_arg(1), reason)) {
+			print(_("ignores list"),  VGETTEXT("Added to ignore list: $nick", symbols));
+			chat_handler_.user_relation_changed(get_arg(1));
+		} else {
+			command_failed(VGETTEXT("Invalid username: $nick", symbols));
 		}
 	}
 }
@@ -2430,18 +2306,18 @@ void chat_command_handler::do_ignore()
 void chat_command_handler::do_friend()
 {
 	if (get_arg(1).empty()) {
-		const std::set<std::string>& tmp = preferences::get_friends();
-		print(_("friends list"), tmp.empty() ? _("(empty)") : utils::join(tmp));
+		const std::map<std::string, std::string>& tmp = preferences::get_acquaintances_nice("friend");
+		print(_("friends list"), tmp.empty() ? _("(empty)") : utils::join_map(tmp, ")\n", " (") + ")");
 	} else {
-		for(int i = 1;!get_arg(i).empty();i++){
-			utils::string_map symbols;
-			symbols["nick"] = get_arg(i);
-			if (preferences::add_friend(get_arg(i))) {
-				chat_handler_.user_relation_changed(get_arg(i));
-				print(_("friends list"),  VGETTEXT("Added to friends list: $nick", symbols));
-			} else {
-				command_failed(VGETTEXT("Invalid username: $nick", symbols));
-			}
+		std::string notes = get_data(2);
+		utils::string_map symbols;
+		symbols["nick"] = get_arg(1);
+
+		if (preferences::add_friend(get_arg(1), notes)) {
+			print(_("friends list"),  VGETTEXT("Added to friends list: $nick", symbols));
+			chat_handler_.user_relation_changed(get_arg(1));
+		} else {
+			command_failed(VGETTEXT("Invalid username: $nick", symbols));
 		}
 	}
 }
@@ -2449,8 +2325,7 @@ void chat_command_handler::do_friend()
 void chat_command_handler::do_remove()
 {
 	for(int i = 1;!get_arg(i).empty();i++){
-		preferences::remove_friend(get_arg(i));
-		preferences::remove_ignore(get_arg(i));
+		preferences::remove_acquaintance(get_arg(i));
 		chat_handler_.user_relation_changed(get_arg(i));
 		utils::string_map symbols;
 		symbols["nick"] = get_arg(i);
@@ -2460,15 +2335,15 @@ void chat_command_handler::do_remove()
 
 void chat_command_handler::do_display()
 {
-	const std::set<std::string> & friends = preferences::get_friends();
-	const std::set<std::string> & ignores = preferences::get_ignores();
+	const std::map<std::string, std::string>& friends = preferences::get_acquaintances_nice("friend");
+	const std::map<std::string, std::string>& ignores = preferences::get_acquaintances_nice("ignore");
 
 	if (!friends.empty()) {
-		print(_("friends list"), utils::join(friends));
+		print(_("friends list"), utils::join_map(friends, ")\n", " (") + ")");
 	}
 
 	if (!ignores.empty()) {
-		print(_("ignores list"), utils::join(ignores));
+		print(_("ignores list"), utils::join_map(ignores, ")\n", " (") + ")");
 	}
 
 	if (friends.empty() && ignores.empty()) {
@@ -3298,4 +3173,3 @@ void menu_handler::change_side_controller(const std::string& side, const std::st
 	network::send_data(cfg, 0);
 }
 } // end namespace events
-

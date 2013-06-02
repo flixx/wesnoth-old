@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-12 19:12+0200\n"
+"POT-Creation-Date: 2013-05-22 22:04-0400\n"
 "PO-Revision-Date: 2012-04-04 19:46+0100\n"
 "Last-Translator: Zbigniew Banach <z.banach@wsisiz.edu.pl>\n"
 "Language-Team:  <z.banach@wsisiz.edu.pl>\n"
@@ -1309,7 +1309,7 @@ msgstr "Usuń dodatki"
 #. [button]: id=help
 #. [button]: id=show_help
 #: data/gui/default/window/addon_connect.cfg:188
-#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:234
+#: data/gui/default/window/title_screen.cfg:179 src/hotkeys.cpp:235
 msgid "Help"
 msgstr "Pomoc"
 
@@ -1335,7 +1335,7 @@ msgstr "Połącz"
 #: data/gui/default/window/editor_new_map.cfg:125
 #: data/gui/default/window/editor_resize_map.cfg:284
 #: data/gui/default/window/editor_set_starting_position.cfg:175
-#: data/gui/default/window/editor_settings.cfg:262
+#: data/gui/default/window/editor_settings.cfg:241
 #: data/gui/default/window/folder_create.cfg:134
 #: data/gui/default/window/game_load.cfg:477
 #: data/gui/default/window/game_save.cfg:135
@@ -1537,7 +1537,7 @@ msgstr "Zagraj w kampanię"
 #: data/gui/default/window/edit_text.cfg:116
 #: data/gui/default/window/editor_edit_label.cfg:177
 #: data/gui/default/window/editor_set_starting_position.cfg:162
-#: data/gui/default/window/editor_settings.cfg:252
+#: data/gui/default/window/editor_settings.cfg:231
 #: data/gui/default/window/folder_create.cfg:120
 #: data/gui/default/window/game_load.cfg:463
 #: data/gui/default/window/game_load.cfg:464
@@ -1735,7 +1735,7 @@ msgstr "Stwórz grę"
 
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [label]
-#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:208
+#: data/gui/default/window/editor_resize_map.cfg:35 src/hotkeys.cpp:209
 msgid "Resize Map"
 msgstr "Zmień rozmiar mapy"
 
@@ -1824,14 +1824,9 @@ msgstr "Zielony:"
 msgid "Blue:"
 msgstr "Niebieski:"
 
-#. [toggle_button]: id=use_mdi
-#: data/gui/default/window/editor_settings.cfg:231
-msgid "Allow multiple maps to be open simultaneously"
-msgstr "Zezwalaj na jednoczesne otwarcie wielu map"
-
 #. #-#-#-#-#  wesnoth-lib.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [button]: id=apply
-#: data/gui/default/window/editor_settings.cfg:272
+#: data/gui/default/window/editor_settings.cfg:251
 #: src/game_preferences_display.cpp:211
 msgid "Apply"
 msgstr "Zastosuj"
@@ -1906,8 +1901,8 @@ msgstr "Ślad wykonania"
 #. [grid]
 #: data/gui/default/window/formula_debugger.cfg:234
 #: data/gui/default/window/lobby_main.cfg:660
-#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:883
-#: src/hotkeys.cpp:1233
+#: data/gui/default/window/title_screen.cfg:265 src/hotkeys.cpp:884
+#: src/hotkeys.cpp:1234
 msgid "Quit"
 msgstr "Wyjdź"
 
@@ -2745,19 +2740,19 @@ msgstr "Kasowanie pliku nie powiodło się."
 msgid "Creation of the directory failed."
 msgstr "Tworzenie katalogu nie powiodło się."
 
-#: src/game_preferences.cpp:323
+#: src/game_preferences.cpp:349
 msgid "No server has been defined."
 msgstr "Nie zdefiniowano serwera."
 
-#: src/game_preferences.cpp:403
+#: src/game_preferences.cpp:429
 msgid "player"
 msgstr "gracz"
 
-#: src/game_preferences.cpp:895
+#: src/game_preferences.cpp:921
 msgid "%H:%M"
 msgstr "%H:%M"
 
-#: src/game_preferences.cpp:898
+#: src/game_preferences.cpp:924
 msgid "%I:%M %p"
 msgstr "%I:%M %p"
 
@@ -3099,12 +3094,16 @@ msgid "Back to the multiplayer options"
 msgstr "Powrót do opcji gry wieloosobowej"
 
 #: src/game_preferences_display.cpp:392
-msgid "Add this username to your friends list"
-msgstr "Dodaj tę nazwę użytkownika do listy przyjaciół"
+msgid ""
+"Add this username to your friends list (add optional notes, e.g., "
+"'player_name notes on friend')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:393
-msgid "Add this username to your ignores list"
-msgstr "Dodaj tę nazwę użytkownika do listy ignorowanych"
+msgid ""
+"Add this username to your ignores list (add optional reason, e.g., "
+"'player_name reason ignored')"
+msgstr ""
 
 #: src/game_preferences_display.cpp:394
 msgid "Remove this username from your list"
@@ -3177,65 +3176,65 @@ msgstr "bez ograniczeń"
 msgid "Chat lines: "
 msgstr "Linie wiadomości:"
 
-#: src/game_preferences_display.cpp:960 src/game_preferences_display.cpp:968
+#: src/game_preferences_display.cpp:969 src/game_preferences_display.cpp:986
 msgid "Invalid username"
 msgstr "Nieprawidłowa nazwa użytkownika"
 
-#: src/game_preferences_display.cpp:1071
+#: src/game_preferences_display.cpp:1088
 msgid "yes"
 msgstr "tak"
 
-#: src/game_preferences_display.cpp:1073
+#: src/game_preferences_display.cpp:1090
 msgid "no"
 msgstr "nie"
 
-#: src/game_preferences_display.cpp:1107
+#: src/game_preferences_display.cpp:1122
 msgid "friend"
 msgstr "przyjaciel"
 
-#: src/game_preferences_display.cpp:1113
+#: src/game_preferences_display.cpp:1126
 msgid "ignored"
 msgstr "ignorowany"
 
-#: src/game_preferences_display.cpp:1117
+#: src/game_preferences_display.cpp:1140
 msgid "(empty list)"
 msgstr "(pusta lista)"
 
-#: src/game_preferences_display.cpp:1241
+#: src/game_preferences_display.cpp:1264
 #: src/hotkey_preferences_display.cpp:214
 msgid "Prefs section^General"
 msgstr "Ogólne"
 
-#: src/game_preferences_display.cpp:1242
+#: src/game_preferences_display.cpp:1265
 msgid "Prefs section^Display"
 msgstr "Ekran"
 
-#: src/game_preferences_display.cpp:1243
+#: src/game_preferences_display.cpp:1266
 msgid "Prefs section^Sound"
 msgstr "Dźwięk"
 
-#: src/game_preferences_display.cpp:1244
+#: src/game_preferences_display.cpp:1267
 msgid "Prefs section^Multiplayer"
 msgstr "Gra wieloosobowa"
 
-#: src/game_preferences_display.cpp:1245
+#: src/game_preferences_display.cpp:1268
 msgid "Advanced section^Advanced"
 msgstr "Zaawansowane"
 
-#: src/game_preferences_display.cpp:1279
+#: src/game_preferences_display.cpp:1302
 msgid "Choose Theme"
 msgstr "Wybierz motyw"
 
-#: src/game_preferences_display.cpp:1294
+#: src/game_preferences_display.cpp:1317
 msgid "New theme will take effect on next new or loaded game."
 msgstr ""
 "Nowy motyw zostanie zastosowany po rozpoczęciu nowej gry lub załadowaniu gry."
 
-#: src/game_preferences_display.cpp:1298
+#: src/game_preferences_display.cpp:1321
 msgid "No known themes. Try changing from within an existing game."
 msgstr "Brak znanych motywów. Spróbuj zmienić motyw w trakcie gry."
 
-#: src/game_preferences_display.cpp:1341
+#: src/game_preferences_display.cpp:1364
 msgid "Find $filename server binary to host networked games"
 msgstr ""
 "Znajdź plik binarny $filename serwera, na którym będą udostępniane gry "
@@ -3422,7 +3421,7 @@ msgstr "Odinstaluj dodatki"
 
 #: src/gui/dialogs/addon_list.cpp:256
 #: src/gui/dialogs/network_transmission.cpp:54
-#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1190
+#: src/gui/dialogs/network_transmission.cpp:56 src/hotkeys.cpp:1191
 msgid "unit_byte^B"
 msgstr "B"
 
@@ -3734,7 +3733,7 @@ msgstr "Domyślne zbliżenie"
 msgid "Toggle Full Screen"
 msgstr "Przełącz pełny ekran"
 
-#: src/hotkeys.cpp:83 src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:83 src/hotkeys.cpp:1185
 msgid "Screenshot"
 msgstr "Zrzut ekranu"
 
@@ -3984,7 +3983,9 @@ msgid "Switch Side"
 msgstr "Zmień mapę"
 
 #: src/hotkeys.cpp:160
-msgid "Swap Foreground/Background Terrains"
+#, fuzzy
+#| msgid "Swap Foreground/Background Terrains"
+msgid "Swap Foreground/Background Palette Item"
 msgstr "Zamień teren na pierwszym i drugim planie"
 
 #: src/hotkeys.cpp:161
@@ -3999,454 +4000,460 @@ msgstr ""
 msgid "Scroll Palette Right"
 msgstr ""
 
-#: src/hotkeys.cpp:166
+#: src/hotkeys.cpp:165
+#, fuzzy
+#| msgid "Switch Map"
+msgid "Switch Time of Day"
+msgstr "Zmień mapę"
+
+#: src/hotkeys.cpp:167
 msgid "Next Tool"
 msgstr "Następne narzędzie"
 
-#: src/hotkeys.cpp:168
+#: src/hotkeys.cpp:169
 msgid "Paint Tool"
 msgstr "Pędzel"
 
-#: src/hotkeys.cpp:168 src/hotkeys.cpp:169
+#: src/hotkeys.cpp:169 src/hotkeys.cpp:170
 msgid ""
 "Use left/right mouse button to draw fore-/background terrain. Hold Shift to "
 "paint base layer only. Ctrl+click to sample terrain under cursor."
 msgstr ""
 
-#: src/hotkeys.cpp:169
+#: src/hotkeys.cpp:170
 msgid "Fill Tool"
 msgstr "Wiadro"
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 msgid ""
-"Left mouse button selects, right deselects. Hold Shift for magic-wand "
-"selection of tiles with same terrain."
+"Left mouse button selects or deselects, right brings up a context menu. Hold "
+"Shift for magic-wand selection of tiles with same terrain."
 msgstr ""
 
-#: src/hotkeys.cpp:170
+#: src/hotkeys.cpp:171
 msgid "Selection Tool"
 msgstr "Zaznaczanie"
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 msgid ""
 "Left mouse button displays player selection, right clears. Number keys "
 "scroll to the starting position, alt+number sets respective starting "
 "position under cursor, delete clears."
 msgstr ""
 
-#: src/hotkeys.cpp:171
+#: src/hotkeys.cpp:172
 #, fuzzy
 #| msgid "Set Starting Positions Tool"
 msgid "Starting Positions Tool"
 msgstr "Narzędzie ustawiające pozycje początkowe"
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 #, fuzzy
 #| msgid "Fill Tool"
 msgid "Label Tool"
 msgstr "Wiadro"
 
-#: src/hotkeys.cpp:172
+#: src/hotkeys.cpp:173
 msgid "Left mouse button sets or drags a label, right clears."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 msgid ""
 "Left mouse button sets a new unit or moves a unit via drag and drop, right "
-"clears. Not implemented yet."
+"brings up a context menu. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:173
+#: src/hotkeys.cpp:174
 #, fuzzy
 #| msgid "Paint Tool"
 msgid "Unit Tool"
 msgstr "Pędzel"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 #, fuzzy
 #| msgid "Next Tool"
 msgid "Item Tool"
 msgstr "Następne narzędzie"
 
-#: src/hotkeys.cpp:174
+#: src/hotkeys.cpp:175
 msgid ""
 "Left mouse button sets a new item or moves it via drag and drop, right "
 "clears. Not implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid ""
 "Left mouse button sets or drags a sound source, right clears. Not "
 "implemented yet."
 msgstr ""
 
-#: src/hotkeys.cpp:175
+#: src/hotkeys.cpp:176
 msgid "Soundsource Tool"
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 msgid ""
 "Left mouse button sets the village ownership to the current side, right "
-"clears. Not implemented yet."
+"clears. Needs a defined side."
 msgstr ""
 
-#: src/hotkeys.cpp:176
+#: src/hotkeys.cpp:177
 #, fuzzy
 #| msgid "Village gold"
 msgid "Village Tool"
 msgstr "Złoto za wioskę"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 #, fuzzy
 #| msgid "Recruit"
 msgid "Canrecruit"
 msgstr "Rekrutuj"
 
-#: src/hotkeys.cpp:178
+#: src/hotkeys.cpp:179
 msgid "Toggle the recruit attribute of a unit."
 msgstr ""
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 #, fuzzy
 msgid "Can be renamed"
 msgstr "Wprowadź nazwę użytkownika"
 
-#: src/hotkeys.cpp:179
+#: src/hotkeys.cpp:180
 msgid "Toggle the unit being renameable."
 msgstr ""
 
-#: src/hotkeys.cpp:181
+#: src/hotkeys.cpp:182
 #, fuzzy
 #| msgid "Change Control"
 msgid "Change Unit ID"
 msgstr "Zmień kontrolę"
 
-#: src/hotkeys.cpp:182
+#: src/hotkeys.cpp:183
 msgid "Loyal"
 msgstr ""
 
-#: src/hotkeys.cpp:185
+#: src/hotkeys.cpp:186
 msgid "Next Brush"
 msgstr "Następny pędzel"
 
-#: src/hotkeys.cpp:186
+#: src/hotkeys.cpp:187
 msgid "Default Brush"
 msgstr "Domyślny pędzel"
 
-#: src/hotkeys.cpp:187
+#: src/hotkeys.cpp:188
 msgid "Single Tile"
 msgstr ""
 
-#: src/hotkeys.cpp:188
+#: src/hotkeys.cpp:189
 msgid "Radius One"
 msgstr ""
 
-#: src/hotkeys.cpp:189
+#: src/hotkeys.cpp:190
 msgid "Radius Two"
 msgstr ""
 
-#: src/hotkeys.cpp:190
+#: src/hotkeys.cpp:191
 msgid "Brush NW-SE"
 msgstr ""
 
-#: src/hotkeys.cpp:191
+#: src/hotkeys.cpp:192
 msgid "Brush SW-NE"
 msgstr ""
 
-#: src/hotkeys.cpp:192
+#: src/hotkeys.cpp:193
 msgid "Cut"
 msgstr "Wytnij"
 
-#: src/hotkeys.cpp:193
+#: src/hotkeys.cpp:194
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid ""
 "Left mouse button pastes from the clipboard, right brings up a context menu."
 msgstr ""
 
-#: src/hotkeys.cpp:194
+#: src/hotkeys.cpp:195
 msgid "Paste"
 msgstr "Wklej"
 
-#: src/hotkeys.cpp:195
+#: src/hotkeys.cpp:196
 msgid "Export Selected Coordinates to System Clipboard"
 msgstr "Eksportuj wybrane współrzędne do schowka systemowego"
 
-#: src/hotkeys.cpp:196
+#: src/hotkeys.cpp:197
 msgid "Select All"
 msgstr "Zaznacz wszystko"
 
-#: src/hotkeys.cpp:197
+#: src/hotkeys.cpp:198
 msgid "Select Inverse"
 msgstr "Zaznacz dopełnienie"
 
-#: src/hotkeys.cpp:198
+#: src/hotkeys.cpp:199
 msgid "Select None"
 msgstr "Usuń zaznaczenie"
 
-#: src/hotkeys.cpp:199
+#: src/hotkeys.cpp:200
 msgid "Rotate Clipboard Clockwise"
 msgstr "Obróć zawartość schowka w prawo"
 
-#: src/hotkeys.cpp:200
+#: src/hotkeys.cpp:201
 msgid "Rotate Clipboard Counter-Clockwise"
 msgstr "Obróć zawartość schowka w lewo"
 
-#: src/hotkeys.cpp:201
+#: src/hotkeys.cpp:202
 msgid "Flip Clipboard Horizontally"
 msgstr "Odwróć zawartość schowka w poziomie"
 
-#: src/hotkeys.cpp:202
+#: src/hotkeys.cpp:203
 msgid "Flip Clipboard Vertically"
 msgstr "Odwróć zawartość schowka w pionie"
 
-#: src/hotkeys.cpp:203
+#: src/hotkeys.cpp:204
 msgid "Rotate Selection"
 msgstr "Obróć zaznaczenie"
 
-#: src/hotkeys.cpp:204
+#: src/hotkeys.cpp:205
 msgid "Flip Selection"
 msgstr "Odwróć zaznaczenie"
 
-#: src/hotkeys.cpp:205
+#: src/hotkeys.cpp:206
 msgid "Fill Selection"
 msgstr "Wybór wypełnienia"
 
-#: src/hotkeys.cpp:206
+#: src/hotkeys.cpp:207
 msgid "Generate Tiles In Selection"
 msgstr "Wygeneruj zaznaczone pola "
 
-#: src/hotkeys.cpp:207
+#: src/hotkeys.cpp:208
 msgid "Randomize Tiles In Selection"
 msgstr "Wylosuj zaznaczone pola"
 
-#: src/hotkeys.cpp:209
+#: src/hotkeys.cpp:210
 msgid "Rotate Map"
 msgstr "Obróć mapę"
 
-#: src/hotkeys.cpp:210
+#: src/hotkeys.cpp:211
 msgid "Generate Map"
 msgstr "Wygeneruj mapę"
 
-#: src/hotkeys.cpp:211
+#: src/hotkeys.cpp:212
 msgid "Apply a Mask"
 msgstr "Zastosuj maskę"
 
-#: src/hotkeys.cpp:212
+#: src/hotkeys.cpp:213
 msgid "Create Mask"
 msgstr "Stwórz maskę"
 
-#: src/hotkeys.cpp:213
+#: src/hotkeys.cpp:214
 msgid "Refresh Display"
 msgstr "Odśwież ekran"
 
-#: src/hotkeys.cpp:214
+#: src/hotkeys.cpp:215
 msgid "Update Terrain Transitions"
 msgstr "Aktualizuj przejścia terenu"
 
-#: src/hotkeys.cpp:216
+#: src/hotkeys.cpp:217
 #, fuzzy
 #| msgid "Update Terrain Transitions"
 msgid "Toggle Terrain Transition Update"
 msgstr "Aktualizuj przejścia terenu"
 
-#: src/hotkeys.cpp:217
+#: src/hotkeys.cpp:218
 msgid "Auto-update Terrain Transitions"
-msgstr "Automatycznie aktualizuj przejścia terenu"
-
-#: src/hotkeys.cpp:219
-#, fuzzy
-#| msgid "Auto-update Terrain Transitions"
-msgid "Auto-update Terrain Transitions: No"
 msgstr "Automatycznie aktualizuj przejścia terenu"
 
 #: src/hotkeys.cpp:220
 #, fuzzy
 #| msgid "Auto-update Terrain Transitions"
+msgid "Auto-update Terrain Transitions: No"
+msgstr "Automatycznie aktualizuj przejścia terenu"
+
+#: src/hotkeys.cpp:221
+#, fuzzy
+#| msgid "Auto-update Terrain Transitions"
 msgid "Auto-update Terrain Transitions: Partial"
 msgstr "Automatycznie aktualizuj przejścia terenu"
 
-#: src/hotkeys.cpp:222
+#: src/hotkeys.cpp:223
 msgid "Refresh Image Cache"
 msgstr "Odśwież pamięć podręczną grafik"
 
-#: src/hotkeys.cpp:223
+#: src/hotkeys.cpp:224
 msgid "Draw Hex Coordinates"
 msgstr "Rysuj koordynaty heksów"
 
-#: src/hotkeys.cpp:224
+#: src/hotkeys.cpp:225
 msgid "Draw Terrain Codes"
 msgstr "Rysuj kody terenu"
 
-#: src/hotkeys.cpp:226
+#: src/hotkeys.cpp:227
 msgid "Define (Time) Area"
 msgstr ""
 
-#: src/hotkeys.cpp:228
+#: src/hotkeys.cpp:229
 msgid "Delay Shroud Updates"
 msgstr "Opóźniaj odsłanianie całunu"
 
-#: src/hotkeys.cpp:229
+#: src/hotkeys.cpp:230
 msgid "Update Shroud Now"
 msgstr "Odsłoń całun teraz"
 
-#: src/hotkeys.cpp:230
+#: src/hotkeys.cpp:231
 msgid "Continue Move"
 msgstr "Kontynuuj ruch"
 
-#: src/hotkeys.cpp:231
+#: src/hotkeys.cpp:232
 msgid "Find Label or Unit"
 msgstr "Znajdź etykietę lub jednostkę"
 
-#: src/hotkeys.cpp:232
+#: src/hotkeys.cpp:233
 msgid "Speak to Ally"
 msgstr "Mów do sojusznika"
 
-#: src/hotkeys.cpp:233
+#: src/hotkeys.cpp:234
 msgid "Speak to All"
 msgstr "Mów do wszystkich"
 
-#: src/hotkeys.cpp:235
+#: src/hotkeys.cpp:236
 msgid "View Chat Log"
 msgstr "Pokaż zapis rozmów"
 
-#: src/hotkeys.cpp:236
+#: src/hotkeys.cpp:237
 msgid "Change Language"
 msgstr "Zmień język"
 
-#: src/hotkeys.cpp:237
+#: src/hotkeys.cpp:238
 msgid "Enter User Command"
 msgstr "Wprowadź komendę"
 
-#: src/hotkeys.cpp:238
+#: src/hotkeys.cpp:239
 msgid "Custom Command"
 msgstr "Polecenie niestandardowe"
 
-#: src/hotkeys.cpp:239
+#: src/hotkeys.cpp:240
 msgid "Run Formula"
 msgstr "Uruchom formułę"
 
-#: src/hotkeys.cpp:240
+#: src/hotkeys.cpp:241
 msgid "Clear Messages"
 msgstr "Wyczyść wiadomości"
 
-#: src/hotkeys.cpp:241
+#: src/hotkeys.cpp:242
 msgid "Refresh WML"
 msgstr "Odśwież WML"
 
-#: src/hotkeys.cpp:242
+#: src/hotkeys.cpp:243
 msgid "Next Tip of the Day"
 msgstr "Następna porada dnia"
 
-#: src/hotkeys.cpp:243
+#: src/hotkeys.cpp:244
 msgid "Previous Tip of the Day"
 msgstr "Poprzednia porada dnia"
 
-#: src/hotkeys.cpp:244
+#: src/hotkeys.cpp:245
 msgid "Start Tutorial"
 msgstr "Rozpocznij samouczek"
 
-#: src/hotkeys.cpp:245
+#: src/hotkeys.cpp:246
 msgid "Start Campaign"
 msgstr "Rozpocznij kampanię"
 
-#: src/hotkeys.cpp:246
+#: src/hotkeys.cpp:247
 msgid "Start Multiplayer Game"
 msgstr "Rozpocznij grę wieloosobową"
 
-#: src/hotkeys.cpp:247
+#: src/hotkeys.cpp:248
 msgid "Manage Add-ons"
 msgstr "Zarządzaj dodatkami"
 
-#: src/hotkeys.cpp:248
+#: src/hotkeys.cpp:249
 msgid "Start Editor"
 msgstr "Uruchom edytor"
 
-#: src/hotkeys.cpp:249
+#: src/hotkeys.cpp:250
 msgid "Show Credits"
 msgstr "Pokaż zasługi"
 
-#: src/hotkeys.cpp:250
+#: src/hotkeys.cpp:251
 msgid "Show Helptip"
 msgstr "Pokaż podpowiedź pomocy"
 
-#: src/hotkeys.cpp:253
+#: src/hotkeys.cpp:254
 msgid "Unrecognized Command"
 msgstr ""
 
-#: src/hotkeys.cpp:386 src/hotkeys.cpp:389
+#: src/hotkeys.cpp:387 src/hotkeys.cpp:390
 msgid "Button"
 msgstr ""
 
-#: src/hotkeys.cpp:386
+#: src/hotkeys.cpp:387
 msgid "Mouse"
 msgstr ""
 
-#: src/hotkeys.cpp:389 src/hotkeys.cpp:425
+#: src/hotkeys.cpp:390 src/hotkeys.cpp:426
 msgid "Joystick"
 msgstr ""
 
-#: src/hotkeys.cpp:395
+#: src/hotkeys.cpp:396
 msgid "Centered"
 msgstr ""
 
-#: src/hotkeys.cpp:398
+#: src/hotkeys.cpp:399
 msgid "Up"
 msgstr ""
 
-#: src/hotkeys.cpp:401
+#: src/hotkeys.cpp:402
 #, fuzzy
 #| msgid "Height:"
 msgid "Right"
 msgstr "Wysokość:"
 
-#: src/hotkeys.cpp:404
+#: src/hotkeys.cpp:405
 msgid "Down"
 msgstr ""
 
-#: src/hotkeys.cpp:407
+#: src/hotkeys.cpp:408
 msgid "Left"
 msgstr ""
 
-#: src/hotkeys.cpp:410
+#: src/hotkeys.cpp:411
 msgid "RightUp"
 msgstr ""
 
-#: src/hotkeys.cpp:413
+#: src/hotkeys.cpp:414
 msgid "RightDown"
 msgstr ""
 
-#: src/hotkeys.cpp:416
+#: src/hotkeys.cpp:417
 msgid "LeftUp"
 msgstr ""
 
-#: src/hotkeys.cpp:419
+#: src/hotkeys.cpp:420
 msgid "LeftDown"
 msgstr ""
 
-#: src/hotkeys.cpp:422
+#: src/hotkeys.cpp:423
 #, fuzzy
 #| msgid "Unknown era"
 msgid "Unknown"
 msgstr "Nieznana era"
 
-#: src/hotkeys.cpp:425
+#: src/hotkeys.cpp:426
 #, fuzzy
 #| msgid "Hut"
 msgid "Hat"
 msgstr "Szałas"
 
-#: src/hotkeys.cpp:884 src/hotkeys.cpp:1234
+#: src/hotkeys.cpp:885 src/hotkeys.cpp:1235
 msgid "Do you really want to quit?"
 msgstr "Czy na pewno wyjść?"
 
-#: src/hotkeys.cpp:1184
+#: src/hotkeys.cpp:1185
 msgid "Map-Screenshot"
 msgstr "Zrzut obrazu mapy"
 
-#: src/hotkeys.cpp:1191 src/hotkeys.cpp:1193
+#: src/hotkeys.cpp:1192 src/hotkeys.cpp:1194
 msgid "Screenshot done"
 msgstr "Zrzut zapisany"
 
@@ -4533,15 +4540,15 @@ msgstr ""
 "bitowego. Do gry w trybie pełnoekranowym wymagana jest rozdzielczość co "
 "najmniej 1024x768x16."
 
-#: src/preferences_display.cpp:326
+#: src/preferences_display.cpp:322
 msgid "There are no alternative video modes available"
 msgstr "Inne tryby graficzne nie są dostępne"
 
-#: src/preferences_display.cpp:357
+#: src/preferences_display.cpp:353
 msgid " (widescreen)"
 msgstr " (panoramiczna)"
 
-#: src/preferences_display.cpp:361
+#: src/preferences_display.cpp:357
 msgid "Choose Resolution"
 msgstr "Wybierz rozdzielczość"
 
@@ -4596,6 +4603,15 @@ msgid ""
 msgstr ""
 "Nazwa klucza „$deprecated_key” została zmieniona na „$key”. Obsługa klucza "
 "„$deprecated_key” zostanie usunięta w wersji $removal_version."
+
+#~ msgid "Allow multiple maps to be open simultaneously"
+#~ msgstr "Zezwalaj na jednoczesne otwarcie wielu map"
+
+#~ msgid "Add this username to your friends list"
+#~ msgstr "Dodaj tę nazwę użytkownika do listy przyjaciół"
+
+#~ msgid "Add this username to your ignores list"
+#~ msgstr "Dodaj tę nazwę użytkownika do listy ignorowanych"
 
 #, fuzzy
 #~| msgid "Auto-update Terrain Transitions"

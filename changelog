@@ -1,12 +1,39 @@
-Version 1.11.3+dev:
+Version 1.11.4+dev:
  * AI:
-   * Reverted new Lua AI persistent storage mechanism for external CAs that would
-     crash Wesnoth under certain circumstances in 1.11.3.  This will be re-committed
-     in an upcoming release.
+   * Recruiting in Micro and Experimental AIs: allow more terrain codes for castles/keeps 
+   * Improved/Added: Command 'lua wesnoth.debug_ai([side]).ai' will now give access to the
+     ai-table of [side].
+ * Campaigns:
+   * Legend of Wesmere:
+     * Scenario 05: Elvish Horse Archers can now carry the treasure
+     * Scenario 09: the player's loyal units stay in the recall list, instead of
+       being stored and then unstored in scenario 14
+   * Under the Burning Suns:
+     * Scenario 8 (Out of the Frying Pan): Fix messenger AI (Lua errors and wrong goal)
+ * Language and i18n:
+   * Updated translations: Portuguese, Portuguese (Brazil)
+ * Lua API:
+   * location_set.of_pairs() now can take coordinates defined by x/y= keys as well
+ * User interface:
+   * Added notification support for Windows
+   * Made it so that the "Back to Turn X" and "Back to Start" menu items work
+     with .bz2 saves
+ * Miscellaneous and bug fixes
+   * Added a new playlist FULL_MUSIC_PLAYLIST, which contains all Wesnoth tracks
+     in alphabetical order
+   * Added -Wno-null-conversion to the CMake pedantic flags.
+ * WML engine:
+   * Added new aspect 'advancements' which with lua engine can handle a
+     function return type of the form f(x, y) -> String. 'advancements'
+     tells the AI to what unit a given unit should advance to.
+
+Version 1.11.4:
+ * AI:
+   * Reverted new Lua AI persistent storage mechanism for external CAs that
+     would crash Wesnoth under certain circumstances in 1.11.3. This will be
+     re-committed in an upcoming release.
    * Micro AIs
      * Healer Support MAI now respects RCA AI [avoid] aspect.
- * Language and i18n:
-   * Updated translations: 
 
 Version 1.11.3:
  * AI:

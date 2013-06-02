@@ -99,7 +99,7 @@ public:
 	 * Add more paths to highlight.  Print numbers where they overlap.
 	 * Used only by Show Enemy Moves.
 	 */
-  void highlight_another_reach(const pathfind::paths &paths_list);
+	void highlight_another_reach(const pathfind::paths &paths_list);
 
 	/** Reset highlighting of paths. */
 	void unhighlight_reach();
@@ -109,7 +109,7 @@ public:
 	 * unit. If NULL, no route is displayed. @a route does not have to remain
 	 * valid after being set.
 	 */
-  void set_route(const pathfind::marked_route *route);
+	void set_route(const pathfind::marked_route *route);
 
 	/** Function to float a label above a tile */
 	void float_label(const map_location& loc, const std::string& text,
@@ -222,21 +222,6 @@ public:
 			attack_indicator_src_.get_relative_dir(attack_indicator_dst_));
 	}
 
-	/**
-	 * Functions to add and remove overlays from locations.
-	 *
-	 * An overlay is an image that is displayed on top of the tile.
-	 * One tile may have multiple overlays.
-	 */
-	void add_overlay(const map_location& loc, const std::string& image,
-		const std::string& halo="", const std::string& team_name="",
-		bool visible_under_fog = true);
-
-	/** remove_overlay will remove all overlays on a tile. */
-	void remove_overlay(const map_location& loc);
-
-	/** remove_single_overlay will remove a single overlay from a tile */
-	void remove_single_overlay(const map_location& loc, const std::string& toDelete);
 
 	/**
 	 * Check the overlay_map for proper team-specific overlays to be
@@ -331,20 +316,20 @@ private:
 
 	map_location displayedUnitHex_;
 
-	struct overlay {
-		overlay(const std::string& img, const std::string& halo_img,
-		        int handle, const std::string& overlay_team_name, const bool fogged) : image(img), halo(halo_img),
-				team_name(overlay_team_name), halo_handle(handle) , visible_in_fog(fogged){}
-		std::string image;
-		std::string halo;
-		std::string team_name;
-		int halo_handle;
-		bool visible_in_fog;
-	};
+//	struct overlay {
+//		overlay(const std::string& img, const std::string& halo_img,
+//		        int handle, const std::string& overlay_team_name, const bool fogged) : image(img), halo(halo_img),
+//				team_name(overlay_team_name), halo_handle(handle) , visible_in_fog(fogged){}
+//		std::string image;
+//		std::string halo;
+//		std::string team_name;
+//		int halo_handle;
+//		bool visible_in_fog;
+//	};
 
-	typedef std::multimap<map_location,overlay> overlay_map;
+//	typedef std::multimap<map_location,overlay> overlay_map;
 
-	overlay_map overlays_;
+//	overlay_map overlays_;
 
 
 

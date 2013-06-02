@@ -16,10 +16,12 @@
 #define EDITOR_MAP_CONTEXT_HPP_INCLUDED
 
 #include "editor_map.hpp"
-#include "map_label.hpp"
-#include "unit_map.hpp"
-#include "tod_manager.hpp"
 #include "gamestatus.hpp"
+#include "map_label.hpp"
+#include "sound_music_track.hpp"
+#include "tod_manager.hpp"
+#include "unit_map.hpp"
+#include "overlay.hpp"
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -65,12 +67,12 @@ public:
 	bool select_area(int index);
 
 	/**
-	 * Map accesor
+	 * Map accessor
 	 */
 	editor_map& get_map() { return map_; };
 
 	/**
-	 * Map accesor - const version
+	 * Map accessor - const version
 	 */
 	const editor_map& get_map() const { return map_; }
 
@@ -109,6 +111,17 @@ public:
 
 	int get_active_area() {
 		return active_area_;
+	}
+
+	bool is_in_playlist(std::string track_id) {
+		return music_tracks_.find(track_id) != music_tracks_.end();
+	}
+
+	void add_to_playlist(const sound::music_track& track) {
+
+		if (music_tracks_.find(track.id()) == music_tracks_.end())
+				music_tracks_.insert(std::pair<std::string, sound::music_track>(track.id(), track));
+		else music_tracks_.erase(track.id());
 	}
 
 	/**
@@ -153,7 +166,7 @@ public:
 	void set_needs_terrain_rebuild(bool value=true) { needs_terrain_rebuild_ = value; }
 
 	/**
-	 * Getter fo the labels reset flag. Set when the labels need to be refreshed.
+	 * Getter for the labels reset flag. Set when the labels need to be refreshed.
 	 */
 	bool needs_labels_reset() const { return needs_labels_reset_; }
 
@@ -196,9 +209,9 @@ public:
 	void set_map(const editor_map& map);
 
 	/**
-	 * Performs an action (thus modyfying the map). An appropriate undo action is added to
+	 * Performs an action (thus modifying the map). An appropriate undo action is added to
 	 * the undo stack. The redo stack is cleared. Note that this may throw, use caution
-	 * when calling this with a dereferennced pointer that you own (i.e. use a smart pointer).
+	 * when calling this with a dereferenced pointer that you own (i.e. use a smart pointer).
 	 */
 	void perform_action(const editor_action& action);
 
@@ -236,14 +249,14 @@ public:
 	/** Un-does the last action, and puts it in the redo stack for a possible redo */
 	void undo();
 
-	/** Re-does a previousle undid action, and puts it back in the undo stack. */
+	/** Re-does a previously undid action, and puts it back in the undo stack. */
 	void redo();
 
 	/**
 	 * Un-does a single step from a undo action chain. The action is separated
-	 * from the chain and it's undo (the redo) is added as a standalone action
+	 * from the chain and it's undo (the redo) is added as a stand-alone action
 	 * to the redo stack.
-	 * Precodnition: the last undo action has to actually be an action chain.
+	 * Precondition: the last undo action has to actually be an action chain.
 	 */
 	void partial_undo();
 
@@ -356,6 +369,12 @@ private:
 	std::vector<team> teams_;
 	boost::scoped_ptr<tod_manager> tod_manager_;
 	game_state state_;
+
+	typedef std::map<std::string, sound::music_track> music_map;
+	music_map music_tracks_;
+
+	typedef std::map<map_location, std::vector<overlay> > overlay_map;
+	overlay_map overlays_;
 
 };
 

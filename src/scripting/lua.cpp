@@ -59,6 +59,9 @@
 #include "ai/lua/core.hpp"
 #include "version.hpp"
 #include "gui/widgets/clickable.hpp"
+#include "ai/contexts.hpp"
+#include "ai/configuration.hpp"
+#include "ai/composite/ai.hpp"
 #ifdef GUI2_EXPERIMENTAL_LISTBOX
 #include "gui/widgets/list.hpp"
 #else
@@ -3063,12 +3066,12 @@ static int intf_get_dialog_value(lua_State *L)
 }
 
 namespace { // helpers of intf_set_dialog_callback()
-	void dialog_callback(gui2::twidget *w)
+	void dialog_callback(gui2::twidget& w)
 	{
 		int cb;
 		{
 			scoped_dialog::callback_map &m = scoped_dialog::current->callbacks;
-			scoped_dialog::callback_map::const_iterator i = m.find(w);
+			scoped_dialog::callback_map::const_iterator i = m.find(&w);
 			if (i == m.end()) return;
 			cb = i->second;
 		}
@@ -3086,7 +3089,8 @@ namespace { // helpers of intf_set_dialog_callback()
 	{
 		void forward(gui2::twidget* widget)
 		{
-			dialog_callback(widget);
+			assert(widget);
+			dialog_callback(*widget);
 		}
 	};
 }//unnamed namespace for helpers of intf_set_dialog_callback()
@@ -3608,8 +3612,20 @@ static int intf_debug_ai(lua_State *L)
 
 	if (lua_engine == NULL)
 	{
-		lua_createtable(L, 0, 0);
-		return 1;
+		//no lua engine is defined for this side.
+		//so set up a dummy engine
+
+		ai::ai_composite * ai_ptr = dynamic_cast<ai::ai_composite *>(c);
+		ai::ai_context& ai_context = ai_ptr->get_ai_context();
+		config cfg = ai::configuration::get_default_ai_parameters();
+
+		lua_engine = new ai::engine_lua(ai_context, cfg);
+		LOG_LUA << "Created new dummy lua-engine for debug_ai(). \n";
+
+		//and add the dummy engine as a component
+		//to the manager, so we could use it later
+		cfg.add_child("engine", lua_engine->to_config());
+		ai::component_manager::add_component(c, "engine[]", cfg);
 	}
 
 	lua_engine->push_ai_table(); // stack: [-1: ai_context]

@@ -27,6 +27,7 @@
 #include "../mouse_handler_base.hpp"
 #include "../tooltips.hpp"
 
+#include "sound_music_track.hpp"
 
 class map_generator;
 
@@ -63,7 +64,8 @@ enum menu_type {
 	AREA,
 	SIDE,
 	TIME,
-	SCHEDULE
+	SCHEDULE,
+	MUSIC
 };
 
 /**
@@ -113,13 +115,8 @@ class editor_controller : public controller_base,
 		/** command_executor override */
 		bool execute_command(hotkey::HOTKEY_COMMAND command, int index = -1);
 
-		/** command_executor override */
-		void show_menu(const std::vector<std::string>& items_arg, int xloc, int yloc, bool context_menu, display& /*gui*/) {
-			show_menu(items_arg, xloc, yloc, context_menu);
-		}
-
 		/** controller_base override */
-		void show_menu(const std::vector<std::string>& items_arg, int xloc, int yloc, bool context_menu);
+		void show_menu(const std::vector<std::string>& items_arg, int xloc, int yloc, bool context_menu, display& disp);
 
 		void show_help();
 		void status_table();
@@ -133,6 +130,8 @@ class editor_controller : public controller_base,
 		void unit_description();
 		void change_unit_id();
 		void rename_unit();
+
+		void unit_list();
 
 		/** Copy the selection on the current map to the clipboard */
 		void copy_selection();
@@ -179,14 +178,6 @@ class editor_controller : public controller_base,
 		 * and delete the pointer. The pointer can be NULL, in which case nothing will happen.
 		 */
 		void perform_refresh_delete(editor_action* action, bool drag_part = false);
-
-
-
-		/**
-		 * Callback for the editor settings dialog to allow on-the-fly
-		 * updating of the lighting display on the game map behind the dialog
-		 */
-		void editor_settings_dialog_redraw_callback(int r, int g, int b);
 
 	private:
 
@@ -250,6 +241,7 @@ class editor_controller : public controller_base,
 		bool do_quit_;
 		EXIT_STATUS quit_mode_;
 
+		std::vector<sound::music_track> music_tracks_;
 };
 
 } //end namespace editor

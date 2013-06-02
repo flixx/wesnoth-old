@@ -19,6 +19,7 @@
 #include "gettext.hpp"
 #include "marked-up_text.hpp"
 #include "tooltips.hpp"
+#include "overlay.hpp"
 
 #include "editor/action/mouse/mouse_action.hpp"
 
@@ -39,6 +40,7 @@ handler_vector editor_palette<Item>::handler_members()
 }
 template handler_vector editor_palette<t_translation::t_terrain>::handler_members();
 template handler_vector editor_palette<unit_type>::handler_members();
+template handler_vector editor_palette<overlay>::handler_members();
 
 template<class Item>
 void editor_palette<Item>::expand_palette_groups_menu(std::vector<std::string>& items)
@@ -55,12 +57,14 @@ void editor_palette<Item>::expand_palette_groups_menu(std::vector<std::string>& 
 				if (groupname.empty()) {
 					groupname = _("(Unknown Group)");
 				}
-				std::string img = item_groups[mci].icon + "_30.png";
 				std::stringstream str;
-				//TODO
-				//std::string postfix = ".png"; //(toolkit_->active_group_index() == mci) ? "-pressed.png" : ".png";
-				//str << IMAGE_PREFIX << "buttons/" << img << postfix << COLUMN_SEPARATOR << groupname;
-				str << IMAGE_PREFIX << img << COLUMN_SEPARATOR << groupname;
+				str << IMAGE_PREFIX << item_groups[mci].icon;
+				if (mci == active_group_index()) {
+					str << "_30-pressed.png";
+				} else {
+					str << "_30.png";
+				}
+				str << COLUMN_SEPARATOR << groupname;
 				groups.push_back(str.str());
 			}
 			items.insert(items.begin() + i, groups.begin(), groups.end());
@@ -70,6 +74,7 @@ void editor_palette<Item>::expand_palette_groups_menu(std::vector<std::string>& 
 }
 template void editor_palette<t_translation::t_terrain>::expand_palette_groups_menu(std::vector<std::string>& items);
 template void editor_palette<unit_type>::expand_palette_groups_menu(std::vector<std::string>& items);
+template void editor_palette<overlay>::expand_palette_groups_menu(std::vector<std::string>& items);
 
 template<class Item>
 bool editor_palette<Item>::scroll_up()
@@ -87,6 +92,7 @@ bool editor_palette<Item>::scroll_up()
 }
 template bool editor_palette<t_translation::t_terrain>::scroll_up();
 template bool editor_palette<unit_type>::scroll_up();
+template bool editor_palette<overlay>::scroll_up();
 
 template<class Item>
 void editor_palette<Item>::expand_palette_groups_menu(std::vector< std::pair< std::string, std::string> >& items)
@@ -104,7 +110,7 @@ void editor_palette<Item>::expand_palette_groups_menu(std::vector< std::pair< st
 }
 template void editor_palette<t_translation::t_terrain>::expand_palette_groups_menu(std::vector< std::pair< std::string, std::string> >& items);
 template void editor_palette<unit_type>::expand_palette_groups_menu(std::vector< std::pair< std::string, std::string> >& items);
-
+template void editor_palette<overlay>::expand_palette_groups_menu(std::vector< std::pair< std::string, std::string> >& items);
 
 template<class Item>
 bool editor_palette<Item>::can_scroll_up()
@@ -113,6 +119,7 @@ bool editor_palette<Item>::can_scroll_up()
 }
 template bool editor_palette<t_translation::t_terrain>::can_scroll_up();
 template bool editor_palette<unit_type>::can_scroll_up();
+template bool editor_palette<overlay>::can_scroll_up();
 
 template<class Item>
 bool editor_palette<Item>::can_scroll_down()
@@ -121,6 +128,7 @@ bool editor_palette<Item>::can_scroll_down()
 }
 template bool editor_palette<t_translation::t_terrain>::can_scroll_down();
 template bool editor_palette<unit_type>::can_scroll_down();
+template bool editor_palette<overlay>::can_scroll_down();
 
 template<class Item>
 bool editor_palette<Item>::scroll_down()
@@ -143,6 +151,7 @@ bool editor_palette<Item>::scroll_down()
 }
 template bool editor_palette<t_translation::t_terrain>::scroll_down();
 template bool editor_palette<unit_type>::scroll_down();
+template bool editor_palette<overlay>::scroll_down();
 
 template<class Item>
 void editor_palette<Item>::set_group(const std::string& id)
@@ -173,6 +182,7 @@ void editor_palette<Item>::set_group(const std::string& id)
 }
 template void editor_palette<t_translation::t_terrain>::set_group(const std::string& id);
 template void editor_palette<unit_type>::set_group(const std::string& id);
+template void editor_palette<overlay>::set_group(const std::string& id);
 
 template<class Item>
 void editor_palette<Item>::set_group(size_t index)
@@ -182,6 +192,7 @@ void editor_palette<Item>::set_group(size_t index)
 }
 template void editor_palette<t_translation::t_terrain>::set_group(size_t index);
 template void editor_palette<unit_type>::set_group(size_t index);
+template void editor_palette<overlay>::set_group(size_t index);
 
 template<class Item>
 size_t editor_palette<Item>::active_group_index()
@@ -197,6 +208,7 @@ size_t editor_palette<Item>::active_group_index()
 }
 template size_t editor_palette<t_translation::t_terrain>::active_group_index();
 template size_t editor_palette<unit_type>::active_group_index();
+template size_t editor_palette<overlay>::active_group_index();
 
 template<class Item>
 const config editor_palette<Item>::active_group_report()
@@ -214,6 +226,7 @@ const config editor_palette<Item>::active_group_report()
 }
 template const config editor_palette<t_translation::t_terrain>::active_group_report();
 template const config editor_palette<unit_type>::active_group_report();
+template const config editor_palette<overlay>::active_group_report();
 
 template<class Item>
 void editor_palette<Item>::adjust_size(const SDL_Rect& target)
@@ -228,9 +241,12 @@ void editor_palette<Item>::adjust_size(const SDL_Rect& target)
 	buttons_.resize(nitems_, gui::tristate_button(gui_.video(), this));
 	set_location(target);
 	set_dirty(true);
+	gui_.video().clear_help_string(help_handle_);
+	help_handle_ = gui_.video().set_help_string(get_help_string());
 }
 template void editor_palette<t_translation::t_terrain>::adjust_size(const SDL_Rect& target);
 template void editor_palette<unit_type>::adjust_size(const SDL_Rect& target);
+template void editor_palette<overlay>::adjust_size(const SDL_Rect& target);
 
 template<class Item>
 void editor_palette<Item>::select_fg_item(const std::string& item_id)
@@ -239,9 +255,12 @@ void editor_palette<Item>::select_fg_item(const std::string& item_id)
 		selected_fg_item_ = item_id;
 		set_dirty();
 	}
+	gui_.video().clear_help_string(help_handle_);
+	help_handle_ = gui_.video().set_help_string(get_help_string());
 }
 template void editor_palette<t_translation::t_terrain>::select_fg_item(const std::string& terrain_id);
 template void editor_palette<unit_type>::select_fg_item(const std::string& unit_id);
+template void editor_palette<overlay>::select_fg_item(const std::string& unit_id);
 
 template<class Item>
 void editor_palette<Item>::select_bg_item(const std::string& item_id)
@@ -250,17 +269,24 @@ void editor_palette<Item>::select_bg_item(const std::string& item_id)
 		selected_bg_item_ = item_id;
 		set_dirty();
 	}
+	gui_.video().clear_help_string(help_handle_);
+	help_handle_ = gui_.video().set_help_string(get_help_string());
 }
 template void editor_palette<t_translation::t_terrain>::select_bg_item(const std::string& terrain_id);
 template void editor_palette<unit_type>::select_bg_item(const std::string& unit_id);
+template void editor_palette<overlay>::select_bg_item(const std::string& unit_id);
 
 template<class Item>
 void editor_palette<Item>::swap()
 {
 	std::swap(selected_fg_item_, selected_bg_item_);
+	select_fg_item(selected_fg_item_);
+	select_bg_item(selected_bg_item_);
+	set_dirty();
 }
 template void editor_palette<t_translation::t_terrain>::swap();
 template void editor_palette<unit_type>::swap();
+template void editor_palette<overlay>::swap();
 
 template<class Item>
 size_t editor_palette<Item>::num_items()
@@ -270,6 +296,7 @@ size_t editor_palette<Item>::num_items()
 }
 template size_t editor_palette<t_translation::t_terrain>::num_items();
 template size_t editor_palette<unit_type>::num_items();
+template size_t editor_palette<overlay>::num_items();
 
 template<class Item>
 void editor_palette<Item>::draw_contents()
@@ -315,8 +342,8 @@ void editor_palette<Item>::draw_contents()
 		if (i >= ending) continue;
 
 		const std::string item_id = active_group()[counter];
-		typedef std::map<std::string, Item> item_map_wurscht;
-		typename item_map_wurscht::iterator item = item_map_.find(item_id);
+		//typedef std::map<std::string, Item> item_map_wurscht;
+		typename item_map::iterator item = item_map_.find(item_id);
 
 		surface item_image(NULL);
 		std::stringstream tooltip_text;
@@ -367,6 +394,7 @@ void editor_palette<Item>::draw_contents()
 }
 template void editor_palette<t_translation::t_terrain>::draw_contents();
 template void editor_palette<unit_type>::draw_contents();
+template void editor_palette<overlay>::draw_contents();
 
 
 } // end namespace editor

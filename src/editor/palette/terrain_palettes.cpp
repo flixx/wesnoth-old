@@ -25,7 +25,6 @@
 #include <boost/foreach.hpp>
 
 namespace {
-	static std::string selected_terrain;
 	static t_translation::t_terrain fg_terrain;
 	static t_translation::t_terrain bg_terrain;
 }
@@ -48,32 +47,24 @@ static bool is_valid_terrain(const t_translation::t_terrain & c) {
 	return !(c == t_translation::VOID_TERRAIN || c == t_translation::FOGGED);
 }
 
-void terrain_palette::update_report()
-{
-	std::ostringstream msg;
-	msg << _("FG: ") << map().get_terrain_editor_string(selected_fg_item())
-		<< '\n' << _("BG: ") << map().get_terrain_editor_string(selected_fg_item());
-	selected_terrain = msg.str();
-}
-
 void terrain_palette::select_bg_item(const std::string& item_id) {
+	bg_terrain = item_map_[item_id];
 	editor_palette<t_translation::t_terrain>::select_bg_item(item_id);
-	bg_terrain = editor_palette<t_translation::t_terrain>::selected_bg_item();
 }
 
 void terrain_palette::select_fg_item(const std::string& item_id) {
+	fg_terrain = item_map_[item_id];
 	editor_palette<t_translation::t_terrain>::select_fg_item(item_id);
-	fg_terrain = editor_palette<t_translation::t_terrain>::selected_fg_item();
 }
 
 void terrain_palette::select_bg_item(const t_translation::t_terrain& terrain) {
-	editor_palette<t_translation::t_terrain>::select_bg_item(get_id(terrain));
 	bg_terrain = terrain;
+	editor_palette<t_translation::t_terrain>::select_bg_item(get_id(terrain));
 }
 
 void terrain_palette::select_fg_item(const t_translation::t_terrain& terrain) {
-	editor_palette<t_translation::t_terrain>::select_fg_item(get_id(terrain));
 	fg_terrain = terrain;
+	editor_palette<t_translation::t_terrain>::select_fg_item(get_id(terrain));
 }
 
 
@@ -87,17 +78,16 @@ void terrain_palette::setup(const config& cfg)
 
 	// Get the available groups and add them to the structure
 	std::set<std::string> group_names;
-	BOOST_FOREACH(const config &g, cfg.child_range("editor_group"))
+	BOOST_FOREACH(const config &group, cfg.child_range("editor_group"))
 	{
-		if (group_names.find(g["id"]) == group_names.end()) {
-			config item;
+		if (group_names.find(group["id"]) == group_names.end()) {
 
 			config cfg;
-			cfg["id"] = g["id"];
-			cfg["name"] = g["name"];
+			cfg["id"] = group["id"];
+			cfg["name"] = group["name"];
 
-			cfg["icon"] = "icons/terrain/terrain_" + g["icon"].t_str();
-			cfg["core"] = "yes";
+			cfg["icon"] = "icons/terrain/terrain_" + group["icon"].str();
+			cfg["core"] = group["core"];
 			groups_.push_back(item_group(cfg));
 
 			group_names.insert(groups_.back().id);
@@ -194,7 +184,7 @@ void terrain_palette::draw_item(const t_translation::t_terrain& terrain,
 	}
 
 	const std::string filename = "terrain/" + map().get_terrain_info(terrain).editor_image() + ".png";
-	image = surface(image::get_image(filename));
+	image = image::get_image(filename);
 	if(image == NULL) {
 		tooltip_text << "IMAGE NOT FOUND\n";
 		ERR_ED << "image for terrain: '" << filename << "' not found\n";
@@ -227,6 +217,14 @@ const std::string& terrain_palette::get_id(const t_translation::t_terrain& terra
 {
 	const terrain_type& t_info = map().get_terrain_info(terrain);
 	return t_info.id();
+}
+
+std::string terrain_palette::get_help_string()
+{
+	std::ostringstream msg;
+	msg << _("FG: ") << map().get_terrain_editor_string(selected_fg_item())	<< " | "
+		<< _("BG: ") << map().get_terrain_editor_string(selected_bg_item());
+	return msg.str();
 }
 
 

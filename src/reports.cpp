@@ -134,8 +134,11 @@ static const unit *get_selected_unit()
 
 static config gray_inactive(const std::string &str)
 {
-	if (resources::screen->viewing_side() == resources::screen->playing_side())
-		return text_report(str);
+	if ( (resources::screen &&
+			(resources::screen->viewing_side() == resources::screen->playing_side()) )
+			|| !resources::screen )
+			return text_report(str);
+
 	return text_report(span_color(font::GRAY_COLOR) + str + naps);
 }
 
@@ -1072,7 +1075,7 @@ static config time_of_day_at(const map_location& mouseover_hex)
 		liminal_color = "red";
 	}
 	tooltip << tod.name << '\n'
-		<< _("Lawful  units: ") << "<span foreground=\"" << lawful_color  << "\">"
+		<< _("Lawful units: ") << "<span foreground=\"" << lawful_color  << "\">"
 		<< utils::signed_percent(b)  << "</span>\n"
 		<< _("Neutral units: ") << utils::signed_percent(0)  << '\n'
 		<< _("Chaotic units: ") << "<span foreground=\"" << chaotic_color << "\">"
@@ -1131,7 +1134,7 @@ REPORT_GENERATOR(gold)
 REPORT_GENERATOR(villages)
 {
 	std::ostringstream str;
-	int viewing_side = resources::screen->viewing_side();
+	int viewing_side = display::get_singleton()->viewing_side();
 	const team &viewing_team = (*resources::teams)[viewing_side - 1];
 	team_data td = calculate_team_data(viewing_team, viewing_side);
 	str << td.villages << '/';
@@ -1150,7 +1153,7 @@ REPORT_GENERATOR(villages)
 
 REPORT_GENERATOR(num_units)
 {
-	return gray_inactive(str_cast(side_units(resources::screen->viewing_side())));
+	return gray_inactive(str_cast(side_units(display::get_singleton()->viewing_side())));
 }
 
 REPORT_GENERATOR(upkeep)
@@ -1213,7 +1216,7 @@ REPORT_GENERATOR(terrain_info)
 	std::ostringstream str;
 	config cfg;
 
-	if (map.is_castle(mouseover_hex)) {
+	if (map.is_keep(mouseover_hex)) {
 		add_image(cfg, "icons/terrain/terrain_type_keep.png", "");
 	}
 

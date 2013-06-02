@@ -16,6 +16,7 @@
 
 #include "config.hpp"
 #include "time_of_day.hpp"
+#include "gettext.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -39,7 +40,7 @@ time_of_day::time_of_day()
 : lawful_bonus(0)
 , bonus_modified(0)
 , image()
-, name("NULL_TOD")
+, name(N_("Stub Time of Day"))
 , id("nulltod")
 , image_mask()
 , color(0,0,0)
@@ -57,6 +58,7 @@ void time_of_day::write(config& cfg) const
 	cfg["name"] = name;
 	cfg["id"] = id;
 	cfg["mask"] = image_mask;
+	cfg["sound"] = sounds;
 }
 
 void time_of_day::parse_times(const config& cfg, std::vector<time_of_day>& normal_times)

@@ -106,8 +106,28 @@ end
 
 function methods:of_pairs(t)
 	local values = self.values
+
 	for i,v in ipairs(t) do
-		values[index(v[1], v[2])] = true
+		local value_table = {}
+		local x_index
+		local y_index
+		if v.x and v.y then
+			x_index = "x"
+			y_index = "y"
+		else
+			x_index = 1
+			y_index = 2
+		end
+		for k,val in pairs(v) do
+			if k ~= x_index and k ~= y_index then
+				value_table[k] = val
+			end
+		end
+		if next(value_table) then
+			values[index(v[x_index], v[y_index])] = value_table
+		else
+			values[index(v[x_index], v[y_index])] = true
+		end
 	end
 end
 

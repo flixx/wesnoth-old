@@ -20,6 +20,7 @@
 #include "../../editor_display.hpp"
 #include "gui/dialogs/unit_create.hpp"
 #include "tooltips.hpp"
+#include "gettext.hpp"
 
 #include "map_location.hpp"
 
@@ -51,10 +52,12 @@ void mouse_action_unit::move(editor_display& disp, const map_location& hex)
 			SDL_Rect rect;
 			rect.x = disp.get_location_x(hex);
 			rect.y = disp.get_location_y(hex);
-			rect.h = 80;
-			rect.w = 80;
+			rect.h = disp.hex_size();
+			rect.w = disp.hex_size();
 			std::stringstream str;
-			str << unit_it->id() << "\n" << unit_it->name() << "\n" << unit_it->type_name();
+			str << N_("ID: ")   << unit_it->id()   << "\n"
+				<< N_("Name: ") << unit_it->name() << "\n"
+				<< N_("Type: ") << unit_it->type_name();
 			tooltips::clear_tooltips();
 			tooltips::add_tooltip(rect, str.str());
 		}

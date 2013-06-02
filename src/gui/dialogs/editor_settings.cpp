@@ -99,10 +99,6 @@ teditor_settings::teditor_settings(editor::editor_display* display
 	, display_(display)
 	, can_update_display_(false)
 {
-	register_bool("use_mdi"
-			, true
-			, &preferences::editor::use_mdi
-			, &preferences::editor::set_use_mdi);
 }
 
 void teditor_settings::do_next_tod(twindow& window)
@@ -148,7 +144,7 @@ void teditor_settings::update_tod_display(twindow& window)
 	}
 
 	// Redraw this window again.
-	window.set_dirty(true);
+	window.set_is_dirty(true);
 }
 
 void teditor_settings::slider_update_callback(twindow& window)
