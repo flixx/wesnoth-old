@@ -620,6 +620,7 @@ set(wesnoth-main_SRC
 	ai/default/ai.cpp
 	ai/default/attack.cpp
 	ai/default/contexts.cpp
+	ai/flix/recruitment.cpp
 	ai/formula/ai.cpp
 	ai/formula/callable_objects.cpp
 	ai/formula/candidates.cpp
