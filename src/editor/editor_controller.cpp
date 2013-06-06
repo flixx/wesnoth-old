@@ -29,7 +29,7 @@
 #include "editor_preferences.hpp"
 
 #include "gui/dialogs/edit_text.hpp"
-#include "gui/dialogs/editor_settings.hpp"
+#include "gui/dialogs/editor/custom_tod.hpp"
 #include "gui/dialogs/message.hpp"
 #include "gui/dialogs/transient_message.hpp"
 #include "gui/widgets/window.hpp"
@@ -141,19 +141,16 @@ void editor_controller::init_tods(const config& game_config)
 
 void editor_controller::init_music(const config& game_config)
 {
-	if (!game_config.has_child("editor_music")) {
+	const std::string tag_name = "editor_music";
+	if (!game_config.has_child(tag_name))
 		ERR_ED << "No editor music defined\n";
-		return;
-	}
-
-	BOOST_FOREACH(const config& editor_music, game_config.child_range("editor_music")) {
-		BOOST_FOREACH(const config& music, editor_music.child_range("music")) {
-			music_tracks_.push_back(sound::music_track(music));
-			sound::play_music_config(music);
+	else {
+		BOOST_FOREACH(const config& editor_music, game_config.child_range(tag_name)) {
+			BOOST_FOREACH(const config& music, editor_music.child_range("music")) {
+				music_tracks_.push_back(sound::music_track(music));
+			}
 		}
 	}
-
-	sound::commit_music_changes();
 }
 
 editor_controller::~editor_controller()
@@ -214,7 +211,7 @@ void editor_controller::quit_confirm(EXIT_STATUS mode)
 	}
 }
 
-void editor_controller::editor_settings_dialog()
+void editor_controller::custom_tods_dialog()
 {
 	if (tods_.empty()) {
 		gui2::show_error_message(gui().video(),
@@ -223,9 +220,16 @@ void editor_controller::editor_settings_dialog()
 	}
 
 	image::color_adjustment_resetter adjust_resetter;
-	if(!gui2::teditor_settings::execute(&(gui()), tods_["test"].second, gui().video())) {
+
+	std::vector<time_of_day> schedule = context_manager_->get_map_context().get_time_manager()->times();
+
+	if(!gui2::tcustom_tod::execute(&(gui()), schedule, gui().video())) {
 		adjust_resetter.reset();
+	} else {
+		// TODO save the new tod here
 	}
+
+	context_manager_->refresh_all();
 }
 
 bool editor_controller::can_execute_command(hotkey::HOTKEY_COMMAND command, int index) const
@@ -307,7 +311,7 @@ bool editor_controller::can_execute_command(hotkey::HOTKEY_COMMAND command, int 
 			return context_manager_->get_map_context().can_undo();
 		case TITLE_SCREEN__RELOAD_WML:
 		case HOTKEY_EDITOR_QUIT_TO_DESKTOP:
-		case HOTKEY_EDITOR_SETTINGS:
+		case HOTKEY_EDITOR_CUSTOM_TODS:
 		case HOTKEY_EDITOR_MAP_NEW:
 		case HOTKEY_EDITOR_SIDE_NEW:
 		case HOTKEY_EDITOR_SIDE_SWITCH:
@@ -627,8 +631,8 @@ bool editor_controller::execute_command(hotkey::HOTKEY_COMMAND command, int inde
 			do_quit_ = true;
 			quit_mode_ = EXIT_RELOAD_DATA;
 			return true;
-		case HOTKEY_EDITOR_SETTINGS:
-			editor_settings_dialog();
+		case HOTKEY_EDITOR_CUSTOM_TODS:
+			custom_tods_dialog();
 			return true;
 		case HOTKEY_EDITOR_PALETTE_ITEM_SWAP:
 			toolkit_->get_palette_manager()->active_palette().swap();
@@ -917,7 +921,7 @@ void editor_controller::toggle_grid()
 void editor_controller::unit_description()
 {
 	map_location loc = gui_->mouseover_hex();
-	unit_map units = context_manager_->get_map_context().get_units();
+	const unit_map & units = context_manager_->get_map_context().get_units();
 	const unit_map::const_unit_iterator un = units.find(loc);
 	if(un != units.end()) {
 		help::show_unit_help(*gui_, un->type_id(), false);
