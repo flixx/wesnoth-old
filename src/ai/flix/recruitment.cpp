@@ -213,7 +213,7 @@ void recruitment::execute() {
 		// find which leader should recruit according to ratio_scores
 		data* best_leader_data = NULL;
 		double biggest_difference = -100;
-		BOOST_FOREACH(const data& data, leader_data) {
+		BOOST_FOREACH(data& data, leader_data) {
 			double should_be = data.ratio_score * 100;  // %
 			double is = data.recruit_count;  // do in 2 steps to prevent int / int.
 			is = (total_recruit_count == 0) ? 0 : (is / total_recruit_count) * 100;  // %

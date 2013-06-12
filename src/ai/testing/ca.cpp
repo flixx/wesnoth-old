@@ -758,16 +758,16 @@ move_leader_to_keep_phase::~move_leader_to_keep_phase()
 
 double move_leader_to_keep_phase::evaluate()
 {
-	// TODO when the configs for this are defined,
+	// TODO(flix) when the configs for this are defined,
 	// make leader_ignores_keep and passive_leader_shares_keepwork
 	// for multiple leaders.
-	// TODO Testing. Could the a star search used here be slow?
+	// TODO(flix) Testing. Could the a star search used here be slow?
 	// It is inside a for loop.
 
-	if(get_leader_ignores_keep()){
+	if (get_leader_ignores_keep()) {
 		return BAD_SCORE;
 	}
-	if(get_passive_leader() && !get_passive_leader_shares_keep()){
+	if (get_passive_leader() && !get_passive_leader_shares_keep()) {
 		return BAD_SCORE;
 	}
 
@@ -780,28 +780,30 @@ double move_leader_to_keep_phase::evaluate()
 
 
 	// 1.
-	unit_map &units_ = *resources::units;
-	const std::vector<unit_map::iterator> leaders = units_.find_leaders(get_side());
-
-	if(leaders.empty()){
+	const unit_map &units_ = *resources::units;
+	const std::vector<unit_map::const_iterator> leaders = units_.find_leaders(get_side());
+	if (leaders.empty()) {
 		return BAD_SCORE;
 	}
 
 	// 2. + 3.
-
-
-	unit* best_leader = NULL;
+	const unit* best_leader = NULL;
 	map_location best_keep;
 	int shortest_distance = 99999;
 
-	BOOST_FOREACH(unit_map::iterator leader, leaders){
-
+	BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
 		if (leader->incapacitated() || leader->movement_left() == 0) {
 			continue;
 		}
 
 		// Find where the leader can move
-		const pathfind::paths leader_paths(*leader, false, true, current_team());
+		const ai::moves_map &possible_moves = get_possible_moves();
+		const ai::moves_map::const_iterator& p_it = possible_moves.find(leader->get_location());
+		if (p_it == possible_moves.end()) {
+			return BAD_SCORE;
+		}
+		const pathfind::paths leader_paths = p_it->second;
+
 		const map_location& keep = suitable_keep(leader->get_location(), leader_paths);
 		if (keep == map_location::null_location || keep == leader->get_location()) {
 			continue;
@@ -814,66 +816,60 @@ double move_leader_to_keep_phase::evaluate()
 		pathfind::plain_route route;
 		route = pathfind::a_star_search(leader->get_location(), keep, 10000.0, &calc, resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
 
-
-		if (!route.steps.empty() || route.move_cost < shortest_distance){
+		if (!route.steps.empty() || route.move_cost < shortest_distance) {
 			best_leader = &(*leader);
 			best_keep = keep;
 			shortest_distance = route.move_cost;
 		}
-
 	}
 
-	if(best_leader == NULL){
+	if (best_leader == NULL) {
 		return BAD_SCORE;
 	}
 
 	// 4.
-	const unit * leader = best_leader;
+	const unit* leader = best_leader;
 	const map_location keep = best_keep;
 	const pathfind::paths leader_paths(*leader, false, true, current_team());
 	const pathfind::shortest_path_calculator calc(*leader, current_team(), *resources::teams, *resources::game_map);
 	const pathfind::teleport_map allowed_teleports = pathfind::get_teleport_locations(*leader, current_team());
-	pathfind::plain_route route;
 
 	if (leader_paths.destinations.contains(keep) && units_.count(keep) == 0) {
 		move_ = check_move_action(leader->get_location(), keep, false);
-		if (move_->is_ok()){
+		if (move_->is_ok()) {
 			return get_score();
 		}
-
 	}
-	// Make a map of the possible locations the leader can move to,
-	// ordered by the distance from the keep.
-	std::multimap<int,map_location> moves_toward_keep;
 
+	// 5.
 	// The leader can't move to his keep, try to move to the closest location
 	// to the keep where there are no enemies in range.
+	// Make a map of the possible locations the leader can move to,
+	// ordered by the distance from the keep.
+	typedef std::multimap<int, map_location> ordered_locations;
+	ordered_locations moves_toward_keep;
 
-
+	pathfind::plain_route route;
 	route = pathfind::a_star_search(leader->get_location(), keep, 10000.0, &calc, resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
 
-
 	int current_distance = route.move_cost;
-	BOOST_FOREACH(const pathfind::paths::step &dest, leader_paths.destinations)
-	{
-		if (!units_.find(dest.curr).valid()){
+	BOOST_FOREACH(const pathfind::paths::step &dest, leader_paths.destinations) {
+		if (!units_.find(dest.curr).valid()) {
 			route = pathfind::a_star_search(dest.curr, keep, 10000.0, &calc, resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
 			const int new_distance = route.move_cost;
-			if(new_distance < current_distance) {
+			if (new_distance < current_distance) {
 				moves_toward_keep.insert(std::make_pair(new_distance, dest.curr));
 			}
 		}
 	}
 
-
 	// Find the first location which we can move to,
 	// without the threat of enemies.
-	for(std::multimap<int,map_location>::const_iterator j = moves_toward_keep.begin();
-		j != moves_toward_keep.end(); ++j) {
-
-		if(get_enemy_dstsrc().count(j->second) == 0) {
-			move_ = check_move_action(leader->get_location(), j->second, true);
-			if (move_->is_ok()){
+	BOOST_FOREACH(const ordered_locations::value_type& pair, moves_toward_keep) {
+		const map_location& loc = pair.second;
+		if (get_enemy_dstsrc().count(loc) == 0) {
+			move_ = check_move_action(leader->get_location(), loc, true);
+			if (move_->is_ok()) {
 				return get_score();
 			}
 		}
@@ -884,7 +880,7 @@ double move_leader_to_keep_phase::evaluate()
 void move_leader_to_keep_phase::execute()
 {
 	move_->execute();
-	if (!move_->is_ok()){
+	if (!move_->is_ok()) {
 		LOG_AI_TESTING_AI_DEFAULT <<  get_name() <<"::execute not ok" << std::endl;
 	}
 }
