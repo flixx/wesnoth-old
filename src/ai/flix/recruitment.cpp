@@ -46,22 +46,25 @@ namespace ai {
 namespace flix_recruitment {
 
 recruitment::recruitment(rca_context &context, const config &cfg)
-		: candidate_action(context, cfg) { }
+		: candidate_action(context, cfg), cheapest_unit_cost_(0) { }
 
 double recruitment::evaluate() {
-	std::vector<unit_map::unit_iterator> leaders = resources::units->find_leaders(get_side());
+	const std::vector<unit_map::unit_iterator> leaders = resources::units->find_leaders(get_side());
 
 	BOOST_FOREACH(const unit_map::unit_iterator &leader, leaders) {
 		if (leader == resources::units->end()) {
 			return BAD_SCORE;
 		}
-
+		if (current_team().gold() < cheapest_unit_cost_) {
+			// TODO(flix) && recruitment-list wasn't changed.
+			return BAD_SCORE;
+		}
 		std::set<map_location> checked_hexes;
-		const map_location &keep = leader->get_location();
-		checked_hexes.insert(keep);
+		const map_location &loc = leader->get_location();
+		checked_hexes.insert(loc);
 
-		if (resources::game_map->is_keep(leader->get_location()) &&
-				count_free_hexes_in_castle(leader->get_location(), checked_hexes) != 0) {
+		if (resources::game_map->is_keep(loc) &&
+				count_free_hexes_in_castle(loc, checked_hexes) != 0) {
 			return get_score();
 		}
 	}
@@ -84,7 +87,6 @@ void recruitment::execute() {
 	std::vector<data> leader_data;
 	// a set of all possible recruits
 	std::set<std::string> global_recruits;
-	int cheapest_unit_cost;
 
 	BOOST_FOREACH(const unit_map::unit_iterator& leader_it, leaders) {
 		const unit& leader = *leader_it;
@@ -111,8 +113,8 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (info->cost() < cheapest_unit_cost) {
-				cheapest_unit_cost = info->cost();
+			if (info->cost() < cheapest_unit_cost_ || cheapest_unit_cost_ == 0) {
+				cheapest_unit_cost_ = info->cost();
 			}
 		}
 
@@ -123,8 +125,8 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (info->cost() < cheapest_unit_cost) {
-				cheapest_unit_cost = info->cost();
+			if (info->cost() < cheapest_unit_cost_ || cheapest_unit_cost_ == 0) {
+				cheapest_unit_cost_ = info->cost();
 			}
 		}
 
@@ -136,7 +138,7 @@ void recruitment::execute() {
 		return;  // This CA is going to be blacklisted for this turn.
 	}
 
-	if (current_team().gold() < cheapest_unit_cost) {
+	if (current_team().gold() < cheapest_unit_cost_) {
 		DBG_AI_FLIX << "Not enough gold for recruiting \n";
 		return;  // This CA is going to be blacklisted for this turn.
 	}
