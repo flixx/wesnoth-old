@@ -23,15 +23,19 @@
 #include "../composite/engine.hpp"
 #include "../composite/rca.hpp"
 #include "../composite/stage.hpp"
+#include "../../display.hpp"  //REMOVE ME
+#include "../../game_display.hpp"  //REMOVE ME
 #include "../../gamestatus.hpp"
 #include "../../log.hpp"
 #include "../../map.hpp"
+#include "../../map_label.hpp"  //REMOVE ME
 #include "../../resources.hpp"
 #include "../../team.hpp"
 #include "../../pathfind/pathfind.hpp"
 #include "../../pathfind/teleport.hpp"
 
 #include <boost/foreach.hpp>
+#include <ctime>  //REMOVE ME
 
 #include <numeric>
 
@@ -787,6 +791,7 @@ double move_leader_to_keep_phase::evaluate()
 	}
 
 	// 2. + 3.
+	std::clock_t start = std::clock();  // REMOVE ME
 	const unit* best_leader = NULL;
 	map_location best_keep;
 	int shortest_distance = 99999;
@@ -827,6 +832,10 @@ double move_leader_to_keep_phase::evaluate()
 		return BAD_SCORE;
 	}
 
+	double  duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;  // REMOVE ME
+	DBG_AI_TESTING_AI_DEFAULT << "SUITABLE_KEEP of leader " << best_leader->name() << ": " <<
+			best_keep.x << ", " << best_keep.y << " in " << duration << "\n";  // REMOVE ME
+
 	// 4.
 	const unit* leader = best_leader;
 	const map_location keep = best_keep;
@@ -842,6 +851,7 @@ double move_leader_to_keep_phase::evaluate()
 	}
 
 	// 5.
+	start = std::clock();  // REMOVE ME
 	// The leader can't move to his keep, try to move to the closest location
 	// to the keep where there are no enemies in range.
 	// Make a map of the possible locations the leader can move to,
@@ -852,13 +862,33 @@ double move_leader_to_keep_phase::evaluate()
 	pathfind::plain_route route;
 	route = pathfind::a_star_search(leader->get_location(), keep, 10000.0, &calc, resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
 
-	int current_distance = route.move_cost;
+	// find next hop
+	map_location next_hop = map_location::null_location;
+	int next_hop_cost = 0;
+	BOOST_FOREACH(const map_location& step, route.steps) {
+		if (leader_paths.destinations.contains(step)) {
+			next_hop = step;
+			next_hop_cost += leader->movement_cost(resources::game_map->get_terrain(step));
+		} else {
+			break;
+		}
+	}
+	if (next_hop == map_location::null_location) {
+		return BAD_SCORE;
+	}
+	//define the next hop to have the lowest cost (0)
+	moves_toward_keep.insert(std::make_pair(0, next_hop));
+
+	resources::screen->labels().clear_all();  // REMOVE ME
 	BOOST_FOREACH(const pathfind::paths::step &dest, leader_paths.destinations) {
 		if (!units_.find(dest.curr).valid()) {
-			route = pathfind::a_star_search(dest.curr, keep, 10000.0, &calc, resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
-			const int new_distance = route.move_cost;
-			if (new_distance < current_distance) {
-				moves_toward_keep.insert(std::make_pair(new_distance, dest.curr));
+			route = pathfind::a_star_search(dest.curr, next_hop, 10000.0, &calc,
+					resources::game_map->w(), resources::game_map->h(), &allowed_teleports);
+			if (route.move_cost < next_hop_cost) {
+				moves_toward_keep.insert(std::make_pair(route.move_cost, dest.curr));
+				std::stringstream s;  // REMOVE ME
+				s << route.move_cost;  // REMOVE ME
+				resources::screen->labels().set_label(dest.curr, s.str());  // REMOVE ME
 			}
 		}
 	}
@@ -870,6 +900,9 @@ double move_leader_to_keep_phase::evaluate()
 		if (get_enemy_dstsrc().count(loc) == 0) {
 			move_ = check_move_action(leader->get_location(), loc, true);
 			if (move_->is_ok()) {
+				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;  // REMOVE ME
+				DBG_AI_TESTING_AI_DEFAULT << "MOVE found in " << duration << "\n";  // REMOVE ME
+
 				return get_score();
 			}
 		}
