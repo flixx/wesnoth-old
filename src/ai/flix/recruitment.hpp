@@ -47,7 +47,7 @@ typedef std::map<std::string, double> score_map;
 typedef std::map<std::string, int> limit_map;
 
 struct data {
-	unit leader;
+	unit_map::const_iterator leader;
 	std::set<std::string> recruits;
 	score_map scores;
 	limit_map limits;
@@ -59,7 +59,7 @@ struct data {
 
 	int recruit_count;
 
-	explicit data(const unit& leader)
+	explicit data(const unit_map::const_iterator leader)
 		: leader(leader), ratio_score(1.0), recruit_count(0) { }
 	double get_score_sum() const {
 		double sum = 0.0;
@@ -82,7 +82,7 @@ struct data {
 	std::string to_string() {
 		std::stringstream s;
 		s << "---------Content of leader data----------\n";
-		s << "For leader: " << leader.name() << "\n";
+		s << "For leader: " << leader->name() << "\n";
 		s << "ratio_score: " << ratio_score << "\n";
 		s << "recruit_count: " << recruit_count << "\n";
 		BOOST_FOREACH(const score_map::value_type& entry, scores) {

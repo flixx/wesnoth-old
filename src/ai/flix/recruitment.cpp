@@ -49,9 +49,10 @@ recruitment::recruitment(rca_context &context, const config &cfg)
 		: candidate_action(context, cfg), cheapest_unit_cost_(0) { }
 
 double recruitment::evaluate() {
-	const std::vector<unit_map::unit_iterator> leaders = resources::units->find_leaders(get_side());
+	const unit_map &units = *resources::units;
+	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
-	BOOST_FOREACH(const unit_map::unit_iterator &leader, leaders) {
+	BOOST_FOREACH(const unit_map::const_iterator &leader, leaders) {
 		if (leader == resources::units->end()) {
 			return BAD_SCORE;
 		}
@@ -80,25 +81,24 @@ void recruitment::execute() {
 	 *         Also initialize some other stuff.
 	 */
 
-	const std::vector<unit_map::unit_iterator>& leaders =
-			resources::units->find_leaders(get_side());
+	const unit_map &units = *resources::units;
+	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
 	// this is the central datastructure with all score_tables in it.
 	std::vector<data> leader_data;
 	// a set of all possible recruits
 	std::set<std::string> global_recruits;
 
-	BOOST_FOREACH(const unit_map::unit_iterator& leader_it, leaders) {
-		const unit& leader = *leader_it;
-		const map_location &keep = leader.get_location();
+	BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
+		const map_location &keep = leader->get_location();
 		if(!resources::game_map->is_keep(keep)) {
-			DBG_AI_FLIX << "Leader " << leader.name() << " is not on keep. \n";
+			DBG_AI_FLIX << "Leader " << leader->name() << " is not on keep. \n";
 			continue;
 		}
 		std::set<map_location> checked_hexes;
 		checked_hexes.insert(keep);
 		if(count_free_hexes_in_castle(keep, checked_hexes) <= 0) {
-			DBG_AI_FLIX << "Leader " << leader.name() << "is on keep but no hexes are free \n";
+			DBG_AI_FLIX << "Leader " << leader->name() << "is on keep but no hexes are free \n";
 			continue;
 		}
 
@@ -119,7 +119,7 @@ void recruitment::execute() {
 		}
 
 		// add extra recruits
-		BOOST_FOREACH(const std::string& recruit, leader.recruits()) {
+		BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
 			data.limits[recruit] = 99999;
@@ -184,14 +184,12 @@ void recruitment::execute() {
 	std::map<std::string, int> own_units_count;
 	int total_own_units = 0;
 
-	const unit_map &units = *resources::units;
-
-	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side() || unit.can_recruit()) {
+	for (unit_map::const_iterator unit = units.begin(); unit != units.end(); ++unit) {
+		if (unit->side() != get_side() || unit->can_recruit()) {
 			continue;
 		}
 
-		++own_units_count[unit.type_name()];
+		++own_units_count[unit->type_name()];
 		++total_own_units;
 	}
 
@@ -217,8 +215,8 @@ void recruitment::execute() {
 		double biggest_difference = -100;
 		BOOST_FOREACH(data& data, leader_data) {
 			double should_be = data.ratio_score * 100;  // %
-			double is = data.recruit_count;  // do in 2 steps to prevent int / int.
-			is = (total_recruit_count == 0) ? 0 : (is / total_recruit_count) * 100;  // %
+			double is = (total_recruit_count == 0) ? 0 :
+					(static_cast<double>(data.recruit_count) / total_recruit_count) * 100;  // %
 			double difference = should_be - is;
 			if (difference > biggest_difference) {
 				biggest_difference = difference;
@@ -235,8 +233,8 @@ void recruitment::execute() {
 			const double score = i.second;
 
 			double should_be = score * 100;  // %
-			double is = own_units_count[unit];  // do in 2 steps to prevent int / int.
-			is = (total_own_units == 0) ? 0 : (is / total_own_units) * 100;  // %
+			double is = (total_own_units == 0) ? 0 :
+					(static_cast<double>(own_units_count[unit]) / total_own_units) * 100;  // %
 			double difference = should_be - is;
 			if (difference > biggest_difference) {
 				biggest_difference = difference;
@@ -250,7 +248,7 @@ void recruitment::execute() {
 		// rather than the default inside out."
 		recruit_result = check_recruit_action(best_recruit,
 				map_location::null_location,
-				best_leader_data->leader.get_location());
+				best_leader_data->leader->get_location());
 		if (recruit_result->is_ok()) {
 			recruit_result->execute();
 			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
