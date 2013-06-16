@@ -21,8 +21,11 @@
 
 #include "../actions.hpp"
 #include "../composite/rca.hpp"
+#include "../../game_display.hpp"
 #include "../../log.hpp"
 #include "../../map.hpp"
+#include "../../map_label.hpp"
+#include "../../pathfind/pathfind.hpp"
 #include "../../resources.hpp"
 #include "../../team.hpp"
 #include "../../unit_map.hpp"
@@ -44,6 +47,12 @@ static lg::log_domain log_ai_flix("ai/flix");
 namespace ai {
 
 namespace flix_recruitment {
+
+namespace {
+// define some tweakable things here which _could_ be extracted as a aspect
+const static int MAP_UNIT_THRESHOLD = 5;
+const static bool MAP_IGNORE_ZOC = true;
+}
 
 recruitment::recruitment(rca_context &context, const config &cfg)
 		: candidate_action(context, cfg), cheapest_unit_cost_() { }
@@ -170,6 +179,10 @@ void recruitment::execute() {
 	/**
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
+	update_important_hexes();
+//	if (game_config::debug) {
+//		show_important_hexes();
+//	}
 
 	// For now just fill the scores with dummy entries.
 	// The second and third unit get a score of 1000, all others 0
@@ -283,5 +296,63 @@ void recruitment::invalidate() {
 	cheapest_unit_cost_ = boost::none;
 }
 
+void recruitment::update_important_hexes() {
+	important_hexes_.clear();
+	pathfind::full_cost_map cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
+	add_side_to_cost_map(cost_map, get_side());
+}
+
+void recruitment::add_side_to_cost_map(pathfind::full_cost_map& cost_map, int side) {
+	const unit_map &units = *resources::units;
+	const gamemap& map = *resources::game_map;
+	const team& team = (*resources::teams)[side - 1];
+
+	// first add all existing units to cost_map
+	int unit_count = 0;
+	for (unit_map::const_iterator unit = units.begin(); unit != units.end(); ++unit) {
+		if (unit->side() != side) {
+			continue;
+		}
+		++unit_count;
+		cost_map.add_unit(*unit);
+	}
+
+	// If this side has not so many units yet, add unit_types with the leaders position as origin.
+	if (unit_count < MAP_UNIT_THRESHOLD) {
+		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
+		BOOST_FOREACH(unit_map::const_iterator leader, leaders) {
+			// Yes, multiple leader support for enemies too.
+
+			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
+			BOOST_FOREACH(std::string recruit, team.recruits()) {
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			}
+
+			// Next add extra-recruits.
+			BOOST_FOREACH(std::string recruit, leader->recruits()) {
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			}
+		}
+	}
+
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			std::stringstream s;
+			s << cost_map.get_pair_at(x, y).first << " / " <<
+					cost_map.get_pair_at(x, y).second << "\n\n";
+			resources::screen->labels().set_label(map_location(x, y), s.str());
+		}
+	}
+}
+
+void recruitment::show_important_hexes() const {
+	if (!game_config::debug) {
+		return;
+	}
+	resources::screen->labels().clear_all();
+	BOOST_FOREACH(const map_location& loc, important_hexes_) {
+		resources::screen->labels().set_label(loc, "\n\n\u2B24");
+	}
+}
 }  // namespace flix_recruitment
 }  // namespace ai

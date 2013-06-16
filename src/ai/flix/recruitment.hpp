@@ -32,6 +32,12 @@
 #pragma warning(disable:4250)
 #endif
 
+namespace pathfind {
+
+struct full_cost_map;
+
+} //of namespace pathfind
+
 namespace ai {
 
 namespace flix_recruitment {
@@ -103,11 +109,20 @@ public:
 	virtual void execute();
 private:
 	void invalidate();
+	void update_important_hexes();
+	void add_side_to_cost_map(pathfind::full_cost_map& cost_map, int side);
+
+	//Debug only
+	void show_important_hexes() const;
+
+	std::set<map_location> important_hexes_;
+
 	// The CA Object will be persistent over turns.
 	// cheapest_unit_cost_ is updated in execute() and
 	// used in evaluate().
 	// Use boost::optional to check for a uninitialized state.
 	boost::optional<int> cheapest_unit_cost_;
+
 };
 
 }  // of namespace flix_recruitment
