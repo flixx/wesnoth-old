@@ -24,6 +24,7 @@
 #include "../../unit.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/optional.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -101,10 +102,12 @@ public:
 	virtual double evaluate();
 	virtual void execute();
 private:
+	void invalidate();
 	// The CA Object will be persistent over turns.
 	// cheapest_unit_cost_ is updated in execute() and
 	// used in evaluate().
-	int cheapest_unit_cost_;
+	// Use boost::optional to check for a uninitialized state.
+	boost::optional<int> cheapest_unit_cost_;
 };
 
 }  // of namespace flix_recruitment

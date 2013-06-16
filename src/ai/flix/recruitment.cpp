@@ -46,7 +46,7 @@ namespace ai {
 namespace flix_recruitment {
 
 recruitment::recruitment(rca_context &context, const config &cfg)
-		: candidate_action(context, cfg), cheapest_unit_cost_(0) { }
+		: candidate_action(context, cfg), cheapest_unit_cost_() { }
 
 double recruitment::evaluate() {
 	const unit_map &units = *resources::units;
@@ -56,9 +56,13 @@ double recruitment::evaluate() {
 		if (leader == resources::units->end()) {
 			return BAD_SCORE;
 		}
-		if (current_team().gold() < cheapest_unit_cost_) {
-			// TODO(flix) && recruitment-list wasn't changed.
-			return BAD_SCORE;
+
+		if (cheapest_unit_cost_) {  // if initialized (this is a boost::optional<int>)
+			// Check Gold. But proceed if there is a unit with cost <= 0 (WML can do that)
+			if (current_team().gold() < cheapest_unit_cost_ && cheapest_unit_cost_ > 0) {
+				// TODO(flix) && recruitment-list wasn't changed.
+				return BAD_SCORE;
+			}
 		}
 		std::set<map_location> checked_hexes;
 		const map_location &loc = leader->get_location();
@@ -113,7 +117,7 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (info->cost() < cheapest_unit_cost_ || cheapest_unit_cost_ == 0) {
+			if (!cheapest_unit_cost_ || info->cost() < cheapest_unit_cost_) {
 				cheapest_unit_cost_ = info->cost();
 			}
 		}
@@ -125,7 +129,7 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (info->cost() < cheapest_unit_cost_ || cheapest_unit_cost_ == 0) {
+			if (!cheapest_unit_cost_ || info->cost() < cheapest_unit_cost_) {
 				cheapest_unit_cost_ = info->cost();
 			}
 		}
@@ -138,7 +142,13 @@ void recruitment::execute() {
 		return;  // This CA is going to be blacklisted for this turn.
 	}
 
-	if (current_team().gold() < cheapest_unit_cost_) {
+	if (!cheapest_unit_cost_) {  // this is a boost::optional.
+		// When it is uninitialized it must be that:
+		DBG_AI_FLIX << "All leaders have empty recruitment lists. \n";
+		return;  // This CA is going to be blacklisted for this turn.
+	}
+
+	if (current_team().gold() < cheapest_unit_cost_ && cheapest_unit_cost_ > 0) {
 		DBG_AI_FLIX << "Not enough gold for recruiting \n";
 		return;  // This CA is going to be blacklisted for this turn.
 	}
@@ -266,6 +276,12 @@ void recruitment::execute() {
 }
 
 recruitment::~recruitment() { }
+
+// This is going to be called when the recruitment list changes
+// (not implemented yet, just here as a reminder)
+void recruitment::invalidate() {
+	cheapest_unit_cost_ = boost::none;
+}
 
 }  // namespace flix_recruitment
 }  // namespace ai
