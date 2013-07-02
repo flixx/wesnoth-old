@@ -147,7 +147,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
     if (not cfg.action) then H.wml_error("[micro_ai] missing required action= key") end
 
     if (cfg.action ~= 'add') and (cfg.action ~= 'delete') and (cfg.action ~= 'change') then
-        H.wml_error("[micro_ai] invalid value for action=.  Allowed values: add, delete or change")
+        H.wml_error("[micro_ai] invalid value for action=. Allowed values: add, delete or change")
     end
 
     --------- Healer Support Micro AI - side-wide AI ------------------------------------
@@ -167,11 +167,11 @@ function wesnoth.wml_actions.micro_ai(cfg)
         -- Set up the CA add/delete parameters
         local CA_parms = {
             {
-                id = 'initialize_healer_support', eval_name = 'initialize_healer_support_eval', exec_name = 'initialize_healer_support_exec',
-                max_score = 999990, cfg_table = {}
+                id = 'initialize_healer_support', eval_name = 'mai_healer_initialize_eval', exec_name = 'mai_healer_initialize_exec',
+                max_score = 999990, cfg_table = cfg_hs
             },
             {
-                id = 'healer_support', eval_name = 'healer_support_eval', exec_name = 'healer_support_exec',
+                id = 'healer_support', eval_name = 'mai_healer_move_eval', exec_name = 'mai_healer_move_exec',
                 max_score = 105000, cfg_table = cfg_hs
             },
         }
@@ -181,7 +181,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg.action == 'delete') or (tonumber(cfg.aggression) ~= 0) then
             table.insert(CA_parms,
                 {
-                    id = 'healers_can_attack', eval_name = 'healers_can_attack_eval', exec_name = 'healers_can_attack_exec',
+                    id = 'healers_can_attack', eval_name = 'mai_healer_may_attack_eval', exec_name = 'mai_healer_may_attack_exec',
                     max_score = 99990, cfg_table = {}
                 }
             )
@@ -218,11 +218,11 @@ function wesnoth.wml_actions.micro_ai(cfg)
         -- Set up the CA add/delete parameters
         local CA_parms = {
             {
-                id = 'bottleneck_move', eval_name = 'bottleneck_move_eval', exec_name = 'bottleneck_move_exec',
+                id = 'bottleneck_move', eval_name = 'mai_bottleneck_move_eval', exec_name = 'mai_bottleneck_move_exec',
                 max_score = 300000, cfg_table = cfg_bd
             },
             {
-                id = 'bottleneck_attack', eval_name = 'bottleneck_attack_eval', exec_name = 'bottleneck_attack_exec',
+                id = 'bottleneck_attack', eval_name = 'mai_bottleneck_attack_eval', exec_name = 'mai_bottleneck_attack_exec',
                 max_score = 290000, cfg_table = {}
             }
         }
@@ -254,15 +254,15 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         local CA_parms = {
             {
-                id = 'attack', eval_name = 'attack_eval', exec_name = 'attack_exec',
+                id = 'attack', eval_name = 'mai_messenger_attack_eval', exec_name = 'mai_messenger_attack_exec',
                 max_score = 300000, cfg_table = cfg_me
             },
             {
-                id = 'messenger_move', eval_name = 'messenger_move_eval', exec_name = 'messenger_move_exec',
+                id = 'messenger_move', eval_name = 'mai_messenger_move_eval', exec_name = 'mai_messenger_move_exec',
                 max_score = 290000, cfg_table = cfg_me
             },
             {
-                id = 'other_move', eval_name = 'other_move_eval', exec_name = 'other_move_exec',
+                id = 'other_move', eval_name = 'mai_messenger_other_move_eval', exec_name = 'mai_messenger_other_move_exec',
                 max_score = 280000, cfg_table = cfg_me
             },
         }
@@ -300,7 +300,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         local CA_parms = {
             {
-                id = 'lurker_moves_lua', eval_name = 'lurker_attack_eval', exec_name = 'lurker_attack_exec',
+                id = 'lurker_moves_lua', eval_name = 'mai_lurkers_attack_eval', exec_name = 'mai_lurkers_attack_exec',
                 max_score = 100010, cfg_table = cfg_lurk
             },
         }
@@ -359,15 +359,15 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         local CA_parms = {
             {
-                id = 'finish', eval_name = 'finish_eval', exec_name = 'finish_exec',
+                id = 'finish', eval_name = 'mai_protect_unit_finish_eval', exec_name = 'mai_protect_unit_finish_exec',
                 max_score = 300000, cfg_table = cfg_pu
             },
             {
-                id = 'attack', eval_name = 'attack_eval', exec_name = 'attack_exec',
+                id = 'attack', eval_name = 'mai_protect_unit_attack_eval', exec_name = 'mai_protect_unit_attack_exec',
                 max_score = 95000, cfg_table = cfg_pu
             },
             {
-                id = 'move', eval_name = 'move_eval', exec_name = 'move_exec',
+                id = 'move', eval_name = 'mai_protect_unit_move_eval', exec_name = 'mai_protect_unit_move_exec',
                 max_score = 94000, cfg_table = cfg_pu
             }
         }
@@ -417,19 +417,23 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         -- Set up the cfg array
         local cfg_guardian = { guardian_type = guardian_type }
-        local required_keys, optional_keys = {}, {}
+        local required_keys, optional_keys, guardian_CA_name = {}, {}, {}
 
         required_keys["stationed_guardian"] = { "id", "distance", "station_x", "station_y", "guard_x", "guard_y" }
         optional_keys["stationed_guardian"] = {}
+        guardian_CA_name["stationed_guardian"] = "mai_guardian_stationed"
 
         required_keys["zone_guardian"] = { "id", "filter_location" }
-        optional_keys["zone_guardian"] = { "filter_location_enemy" }
+        optional_keys["zone_guardian"] = { "filter_location_enemy", "station_x", "station_y" }
+        guardian_CA_name["zone_guardian"] = "mai_guardian_zone"
 
         required_keys["coward"] = { "id", "distance" }
         optional_keys["coward"] = { "seek_x", "seek_y","avoid_x","avoid_y" }
+        guardian_CA_name["coward"] = "mai_guardian_coward"
 
         required_keys["return_guardian"] = { "id", "return_x", "return_y" }
         optional_keys["return_guardian"] = {}
+        guardian_CA_name["return_guardian"] = "mai_guardian_return"
 
         if (cfg.action~='delete') then
             --Check that we know about this type of guardian
@@ -471,7 +475,9 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         local CA_parms = {
             {
-                id = guardian_type .. '_' .. cfg.id, eval_name = guardian_type .. '_eval', exec_name = guardian_type .. '_exec',
+                id = guardian_type .. '_' .. cfg.id,
+                eval_name = guardian_CA_name[guardian_type] .. '_eval',
+                exec_name = guardian_CA_name[guardian_type] .. '_exec',
                 max_score = max_scores[guardian_type], sticky = true, unit_x = unit.x, unit_y = unit.y, cfg_table = cfg_guardian
             },
         }
@@ -558,7 +564,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'big_animals') then
             CA_parms = {
                 {
-                    id = "big_animal", eval_name = 'big_eval', exec_name = 'big_exec',
+                    id = "big_animal", eval_name = 'mai_animals_big_eval', exec_name = 'mai_animals_big_exec',
                     max_score = 300000, cfg_table = cfg_animals
                 }
             }
@@ -567,11 +573,11 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'wolves') then
             CA_parms = {
                 {
-                    id = "wolves", eval_name = 'wolves_eval', exec_name = 'wolves_exec',
+                    id = "wolves", eval_name = 'mai_animals_wolves_eval', exec_name = 'mai_animals_wolves_exec',
                     max_score = 95000, cfg_table = cfg_animals
                 },
                 {
-                    id = "wolves_wander", eval_name = 'wolves_wander_eval', exec_name = 'wolves_wander_exec',
+                    id = "wolves_wander", eval_name = 'mai_animals_wolves_wander_eval', exec_name = 'mai_animals_wolves_wander_exec',
                     max_score = 90000, cfg_table = cfg_animals
                 }
             }
@@ -601,27 +607,27 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'herding') then
             CA_parms = {
                 {
-                    id = "close_enemy", eval_name = 'herding_attack_close_enemy_eval', exec_name = 'herding_attack_close_enemy_exec',
+                    id = "close_enemy", eval_name = 'mai_animals_herding_attack_close_enemy_eval', exec_name = 'mai_animals_herding_attack_close_enemy_exec',
                     max_score = 300000, cfg_table = cfg_animals
                 },
                 {
-                    id = "sheep_runs_enemy", eval_name = 'sheep_runs_enemy_eval', exec_name = 'sheep_runs_enemy_exec',
+                    id = "sheep_runs_enemy", eval_name = 'mai_animals_sheep_runs_enemy_eval', exec_name = 'mai_animals_sheep_runs_enemy_exec',
                     max_score = 295000, cfg_table = cfg_animals
                 },
                 {
-                    id = "sheep_runs_dog", eval_name = 'sheep_runs_dog_eval', exec_name = 'sheep_runs_dog_exec',
+                    id = "sheep_runs_dog", eval_name = 'mai_animals_sheep_runs_dog_eval', exec_name = 'mai_animals_sheep_runs_dog_exec',
                     max_score = 290000, cfg_table = cfg_animals
                 },
                 {
-                    id = "herd_sheep", eval_name = 'herd_sheep_eval', exec_name = 'herd_sheep_exec',
+                    id = "herd_sheep", eval_name = 'mai_animals_herd_sheep_eval', exec_name = 'mai_animals_herd_sheep_exec',
                     max_score = 280000, cfg_table = cfg_animals
                 },
                 {
-                    id = "sheep_move", eval_name = 'sheep_move_eval', exec_name = 'sheep_move_exec',
+                    id = "sheep_move", eval_name = 'mai_animals_sheep_move_eval', exec_name = 'mai_animals_sheep_move_exec',
                     max_score = 270000, cfg_table = cfg_animals
                 },
                 {
-                    id = "dog_move", eval_name = 'dog_move_eval', exec_name = 'dog_move_exec',
+                    id = "dog_move", eval_name = 'mai_animals_dog_move_eval', exec_name = 'mai_animals_dog_move_exec',
                     max_score = 260000, cfg_table = cfg_animals
                 }
             }
@@ -630,19 +636,19 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'forest_animals') then
             CA_parms = {
                 {
-                    id = "new_rabbit", eval_name = 'new_rabbit_eval', exec_name = 'new_rabbit_exec',
+                    id = "new_rabbit", eval_name = 'mai_animals_new_rabbit_eval', exec_name = 'mai_animals_new_rabbit_exec',
                     max_score = 310000, cfg_table = cfg_animals
                 },
                 {
-                    id = "tusker_attack", eval_name = 'tusker_attack_eval', exec_name = 'tusker_attack_exec',
+                    id = "tusker_attack", eval_name = 'mai_animals_tusker_attack_eval', exec_name = 'mai_animals_tusker_attack_exec',
                     max_score = 300000, cfg_table = cfg_animals
                 },
                 {
-                    id = "move", eval_name = 'forest_animals_move_eval', exec_name = 'forest_animals_move_exec',
+                    id = "move", eval_name = 'mai_animals_forest_move_eval', exec_name = 'mai_animals_forest_move_exec',
                     max_score = 290000, cfg_table = cfg_animals
                 },
                 {
-                    id = "tusklet", eval_name = 'tusklet_eval', exec_name = 'tusklet_exec',
+                    id = "tusklet", eval_name = 'mai_animals_tusklet_eval', exec_name = 'mai_animals_tusklet_exec',
                     max_score = 280000, cfg_table = cfg_animals
                 }
             }
@@ -651,11 +657,11 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'swarm') then
             CA_parms = {
                 {
-                    id = "scatter_swarm", eval_name = 'scatter_swarm_eval', exec_name = 'scatter_swarm_exec',
+                    id = "scatter_swarm", eval_name = 'mai_animals_scatter_swarm_eval', exec_name = 'mai_animals_scatter_swarm_exec',
                     max_score = 300000, cfg_table = cfg_animals
                 },
                 {
-                    id = "move_swarm", eval_name = 'move_swarm_eval', exec_name = 'move_swarm_exec',
+                    id = "move_swarm", eval_name = 'mai_animals_move_swarm_eval', exec_name = 'mai_animals_move_swarm_exec',
                     max_score = 290000, cfg_table = cfg_animals
                 }
             }
@@ -664,11 +670,11 @@ function wesnoth.wml_actions.micro_ai(cfg)
         if (cfg_animals.animal_type == 'wolves_multipacks') then
             CA_parms = {
                 {
-                    id = "wolves_multipacks_attack", eval_name = 'wolves_multipacks_attack_eval', exec_name = 'wolves_multipacks_attack_exec',
+                    id = "wolves_multipacks_attack", eval_name = 'mai_animals_wolves_multipacks_attack_eval', exec_name = 'mai_animals_wolves_multipacks_attack_exec',
                     max_score = 300000, cfg_table = cfg_animals
                 },
                 {
-                    id = "wolves_multipacks_wander_eval", eval_name = 'wolves_multipacks_wander_eval', exec_name = 'wolves_multipacks_wander_exec',
+                    id = "wolves_multipacks_wander_eval", eval_name = 'mai_animals_wolves_multipacks_wander_eval', exec_name = 'mai_animals_wolves_multipacks_wander_exec',
                     max_score = 290000, cfg_table = cfg_animals
                 }
             }
@@ -678,7 +684,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
             local unit = wesnoth.get_units { id=cfg_animals.id }[1]
             CA_parms = {
                 {
-                    id = "hunter_unit_" .. cfg_animals.id, eval_name = 'hunter_unit_eval', exec_name = 'hunter_unit_exec',
+                    id = "hunter_unit_" .. cfg_animals.id, eval_name = 'mai_animals_hunter_unit_eval', exec_name = 'mai_animals_hunter_unit_exec',
                     max_score = 300000, sticky = true, unit_x = unit.x, unit_y = unit.y, cfg_table = cfg_animals
                 }
             }
@@ -717,7 +723,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
         local unit = wesnoth.get_units { id=cfg_p.id }[1]
         local CA_parms = {
             {
-                id = "patrol_unit_" .. cfg_p.id, eval_name = 'patrol_eval', exec_name = 'patrol_exec',
+                id = "patrol_unit_" .. cfg_p.id, eval_name = 'mai_patrol_eval', exec_name = 'mai_patrol_exec',
                 max_score = 300000, sticky = true, unit_x = unit.x, unit_y = unit.y, cfg_table = cfg_p
             },
         }
@@ -736,13 +742,13 @@ function wesnoth.wml_actions.micro_ai(cfg)
 
         if cfg.recruiting_type then
             if cfg.recruiting_type == "rushers" then
-                recruit_CA.eval_name = 'rusher_recruit_eval'
-                recruit_CA.exec_name = 'rusher_recruit_exec'
+                recruit_CA.eval_name = 'mai_rusher_recruit_eval'
+                recruit_CA.exec_name = 'mai_rusher_recruit_exec'
 
                 cfg_recruiting.randomness = cfg.randomness
             elseif cfg.recruiting_type == "random" then
-                recruit_CA.eval_name = 'random_recruit_eval'
-                recruit_CA.exec_name = 'random_recruit_exec'
+                recruit_CA.eval_name = 'mai_random_recruit_eval'
+                recruit_CA.exec_name = 'mai_random_recruit_exec'
 
                 cfg_recruiting.skip_low_gold_recruiting = cfg.skip_low_gold_recruiting
 
@@ -836,7 +842,7 @@ function wesnoth.wml_actions.micro_ai(cfg)
         -- Set up the CA add/delete parameters
         local CA_parms = {
             {  -- Note: do not define max_score
-                id = ca_id, eval_name = 'goto_eval', exec_name = 'goto_exec',
+                id = ca_id, eval_name = 'mai_goto_eval', exec_name = 'mai_goto_exec',
                 cfg_table = cfg_go,
                 pass_ca_id = true
             }

@@ -411,13 +411,7 @@ unit::unit(const config &cfg, bool use_traits, game_state* state, const vconfig*
 	if (const config &status_flags = cfg.child("status"))
 	{
 		BOOST_FOREACH(const config::attribute &st, status_flags.attribute_range()) {
-			if (st.first == "healable") {
-				///@deprecated 1.9.2 'healable' instead of 'unhealable'
-				ERR_UT << "Usage of 'healable' is deprecated, use 'unhealable' instead, "
-					"support will be removed in 1.9.2.\n";
-				if (!st.second.to_bool(true))
-					set_state("unhealable", true);
-			} else if (st.second.to_bool()) {
+			if (st.second.to_bool()) {
 				set_state(st.first, true);
 			}
 		}
@@ -637,7 +631,7 @@ unit::~unit()
  */
 unit& unit::operator=(const unit& u)
 {
-	// Use copy constructor to make sure we are coherant
+	// Use copy constructor to make sure we are coherent
 	if (this != &u) {
 		this->~unit();
 		new (this) unit(u) ;
@@ -1494,24 +1488,10 @@ bool unit::internal_matches_filter(const vconfig& cfg, const map_location& loc, 
 		for (i = vis_filt.begin(); i != i_end; ++i) {
 			bool visible = (*i)["visible"].to_bool(true);
 			std::set<int> viewers;
-			if (i->has_attribute("viewing_side")) {
-				ERR_NG << "[filter_vision]viewing_side= is deprecated, use side=\n";
-				const int max_side = static_cast<int>(teams_manager::get_teams().size());
-				std::vector<std::pair<int,int> > ranges = utils::parse_ranges((*i)["viewing_side"]);
-				std::vector<std::pair<int,int> >::const_iterator range, range_end = ranges.end();
-				for (range = ranges.begin(); range != range_end; ++range) {
-					for (int i=range->first; i<=range->second; ++i) {
-						if ( 0 < i  &&  i <= max_side ) {
-							viewers.insert(i);
-						}
-					}
-				}
-			} else {
-				// Use standard side filter
-				side_filter ssf(*i);
-				std::vector<int> sides = ssf.get_teams();
-				viewers.insert(sides.begin(), sides.end());
-			}
+			// Use standard side filter
+			side_filter ssf(*i);
+			std::vector<int> sides = ssf.get_teams();
+			viewers.insert(sides.begin(), sides.end());
 			if (viewers.empty()) {
 				return false;
 			}
@@ -1953,7 +1933,8 @@ void unit::redraw_unit()
 	surface ellipse_front(NULL);
 	surface ellipse_back(NULL);
 	int ellipse_floating = 0;
-	if(draw_bars && preferences::show_side_colors()) {
+	// Always show the ellipse for selected units
+	if(draw_bars && (preferences::show_side_colors() || disp.selected_hex() == loc_)) {
 		if(adjusted_params.submerge > 0.0) {
 			// The division by 2 seems to have no real meaning,
 			// It just works fine with the current center of ellipse
@@ -1966,15 +1947,16 @@ void unit::redraw_unit()
 			ellipse="misc/ellipse";
 		}
 
+		const char* const leader = can_recruit() ? "leader-" : "";
 		const char* const selected = disp.selected_hex() == loc_ ? "selected-" : "";
 
 		// Load the ellipse parts recolored to match team color
 		char buf[100];
 		std::string tc=team::get_side_color_index(side_);
 
-		snprintf(buf,sizeof(buf),"%s-%stop.png~RC(ellipse_red>%s)",ellipse.c_str(),selected,tc.c_str());
+		snprintf(buf,sizeof(buf),"%s-%s%stop.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,selected,tc.c_str());
 		ellipse_back.assign(image::get_image(image::locator(buf), image::SCALED_TO_ZOOM));
-		snprintf(buf,sizeof(buf),"%s-%sbottom.png~RC(ellipse_red>%s)",ellipse.c_str(),selected,tc.c_str());
+		snprintf(buf,sizeof(buf),"%s-%s%sbottom.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,selected,tc.c_str());
 		ellipse_front.assign(image::get_image(image::locator(buf), image::SCALED_TO_ZOOM));
 	}
 
@@ -1991,11 +1973,16 @@ void unit::redraw_unit()
 	}
 	if(draw_bars) {
 		const image::locator* orb_img = NULL;
-		static const image::locator enemy_orb(game_config::images::enemy_orb);
-		static const image::locator ally_orb(game_config::images::ally_orb);
-		static const image::locator moved_orb(game_config::images::moved_orb);
-		static const image::locator unmoved_orb(game_config::images::unmoved_orb);
-		static const image::locator partmoved_orb(game_config::images::partmoved_orb);
+		static const image::locator partmoved_orb(game_config::images::orb + "~RC(magenta>" +
+						game_config::images::partmoved_orb_color + ")"  );
+		static const image::locator moved_orb(game_config::images::orb + "~RC(magenta>" +
+						game_config::images::moved_orb_color + ")"  );
+		static const image::locator ally_orb(game_config::images::orb + "~RC(magenta>" +
+				game_config::images::ally_orb_color + ")"  );
+		static const image::locator enemy_orb(game_config::images::orb + "~RC(magenta>" +
+				game_config::images::enemy_orb_color + ")"  );
+		static const image::locator unmoved_orb(game_config::images::orb + "~RC(magenta>" +
+					game_config::images::unmoved_orb_color + ")"  );
 
 		const std::string* energy_file = &game_config::images::energy;
 
@@ -2653,7 +2640,7 @@ void unit::add_modification(const std::string& mod_type, const config& mod, bool
 			}
 		}
 		if ( set_poisoned )
-			// An effect explictly set the poisoned state, and this
+			// An effect explicitly set the poisoned state, and this
 			// should override the unit being immune to poison.
 			set_state(STATE_POISONED, true);
 	}

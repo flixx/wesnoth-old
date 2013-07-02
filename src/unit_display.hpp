@@ -20,14 +20,13 @@
 #ifndef UNIT_DISPLAY_HPP_INCLUDED
 #define UNIT_DISPLAY_HPP_INCLUDED
 
-#include "unit_animation.hpp"
-#include "unit_map.hpp"
-#include "gamestatus.hpp"
 #include "game_display.hpp"
+#include "map_location.hpp"
+#include "unit_animation.hpp"
 
 class attack_type;
-class team;
 class unit;
+class vconfig;
 
 /**
  *  Contains a number of free functions which display units
@@ -130,7 +129,7 @@ void unit_healing(unit &healed, const std::vector<unit *> &healers, int healing,
  * Returns once animation is played.
  *
  * This is used for the animate_unit action, but can easily be generalized if
- * other wml-decribed animations are needed.
+ * other wml-described animations are needed.
  */
 void wml_animation(const vconfig &cfg,
 	const map_location& default_location=map_location::null_location);

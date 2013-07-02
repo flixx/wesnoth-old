@@ -1285,6 +1285,13 @@ REPORT_GENERATOR(income)
 	return text_report(str.str());
 }
 
+namespace {
+void blit_tced_icon(config &cfg, const std::string &terrain_id, bool high_res) {
+	const std::string tc_base = high_res ? "images/buttons/icon-base-32.png" : "images/buttons/icon-base-16.png";
+	const std::string terrain_image = "icons/terrain/terrain_type_" + terrain_id + (high_res ? "_30.png" : ".png");
+	add_image(cfg, tc_base + "~RC(magenta>" + terrain_id + ")~BLIT(" + terrain_image + ")", terrain_id);
+}
+}
 
 REPORT_GENERATOR(terrain_info)
 {
@@ -1298,16 +1305,25 @@ REPORT_GENERATOR(terrain_info)
 	std::ostringstream str;
 	config cfg;
 
+	bool high_res = false;
+
+	if (display::get_singleton()->shrouded(mouseover_hex)) {
+		blit_tced_icon(cfg, "shroud", high_res);
+		return cfg;
+	}
+	if (display::get_singleton()->fogged(mouseover_hex)) {
+		blit_tced_icon(cfg, "fog", high_res);
+	}
+
 	if (map.is_keep(mouseover_hex)) {
-		add_image(cfg, "icons/terrain/terrain_type_keep.png", "");
+		blit_tced_icon(cfg, "keep", high_res);
 	}
 
 	const t_translation::t_list& underlying_terrains = map.underlying_union_terrain(terrain);
 	BOOST_FOREACH(const t_translation::t_terrain& underlying_terrain, underlying_terrains) {
 
 		const std::string& terrain_id = map.get_terrain_info(underlying_terrain).id();
-		str << terrain_id;
-		add_image(cfg, "icons/terrain/terrain_type_" + terrain_id + ".png", str.str());
+		blit_tced_icon(cfg, terrain_id, high_res);
 	}
 	return cfg;
 }

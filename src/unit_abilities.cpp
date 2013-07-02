@@ -89,9 +89,9 @@ A poisoned unit cannot be cured of its poison by a healer, and must seek the car
  */
 
 
-namespace unit_abilities {
+namespace {
 
-static bool affects_side(const config& cfg, const std::vector<team>& teams, size_t side, size_t other_side)
+bool affects_side(const config& cfg, const std::vector<team>& teams, size_t side, size_t other_side)
 {
 	if (side == other_side)
 		return cfg["affect_allies"].to_bool(true);
@@ -122,11 +122,18 @@ bool unit::get_ability_bool(const std::string& tag_name, const map_location& loc
 		const unit_map::const_iterator it = units.find(adjacent[i]);
 		if (it == units.end() || it->incapacitated())
 			continue;
+		// Abilities may be tested at locations other than the unit's current
+		// location. This is intentional to allow for less messing with the unit
+		// map during calculations, particularly with regards to movement.
+		// Thus, we need to make sure the adjacent unit (*it) is not actually
+		// ourself.
+		if ( &*it == this )
+			continue;
 		const config &adj_abilities = it->cfg_.child("abilities");
 		if (!adj_abilities)
 			continue;
 		BOOST_FOREACH(const config &j, adj_abilities.child_range(tag_name)) {
-			if (unit_abilities::affects_side(j, teams_manager::get_teams(), side(), it->side()) &&
+			if (affects_side(j, teams_manager::get_teams(), side(), it->side()) &&
 			    it->ability_active(tag_name, j, adjacent[i]) &&
 			    ability_affects_adjacent(tag_name,  j, i, loc))
 				return true;
@@ -156,11 +163,18 @@ unit_ability_list unit::get_abilities(const std::string& tag_name, const map_loc
 		const unit_map::const_iterator it = units.find(adjacent[i]);
 		if (it == units.end() || it->incapacitated())
 			continue;
+		// Abilities may be tested at locations other than the unit's current
+		// location. This is intentional to allow for less messing with the unit
+		// map during calculations, particularly with regards to movement.
+		// Thus, we need to make sure the adjacent unit (*it) is not actually
+		// ourself.
+		if ( &*it == this )
+			continue;
 		const config &adj_abilities = it->cfg_.child("abilities");
 		if (!adj_abilities)
 			continue;
 		BOOST_FOREACH(const config &j, adj_abilities.child_range(tag_name)) {
-			if (unit_abilities::affects_side(j, teams_manager::get_teams(), side(), it->side()) &&
+			if (affects_side(j, teams_manager::get_teams(), side(), it->side()) &&
 			    it->ability_active(tag_name, j, adjacent[i]) &&
 			    ability_affects_adjacent(tag_name, j, i, loc))
 				res.push_back(unit_ability(&j, adjacent[i]));
@@ -213,34 +227,6 @@ namespace {
 		                     gender == unit_race::MALE ? male_key : female_key,
 		                     default_key);
 	}
-
-	/**
-	 * Strips the name of an ability/special from the description.
-	 * This is legacy support, introduced for version 1.11.1.
-	 * Can (should) be removed post-1.12.
-	 */
-	t_string legacy_description(const t_string & description)
-	{
-		// The legacy format is name + ':' + newline + description.
-		// We identify this by the colon.
-		std::string revision = description.str();
-		const size_t colon_pos = revision.find(':');
-		if ( colon_pos != std::string::npos )
-			// Make sure this colon ends the first line.
-			if ( revision.find('\n') == colon_pos + 1 ) {
-				//@deprecated Format changed for 1.11.1.
-				// Not logging this here because it would spam the screen,
-				// and these will have been caught when the help was generated.
-				//lg::wml_error << "Descriptions should no longer include the name as the first line.\n";
-
-				// Remove the first line.
-				revision.erase(0, colon_pos + 2);
-				return t_string(revision);
-			}
-
-		// No adaptation needed.
-		return description;
-	}
 }
 
 /**
@@ -272,7 +258,7 @@ std::vector<boost::tuple<t_string,t_string,t_string> > unit::ability_tooltips(st
 				res.push_back(boost::make_tuple(
 						ab.cfg["name"].t_str(),
 						name,
-						legacy_description(ab.cfg["description"].t_str()) ));
+						legacy::ability_description(ab.cfg["description"].t_str()) ));
 				if ( active_list )
 					active_list->push_back(true);
 			}
@@ -290,7 +276,7 @@ std::vector<boost::tuple<t_string,t_string,t_string> > unit::ability_tooltips(st
 				res.push_back(boost::make_tuple(
 						default_value(ab.cfg, "name_inactive", "name").t_str(),
 						name,
-						legacy_description(default_value(ab.cfg, "description_inactive", "description").t_str()) ));
+						legacy::ability_description(default_value(ab.cfg, "description_inactive", "description").t_str()) ));
 				active_list->push_back(false);
 			}
 		}
@@ -585,7 +571,7 @@ unit_ability_list attack_type::get_specials(const std::string& special) const
 }
 
 /**
- * Returns a vector of names and decriptions for the specials of *this.
+ * Returns a vector of names and descriptions for the specials of *this.
  * Each std::pair in the vector has first = name and second = description.
  *
  * This uses either the active or inactive name/description for each special,
@@ -609,7 +595,7 @@ std::vector<std::pair<t_string, t_string> > attack_type::special_tooltips(
 		if ( !active_list || special_active(sp.cfg, AFFECT_EITHER) ) {
 			const t_string &name = sp.cfg["name"];
 			if (!name.empty()) {
-				res.push_back(std::make_pair(name, legacy_description(sp.cfg["description"].t_str()) ));
+				res.push_back(std::make_pair(name, legacy::ability_description(sp.cfg["description"].t_str()) ));
 				if ( active_list )
 					active_list->push_back(true);
 			}
@@ -617,7 +603,7 @@ std::vector<std::pair<t_string, t_string> > attack_type::special_tooltips(
 			t_string const &name = default_value(sp.cfg, "name_inactive", "name").t_str();
 			if (!name.empty()) {
 				res.push_back(std::make_pair(
-					name, legacy_description(default_value(sp.cfg, "description_inactive", "description").t_str()) ));
+					name, legacy::ability_description(default_value(sp.cfg, "description_inactive", "description").t_str()) ));
 				active_list->push_back(false);
 			}
 		}

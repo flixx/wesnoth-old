@@ -17,19 +17,24 @@
 #ifndef GAME_STATUS_HPP_INCLUDED
 #define GAME_STATUS_HPP_INCLUDED
 
+#include "config.hpp"
+#include "game_end_exceptions.hpp"
+#include "map_location.hpp"
 #include "mp_game_settings.hpp"
 #include "random.hpp"
 #include "simple_rng.hpp"
-#include "map_location.hpp"
-#include "variable.hpp"
-#include "serialization/binary_or_text.hpp"
+#include "tstring.hpp"
 #include "boost/shared_ptr.hpp"
-#include "game_end_exceptions.hpp"
-#include "unit.hpp"
 
+class config_writer;
+class game_display;
+class gamemap;
 class scoped_wml_variable;
 class team;
-class gamemap;
+class unit_map;
+
+// Defined later in this header:
+class game_data;
 
 void convert_old_saves(config& cfg);
 
@@ -95,7 +100,6 @@ public:
 	void transfer_all_gold_to(config& side_cfg);
 	void transfer_all_recruits_to(config& side_cfg);
 	void transfer_all_recalls_to(config& side_cfg);
-	//std::vector<unit>& get_recall_list() { return recall_list_; };
 	void update_carryover(const team& t, const int gold, const bool add);
 	void initialize_team(config& side_cfg);
 	const std::string to_string();
@@ -107,7 +111,10 @@ private:
 	int gold_;
 	std::string name_;
 	std::set<std::string> previous_recruits_;
-	std::vector<unit> recall_list_;
+	// NOTE: we store configs instead of units because units often assume or
+	//       assert that various resources:: are available, which is not the
+	//       case between scenarios.
+	std::vector<config> recall_list_;
 	std::string save_id_;
 
 	std::string get_recruits(bool erase=false);
@@ -268,7 +275,7 @@ public:
 	bool end_credits;                                /**< whether to show the standard credits at the end */
 	std::string end_text;                            /**< end-of-campaign text */
 	unsigned int end_text_duration;                  /**< for how long the end-of-campaign text is shown */
-//	std::string difficulty; /**< The difficulty level the game is being played on. */
+	std::string difficulty; /**< The difficulty level the game is being played on. */
 };
 
 class game_state

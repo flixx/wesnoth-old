@@ -103,6 +103,7 @@ const hotkey_command hotkey_list_[] = {
 	{ hotkey::HOTKEY_SPEAK, "speak", N_("Speak"), false, hotkey::SCOPE_GAME, NULL },
 	{ hotkey::HOTKEY_CREATE_UNIT, "createunit", N_("Create Unit (Debug!)"), false, hotkey::SCOPE_GAME, NULL },
 	{ hotkey::HOTKEY_CHANGE_SIDE, "changeside", N_("Change Side (Debug!)"), false, hotkey::SCOPE_GAME, NULL },
+	{ hotkey::HOTKEY_KILL_UNIT, "killunit", N_("Kill Unit (Debug!)"), false, hotkey::SCOPE_GAME, NULL },
 	{ hotkey::HOTKEY_PREFERENCES, "preferences", N_("Preferences"), false, hotkey::SCOPE_GENERAL, NULL },
 	{ hotkey::HOTKEY_OBJECTIVES, "objectives", N_("Scenario Objectives"), false, hotkey::SCOPE_GAME, NULL },
 	{ hotkey::HOTKEY_UNIT_LIST, "unitlist", N_("Unit List"), false, hotkey::SCOPE_GENERAL, NULL },
@@ -182,6 +183,7 @@ const hotkey_command hotkey_list_[] = {
 	{ hotkey::HOTKEY_EDITOR_UNIT_CHANGE_ID, "editor-change-unitid", N_("Change Unit ID"), false, hotkey::SCOPE_EDITOR, NULL },
 	{ hotkey::HOTKEY_EDITOR_UNIT_TOGGLE_LOYAL, "editor-unit-toggle-loyal", N_("Loyal"), false, hotkey::SCOPE_EDITOR, NULL },
 
+	{ hotkey::HOTKEY_MINIMAP_COLOR_CODING, "minimap-color-coding", N_("Toggle Minimap color coding"), false, hotkey::SCOPE_GENERAL, NULL },
 
 	{ hotkey::HOTKEY_EDITOR_BRUSH_NEXT, "editor-brush-next", N_("Next Brush"), false, hotkey::SCOPE_EDITOR, NULL },
 	{ hotkey::HOTKEY_EDITOR_BRUSH_DEFAULT, "editor-brush-default", N_("Default Brush"), false, hotkey::SCOPE_EDITOR, NULL },
@@ -1025,6 +1027,9 @@ bool command_executor::execute_command(HOTKEY_COMMAND command, int /*index*/)
 		case HOTKEY_CHANGE_SIDE:
 			change_side();
 			break;
+		case HOTKEY_KILL_UNIT:
+			kill_unit();
+			break;
 		case HOTKEY_PREFERENCES:
 			preferences();
 			break;
@@ -1163,6 +1168,10 @@ void execute_command(display& disp, HOTKEY_COMMAND command, command_executor* ex
 		}
 	}
 	switch (command) {
+		case HOTKEY_MINIMAP_COLOR_CODING:
+			preferences::toggle_minimap_color_coding();
+			disp.redraw_minimap();
+			break;
 		case HOTKEY_ZOOM_IN:
 			disp.set_zoom(zoom_amount);
 			break;

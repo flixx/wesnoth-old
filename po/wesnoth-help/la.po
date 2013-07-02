@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wesnoth 1.8\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-12 19:12+0200\n"
-"PO-Revision-Date: 2012-12-19 21:56-0000\n"
+"POT-Creation-Date: 2013-06-24 15:23+0200\n"
+"PO-Revision-Date: 2013-06-20 23:23-0000\n"
 "Last-Translator: Thomas Hockings <elprofesh@gmail.com>\n"
 "Language-Team: Latin <http://wiki.wesnoth.org/LatinTranslation>\n"
 "Language: la\n"
@@ -21,11 +21,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.5.5\n"
 
 #. [time]: id=underground
 #: data/campaigns/Heir_To_The_Throne/utils/httt_utils.cfg:529
-#: data/core/macros/schedules.cfg:78
+#: data/core/macros/schedules.cfg:99
 msgid "Underground"
 msgstr "Subterraneus"
 
@@ -892,7 +892,7 @@ msgstr "Praecipua Telorum"
 
 #. #-#-#-#-#  wesnoth-help.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [section]: id=factions_section
-#: data/core/help.cfg:56 src/help.cpp:1307 src/help.cpp:1309
+#: data/core/help.cfg:56 src/help.cpp:1279 src/help.cpp:1281
 msgid "Factions"
 msgstr "Factiones"
 
@@ -1622,9 +1622,8 @@ msgstr ""
 
 #. [topic]: id=damage_types_and_resistance
 #: data/core/help.cfg:260
-#, fuzzy
 msgid "Damage Types and Resistance"
-msgstr "Genera Damni et Repugnantia"
+msgstr "Genera Damni et Firmitas"
 
 #. [topic]: id=damage_types_and_resistance
 #: data/core/help.cfg:261
@@ -1735,7 +1734,7 @@ msgstr ""
 #. [time]: id=dawn_hour
 #. [topic]: id=time_of_day
 #: data/core/help.cfg:281 data/core/macros/schedules.cfg:6
-#: data/core/macros/schedules.cfg:246
+#: data/core/macros/schedules.cfg:285
 msgid "Dawn"
 msgstr "Diluculum"
 
@@ -1747,27 +1746,27 @@ msgstr "Ante Meridiem"
 
 #. [time]: id=afternoon
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:283 data/core/macros/schedules.cfg:26
+#: data/core/help.cfg:283 data/core/macros/schedules.cfg:35
 msgid "Afternoon"
 msgstr "Post Meridiem"
 
 #. [time]: id=dusk
 #. [time]: id=dusk_hour
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:284 data/core/macros/schedules.cfg:35
-#: data/core/macros/schedules.cfg:358
+#: data/core/help.cfg:284 data/core/macros/schedules.cfg:44
+#: data/core/macros/schedules.cfg:397
 msgid "Dusk"
 msgstr "Crepusculum"
 
 #. [time]: id=first_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:285 data/core/macros/schedules.cfg:46
+#: data/core/help.cfg:285 data/core/macros/schedules.cfg:55
 msgid "First Watch"
 msgstr "Vigilia Prima"
 
 #. [time]: id=second_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:286 data/core/macros/schedules.cfg:58
+#: data/core/help.cfg:286 data/core/macros/schedules.cfg:79
 msgid "Second Watch"
 msgstr "Vigilia Secunda"
 
@@ -4085,124 +4084,126 @@ msgstr ""
 msgid "Max HP bonus +3, Max XP +20%"
 msgstr "Max bonum PS +III, Max PU +XX%"
 
+#. [time]: id=midday
+#. [time]: id=midday_hour
+#: data/core/macros/schedules.cfg:26 data/core/macros/schedules.cfg:332
+msgid "Midday"
+msgstr "Meridies"
+
+# NB: these translations are utterly different from how the Romans counted the hours
+#. [time]: id=midnight
+#. [time]: id=midnight_hour
+#: data/core/macros/schedules.cfg:67 data/core/macros/schedules.cfg:201
+msgid "Midnight"
+msgstr "Media Nox"
+
 #. [time]: id=indoors
-#: data/core/macros/schedules.cfg:70
+#: data/core/macros/schedules.cfg:91
 msgid "Indoors"
 msgstr "Intro"
 
 #. [time]: id=deep_underground
-#: data/core/macros/schedules.cfg:90
+#: data/core/macros/schedules.cfg:111
 msgid "Deep Underground"
 msgstr "Subterraneus Infernus"
 
-# NB: these translations are utterly different from how the Romans counted the hours
-#. [time]: id=midnight_hour
-#: data/core/macros/schedules.cfg:162
-msgid "Midnight"
-msgstr "Media Nox"
-
 #. [time]: id=second_watch_hour1
-#: data/core/macros/schedules.cfg:174
+#: data/core/macros/schedules.cfg:213
 msgid "Second Watch — First Hour"
 msgstr "Secunda Vigilia — Prima Hora"
 
 #. [time]: id=second_watch_hour2
-#: data/core/macros/schedules.cfg:186
+#: data/core/macros/schedules.cfg:225
 msgid "Second Watch — Second Hour"
 msgstr "Secunda Vigilia — Secunda Hora"
 
 #. [time]: id=second_watch_hour3
-#: data/core/macros/schedules.cfg:198
+#: data/core/macros/schedules.cfg:237
 msgid "Second Watch — Third Hour"
 msgstr "Secunda Vigilia — Tertia Hora"
 
 #. [time]: id=second_watch_hour4
-#: data/core/macros/schedules.cfg:210
+#: data/core/macros/schedules.cfg:249
 msgid "Second Watch — Fourth Hour"
 msgstr "Secunda Vigilia — Tertia Hora"
 
 #. [time]: id=second_watch_hour5
-#: data/core/macros/schedules.cfg:222
+#: data/core/macros/schedules.cfg:261
 msgid "Second Watch — Fifth Hour"
 msgstr "Secunda Vigilia — Quinta Hora"
 
 #. [time]: id=second_watch_hour6
-#: data/core/macros/schedules.cfg:234
+#: data/core/macros/schedules.cfg:273
 msgid "Second Watch — Sixth Hour"
 msgstr "Secunda Vigilia — Sexta Hora"
 
 #. [time]: id=morning_hour1
-#: data/core/macros/schedules.cfg:257
+#: data/core/macros/schedules.cfg:296
 msgid "Morning — First Hour"
 msgstr "Ante Meridiem — Prima Hora"
 
 #. [time]: id=morning_hour2
-#: data/core/macros/schedules.cfg:266
+#: data/core/macros/schedules.cfg:305
 msgid "Morning — Second Hour"
 msgstr "Ante Meridiem — Secunda Hora"
 
 #. [time]: id=morning_hour3
-#: data/core/macros/schedules.cfg:275
+#: data/core/macros/schedules.cfg:314
 msgid "Morning — Third Hour"
 msgstr "Ante Meridiem — Tertia Hora"
 
 #. [time]: id=morning_hour4
-#: data/core/macros/schedules.cfg:284
+#: data/core/macros/schedules.cfg:323
 msgid "Morning — Fourth Hour"
 msgstr "Ante Meridiem — Quarta Hora"
 
-#. [time]: id=midday_hour
-#: data/core/macros/schedules.cfg:293
-msgid "Midday"
-msgstr "Meridies"
-
 #. [time]: id=afternoon_hour1
-#: data/core/macros/schedules.cfg:302
+#: data/core/macros/schedules.cfg:341
 msgid "Afternoon — First Hour"
 msgstr "Post Meridiem — Prima Hora"
 
 #. [time]: id=afternoon_hour2
-#: data/core/macros/schedules.cfg:311
+#: data/core/macros/schedules.cfg:350
 msgid "Afternoon — Second Hour"
 msgstr "Post Meridiem — Secunda Hora"
 
 #. [time]: id=afternoon_hour3
-#: data/core/macros/schedules.cfg:320
+#: data/core/macros/schedules.cfg:359
 msgid "Afternoon — Third Hour"
 msgstr "Post Meridiem —Tertia Hora"
 
 #. [time]: id=afternoon_hour4
-#: data/core/macros/schedules.cfg:329
+#: data/core/macros/schedules.cfg:368
 msgid "Afternoon — Fourth Hour"
 msgstr "Post Meridiem — Quarta Hora"
 
 #. [time]: id=afternoon_hour5
-#: data/core/macros/schedules.cfg:338
+#: data/core/macros/schedules.cfg:377
 msgid "Afternoon — Fifth Hour"
 msgstr "Post Meridiem — Quinta Hora"
 
 #. [time]: id=afternoon_hour6
-#: data/core/macros/schedules.cfg:347
+#: data/core/macros/schedules.cfg:386
 msgid "Afternoon — Sixth Hour"
 msgstr "Post Meridiem — Sexta Hora"
 
 #. [time]: id=first_watch_hour1
-#: data/core/macros/schedules.cfg:369
+#: data/core/macros/schedules.cfg:408
 msgid "First Watch — First Hour"
 msgstr "Prima Vigilia — Prima Hora"
 
 #. [time]: id=first_watch_hour2
-#: data/core/macros/schedules.cfg:381
+#: data/core/macros/schedules.cfg:420
 msgid "First Watch — Second Hour"
 msgstr "Prima Vigilia — Secunda Hora"
 
 #. [time]: id=first_watch_hour3
-#: data/core/macros/schedules.cfg:393
+#: data/core/macros/schedules.cfg:432
 msgid "First Watch — Third Hour"
 msgstr "Prima Vigilia — Tertia Hora"
 
 #. [time]: id=first_watch_hour4
-#: data/core/macros/schedules.cfg:405
+#: data/core/macros/schedules.cfg:444
 msgid "First Watch — Fourth Hour"
 msgstr "Prima Vigilia — Quarta Hora"
 
@@ -4235,29 +4236,23 @@ msgstr ""
 "nonnulli vivis."
 
 #: data/core/macros/special-notes.cfg:14
-#, fuzzy
 msgid " This unit is capable of basic healing."
-msgstr " Haec unitas unitates vicinas mederi potest et eas a veneno curare."
+msgstr " Hic actor sanationem mediocrem potest."
 
 #: data/core/macros/special-notes.cfg:17
-#, fuzzy
 msgid " This unit is capable of rapid healing."
-msgstr " Haec unitas unitates vicinas mederi potest et eas a veneno curare."
+msgstr " Hic actor sanationem celerem potest."
 
 #: data/core/macros/special-notes.cfg:20
-#, fuzzy
 msgid ""
 " This unit is capable of healing those around it, and curing them of poison."
-msgstr " Haec unitas unitates vicinas mederi potest et eas a veneno curare."
+msgstr " Hic actor vicinos sanare potest et venenum purgare."
 
 #: data/core/macros/special-notes.cfg:23
-#, fuzzy
 msgid ""
 " This unit is capable of neutralizing the effects of poison in units around "
 "it."
-msgstr ""
-" Haec unitas mederi potest, sed tantum eventus veneni retardare potest, non "
-"omnino curare."
+msgstr " Hic actor venenum vicinorum supprimere."
 
 #: data/core/macros/special-notes.cfg:26
 #, fuzzy
@@ -4479,9 +4474,8 @@ msgstr "immortua"
 #. [trait]: id=undead
 #: data/core/macros/traits.cfg:24 data/core/macros/traits.cfg:47
 #: data/core/macros/traits.cfg:70
-#, fuzzy
 msgid "Immune to drain, poison, and plague"
-msgstr "Immunis veneno"
+msgstr "Ab hauriendo et veneno et peste incolumis"
 
 #. [trait]: id=mechanical
 #: data/core/macros/traits.cfg:45
@@ -5261,7 +5255,7 @@ msgstr ""
 #. [race]: id=undead
 #: data/core/units.cfg:294
 msgid "race^Undead"
-msgstr "Immortuus"
+msgstr "Immortuum"
 
 #. [race]: id=undead
 #: data/core/units.cfg:295
@@ -5271,7 +5265,7 @@ msgstr "Immortua"
 #. [race]: id=undead
 #: data/core/units.cfg:296
 msgid "race+plural^Undead"
-msgstr "Immortui"
+msgstr "Immortua"
 
 #. [race]: id=undead
 #: data/core/units.cfg:297
@@ -5332,252 +5326,187 @@ msgid "Help"
 msgstr "Auxilium"
 
 #: src/help.cpp:1142
-#, fuzzy
 msgid "<header>text='Units having this special attack'</header>"
-msgstr ""
-"\n"
-"\n"
-"<header>text='Probabilitas icti'</header>"
+msgstr "<header>text='Actores huius ictus praecipui'</header>"
 
-#: src/help.cpp:1236
-#, fuzzy
+#: src/help.cpp:1208
 msgid "<header>text='Units having this ability'</header>"
-msgstr ""
-"\n"
-"\n"
-"<header>text='Probabilitas icti'</header>"
+msgstr "<header>text='Actores huius facultatis'</header>"
 
-#: src/help.cpp:1269
+#: src/help.cpp:1241
 msgid "Leaders:"
 msgstr "Duces:"
 
-#: src/help.cpp:1278
+#: src/help.cpp:1250
 msgid "Recruits:"
 msgstr "Tirones:"
 
-#: src/help.cpp:1292
+#: src/help.cpp:1264
 msgid "Era:"
 msgstr "Aetas:"
 
-#: src/help.cpp:1300
+#: src/help.cpp:1272
 msgid "Factions:"
 msgstr "Factiones:"
 
-#: src/help.cpp:1310
+#: src/help.cpp:1282
 msgid "Factions are only used in multiplayer"
 msgstr "Modo potest ut factiones cum pluribus lusoribus utantur"
 
-#: src/help.cpp:1354
+#: src/help.cpp:1326
 msgid "level"
 msgstr "ordo"
 
-#: src/help.cpp:1387
+#: src/help.cpp:1359
 msgid "Advances from: "
 msgstr "Producitur a: "
 
-#: src/help.cpp:1389
+#: src/help.cpp:1361
 msgid "Advances to: "
 msgstr "Producitur ad: "
 
-#: src/help.cpp:1412
+#: src/help.cpp:1384
 msgid "Base unit: "
 msgstr "Actor communis: "
 
-#: src/help.cpp:1422
+#: src/help.cpp:1394
 msgid "Variations: "
 msgstr "Variationes: "
 
-#: src/help.cpp:1446 src/help.cpp:1818 src/help.cpp:1891
+#: src/help.cpp:1418 src/help.cpp:1790 src/help.cpp:1863
 msgid "race^Miscellaneous"
 msgstr "Alia"
 
-#: src/help.cpp:1448
+#: src/help.cpp:1420
 msgid "Race: "
 msgstr "Stirps: "
 
-#: src/help.cpp:1455
+#: src/help.cpp:1427
 msgid "Abilities: "
 msgstr "Facultates: "
 
-#: src/help.cpp:1472
+#: src/help.cpp:1444
 msgid "Ability Upgrades: "
 msgstr "Praemia Producendi: "
 
-#: src/help.cpp:1488
+#: src/help.cpp:1460
 msgid "HP: "
 msgstr "PS: "
 
-#: src/help.cpp:1489
+#: src/help.cpp:1461
 msgid "Moves: "
 msgstr "Motus: "
 
-#: src/help.cpp:1491
+#: src/help.cpp:1463
 msgid "Vision: "
-msgstr ""
+msgstr "Visio: "
 
-#: src/help.cpp:1493
+#: src/help.cpp:1465
 msgid "Jamming: "
 msgstr ""
 
-#: src/help.cpp:1494
+#: src/help.cpp:1466
 msgid "Cost: "
 msgstr "Pretium: "
 
-#: src/help.cpp:1495
+#: src/help.cpp:1467
 msgid "Alignment: "
 msgstr "Pars: "
 
-#: src/help.cpp:1501
+#: src/help.cpp:1473
 msgid "Required XP: "
 msgstr "PU Necessaria: "
 
-#: src/help.cpp:1510
+#: src/help.cpp:1482
 msgid "unit help^Attacks"
 msgstr "Impetus"
 
-#: src/help.cpp:1517
+#: src/help.cpp:1489
 msgid "unit help^Name"
 msgstr "Nomen"
 
-#: src/help.cpp:1518
+#: src/help.cpp:1490
 msgid "Type"
 msgstr "Species"
 
-#: src/help.cpp:1519
+#: src/help.cpp:1491
 msgid "Strikes"
 msgstr "Ictus"
 
-#: src/help.cpp:1520
+#: src/help.cpp:1492
 msgid "Range"
 msgstr "Iactus"
 
-#: src/help.cpp:1521
+#: src/help.cpp:1493
 msgid "Special"
 msgstr "Praecipuum"
 
-#: src/help.cpp:1567
-#, fuzzy
+#: src/help.cpp:1539
 msgid "Resistances"
-msgstr "Repugnantiae"
+msgstr "Firmitas"
 
-#: src/help.cpp:1571
+#: src/help.cpp:1543
 msgid "Attack Type"
 msgstr "Modus Pugnandi"
 
-#: src/help.cpp:1572
-#, fuzzy
+#: src/help.cpp:1544
 msgid "Resistance"
-msgstr "Repugnantia"
+msgstr "Firmitas"
 
-#: src/help.cpp:1602
+#: src/help.cpp:1574
 msgid "Terrain Modifiers"
 msgstr "Mutamenta Terrae"
 
-#: src/help.cpp:1606
+#: src/help.cpp:1578
 msgid "Terrain"
 msgstr "Terra"
 
-#: src/help.cpp:1607
+#: src/help.cpp:1579
 msgid "Defense"
 msgstr "Defensio"
 
-#: src/help.cpp:1608
+#: src/help.cpp:1580
 msgid "Movement Cost"
 msgstr "Pretium Motus"
 
-#: src/help.cpp:1612
+#: src/help.cpp:1584
 msgid "Vision Cost"
-msgstr ""
+msgstr "Sumptus Visionis"
 
-#: src/help.cpp:1615
+#: src/help.cpp:1587
 msgid "Jamming Cost"
 msgstr ""
 
-#: src/help.cpp:1897
+#: src/help.cpp:1869
 msgid "<header>text='Units of this race'</header>"
 msgstr "<header>text='Actores stirpis'</header>"
 
-#: src/help.cpp:2809
+#: src/help.cpp:2781
 msgid " < Back"
 msgstr " < Retro"
 
-#: src/help.cpp:2810
+#: src/help.cpp:2782
 msgid "Forward >"
 msgstr "Prorsus >"
 
-#: src/help.cpp:2918
+#: src/help.cpp:2890
 #, fuzzy
 msgid "Reference to unknown topic: "
 msgstr "Referentia ad locum ignotum: "
 
-#: src/help.cpp:3174
+#: src/help.cpp:3146
 msgid "corrupted original file"
 msgstr ""
 
-#: src/help.cpp:3273
+#: src/help.cpp:3245
 msgid "Close"
 msgstr "Claudere"
 
-#: src/help.cpp:3276
+#: src/help.cpp:3248
 msgid "The Battle for Wesnoth Help"
 msgstr "Auxilium Proelio pro Vesnote"
 
-#: src/help.cpp:3332
+#: src/help.cpp:3304
 #, fuzzy
 msgid "Parse error when parsing help text: "
 msgstr "Mendum traductionis in tradendo textum adiutorii: "
-
-#, fuzzy
-#~ msgid ""
-#~ "Berserk:\n"
-#~ "Whether used offensively or defensively, this attack presses the "
-#~ "engagement until one of the combatants is slain, or 30 rounds of attacks "
-#~ "have occurred."
-#~ msgstr ""
-#~ "Saevitia:\n"
-#~ "In offensione vel defensione, haec oppugnatio certamen presset donec unus "
-#~ "ex pugnatoribus interfectus erit aut XXX tractus oppugnationis evenerint."
-
-#, fuzzy
-#~ msgid ""
-#~ "Magical:\n"
-#~ "This attack always has a 70% chance to hit regardless of the defensive "
-#~ "ability of the unit being attacked."
-#~ msgstr ""
-#~ "Magicalis:\n"
-#~ "Haec oppugnatio semper probabilitatem LXX pro cento habet feriendi."
-
-#~ msgid "firststrike"
-#~ msgstr "primus ictus"
-
-#~ msgid ""
-#~ "First Strike:\n"
-#~ "This unit always strikes first with this attack, even if they are "
-#~ "defending."
-#~ msgstr ""
-#~ "Primus Ictus:\n"
-#~ "Hic actor semper primus percutit, etiam si defendit."
-
-#~ msgid "race^Khalifate Human"
-#~ msgstr "Vir Khalifate"
-
-#~ msgid "race+female^Khalifate Human"
-#~ msgstr "Femina Khalifate"
-
-#~ msgid "race+plural^Khalifate"
-#~ msgstr "Khalifate"
-
-#~ msgid "This race does not have a description yet."
-#~ msgstr "Haec stirps nondum descriptonem habet."
-
-#~ msgid "race^Falcon"
-#~ msgstr "Falco"
-
-#~ msgid "race+female^Falcon"
-#~ msgstr "Falco"
-
-#~ msgid "race^Falcons"
-#~ msgstr "Falcones"
-
-#~ msgid "<header>text='Race specific topics'</header>"
-#~ msgstr "<header>text='Materia de stirpe'</header>"

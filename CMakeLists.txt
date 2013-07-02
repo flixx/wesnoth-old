@@ -44,6 +44,7 @@ endif(NOT MSVC)
 if(MSVC)
 	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-DNOMINMAX)
 endif(MSVC)
 
 #check for some compiler/arch specific things and export defines accordingly...
@@ -228,7 +229,10 @@ endif(MSVC AND NOT DEFINED CXX_FLAGS_MSVC)
 set(CXX_FLAGS_PROJECT)
 check_compiler_has_flag(CXX_FLAGS_PROJECT "-std=c++98" HAS_COMPILER_FLAG_STD)
 check_compiler_has_flag(CXX_FLAGS_PROJECT "-W" HAS_COMPILER_FLAG_W)
+# MSVC's -Wall is not like gcc's, it really enables *all* warnings which include zillions for system headers and doesn't make sense.
+if(NOT MSVC)
 check_compiler_has_flag(CXX_FLAGS_PROJECT "-Wall" HAS_COMPILER_FLAG_WALL)
+endif(NOT MSVC)
 
 
 ### Set strict compiler flags.
@@ -473,9 +477,9 @@ endif(ENABLE_TOOLS OR ENABLE_GAME OR ENABLE_TESTS)
 if(ENABLE_GAME OR ENABLE_TESTS)
 	find_package( SDL_mixer 1.2 REQUIRED )
 	find_package( SDL_ttf 2.0.8 REQUIRED )
-	find_package(VorbisFile REQUIRED)
 
 	if(NOT MSVC)
+		find_package(VorbisFile REQUIRED)
 		find_package( PkgConfig REQUIRED )
 		pkg_check_modules( PANGOCAIRO REQUIRED pangocairo>=1.21.3 )
 		pkg_check_modules( FONTCONFIG REQUIRED fontconfig>=2.4.1 )

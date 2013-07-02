@@ -92,8 +92,6 @@ private:
 
 gui::dialog_button_action::RESULT delete_recall_unit::button_pressed(int menu_selection)
 {
-	const std::vector<std::pair<int, int> >& param = std::vector<std::pair<int, int> >();
-	param.back();
 	const size_t index = size_t(filter_.get_index(menu_selection));
 	if(index < units_.size()) {
 		const unit &u = *(units_[index]);
@@ -123,7 +121,7 @@ gui::dialog_button_action::RESULT delete_recall_unit::button_pressed(int menu_se
 			}
 		}
 		// Remove the item from filter_textbox memory
-		filter_.delete_item(index);
+		filter_.delete_item(menu_selection);
 		//add dismissal to the undo stack
 		resources::undo_stack->add_dismissal(u);
 
@@ -995,7 +993,7 @@ std::string load_game_dialog(display& disp, const config& game_config, bool* sel
 	gui::dialog_button* change_difficulty_option = NULL;
 
 	if(select_difficulty != NULL) {
-		// implmentation of gui::dialog::add_option, needed for storing a pointer to the option-box
+		// implementation of gui::dialog::add_option, needed for storing a pointer to the option-box
 		change_difficulty_option = new gui::dialog_button(disp.video(), _("Change difficulty"), gui::button::TYPE_CHECK);
 		change_difficulty_option->set_check(false);
 

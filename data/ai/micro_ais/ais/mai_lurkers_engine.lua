@@ -1,12 +1,12 @@
 return {
-    init = function(ai)
+    init = function(ai, existing_engine)
 
-        local lurkers = {}
+        local engine = existing_engine or {}
 
         local LS = wesnoth.require "lua/location_set.lua"
         local AH = wesnoth.require "ai/lua/ai_helper.lua"
 
-        function lurkers:lurker_attack_eval(cfg)
+        function engine:mai_lurkers_attack_eval(cfg)
             -- If any lurker has moves left, we return score just above standard combat CA
             local units = wesnoth.get_units { side = wesnoth.current.side,
                 { "and", cfg.filter }, formula = '$this_unit.moves > 0'
@@ -19,7 +19,7 @@ return {
             return eval
         end
 
-        function lurkers:lurker_attack_exec(cfg)
+        function engine:mai_lurkers_attack_exec(cfg)
             -- We simply pick the first of the lurkers, they have no strategy
             local me = wesnoth.get_units { side = wesnoth.current.side,
                 { "and", cfg.filter }, formula = '$this_unit.moves > 0'
@@ -88,7 +88,7 @@ return {
 
                 -- get one of the reachable wander terrain hexes randomly
                 local rand = AH.random(1, reachable_wander_terrain:size())
-                --print("  reach_wander no allies: " .. reachable_wander_terrain:size() .. "  rand #: " ..  rand)
+                --print("  reach_wander no allies: " .. reachable_wander_terrain:size() .. "  rand #: " .. rand)
                 local dst = reachable_wander_terrain:to_stable_pairs()
                 if dst[1] then
                     dst = dst[rand]
@@ -102,6 +102,6 @@ return {
             if me and me.valid then ai.stopunit_all(me) end
         end
 
-        return lurkers
+        return engine
     end
 }

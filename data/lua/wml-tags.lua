@@ -775,6 +775,13 @@ function wml_actions.harm_unit(cfg)
 	-- #textdomain wesnoth
 	local harmer
 
+	local function toboolean( value ) -- helper for animate fields
+		-- units will be animated upon leveling or killing, even
+		-- with special attacker and defender values
+		if value then return true
+		else return false end
+	end
+
 	local this_unit = start_var_scope("this_unit")
 
 	for index, unit_to_harm in ipairs(wesnoth.get_units(filter)) do
@@ -912,11 +919,7 @@ function wml_actions.harm_unit(cfg)
 			end
 
 			if kill ~= false and unit_to_harm.hitpoints <= 0 then
-				local function bool( value ) -- support function for kill tag below
-					if value then return true
-					else return false end
-				end
-				wml_actions.kill({ id = unit_to_harm.id, animate = bool( animate ), fire_event = fire_event })
+				wml_actions.kill({ id = unit_to_harm.id, animate = toboolean( animate ), fire_event = fire_event })
 			end
 
 			if animate then
@@ -928,17 +931,27 @@ function wml_actions.harm_unit(cfg)
 			end
 
 			-- both may no longer be alive at this point, so double check
+			-- this blocks handles the harmed units advancing
 			if experience ~= false and harmer and unit_to_harm.valid and unit_to_harm.experience >= unit_to_harm.max_experience then
 				wml_actions.store_unit { { "filter", { id = unit_to_harm.id } }, variable = "Lua_store_unit", kill = true }
-				wml_actions.unstore_unit { variable = "Lua_store_unit", find_vacant = false, advance = true }
+				wml_actions.unstore_unit { variable = "Lua_store_unit",
+								find_vacant = false,
+								advance = true,
+								animate = toboolean( animate ),
+								fire_event = fire_event }
 				wesnoth.set_variable ( "Lua_store_unit", nil )
 			end
-		end
 
-		if experience ~= false and harmer and harmer.valid and harmer.experience >= harmer.max_experience then
-			wml_actions.store_unit { { "filter", { id = harmer.id } }, variable = "Lua_store_unit", kill = true }
-			wml_actions.unstore_unit { variable = "Lua_store_unit", find_vacant = false, advance = true }
-			wesnoth.set_variable ( "Lua_store_unit", nil )
+			-- this block handles the harmer advancing
+			if experience ~= false and harmer and harmer.valid and harmer.experience >= harmer.max_experience then
+				wml_actions.store_unit { { "filter", { id = harmer.id } }, variable = "Lua_store_unit", kill = true }
+				wml_actions.unstore_unit { variable = "Lua_store_unit",
+								find_vacant = false,
+								advance = true,
+								animate = toboolean( animate ),
+								fire_event = fire_event }
+				wesnoth.set_variable ( "Lua_store_unit", nil )
+			end
 		end
 
 		wml_actions.redraw {}

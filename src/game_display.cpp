@@ -33,6 +33,7 @@
 Growl_Delegate growl_obj;
 #endif
 
+#include "cursor.hpp"
 #include "game_preferences.hpp"
 #include "halo.hpp"
 #include "log.hpp"
@@ -272,15 +273,38 @@ void game_display::draw_hex(const map_location& loc)
 
 	display::draw_hex(loc);
 
+	if(cursor::get() == cursor::WAIT) {
+		// Interaction is disabled, so we don't need anything else
+		return;
+	}
+
 	if(on_map && loc == mouseoverHex_) {
 		tdrawing_layer hex_top_layer = LAYER_MOUSEOVER_BOTTOM;
-		if( get_visible_unit(loc, (*teams_)[viewing_team()] ) != NULL ) {
+		const unit *u = get_visible_unit(loc, (*teams_)[viewing_team()] );
+		if( u != NULL ) {
 			hex_top_layer = LAYER_MOUSEOVER_TOP;
 		}
-		drawing_buffer_add( hex_top_layer,
-						   loc, xpos, ypos, image::get_image("misc/hover-hex-top.png", image::SCALED_TO_HEX));
-		drawing_buffer_add(LAYER_MOUSEOVER_BOTTOM,
-						   loc, xpos, ypos, image::get_image("misc/hover-hex-bottom.png", image::SCALED_TO_HEX));
+		if(u == NULL) {
+			drawing_buffer_add( hex_top_layer,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-top.png~RC(magenta>gold)", image::SCALED_TO_HEX));
+			drawing_buffer_add(LAYER_MOUSEOVER_BOTTOM,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-bottom.png~RC(magenta>gold)", image::SCALED_TO_HEX));
+		} else if((*teams_)[currentTeam_].is_enemy(u->side())) {
+			drawing_buffer_add( hex_top_layer,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-enemy-top.png~RC(magenta>red)", image::SCALED_TO_HEX));
+			drawing_buffer_add(LAYER_MOUSEOVER_BOTTOM,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-enemy-bottom.png~RC(magenta>red)", image::SCALED_TO_HEX));
+		} else if((*teams_)[currentTeam_].side() == u->side()) {
+			drawing_buffer_add( hex_top_layer,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-top.png~RC(magenta>green)", image::SCALED_TO_HEX));
+			drawing_buffer_add(LAYER_MOUSEOVER_BOTTOM,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-bottom.png~RC(magenta>green)", image::SCALED_TO_HEX));
+		} else {
+			drawing_buffer_add( hex_top_layer,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-top.png~RC(magenta>lightblue)", image::SCALED_TO_HEX));
+			drawing_buffer_add(LAYER_MOUSEOVER_BOTTOM,
+				loc, xpos, ypos, image::get_image("misc/hover-hex-bottom.png~RC(magenta>lightblue)", image::SCALED_TO_HEX));
+		}
 	}
 
 
@@ -668,7 +692,7 @@ game_display::fake_unit & game_display::fake_unit::operator=(unit const & a)
 	if ( this != &a ) {
 		game_display * display = my_display_;
 
-		// Use the copy constructor to make sure we are coherant.
+		// Use the copy constructor to make sure we are coherent.
 		// (Methodology copied from unit::operator=)
 		this->~fake_unit();
 		new (this) fake_unit(a);
@@ -685,13 +709,13 @@ game_display::fake_unit & game_display::fake_unit::operator=(unit const & a)
 game_display::fake_unit::~fake_unit()
 {
 	// The fake_unit class exists for this one line, which removes the
-	// fake_unit from the display's fake_units_ deque in the event of an
+	// fake_unit from the display's fake_units_ dequeue in the event of an
 	// exception.
 	if(my_display_){remove_from_game_display();}
 }
 
 /**
- * Place @a this on @a display's fake_units_ deque.
+ * Place @a this on @a display's fake_units_ dequeue.
  * This will be added at the end (drawn last, over all other units).
  * Duplicate additions are not allowed.
  */

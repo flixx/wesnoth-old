@@ -26,6 +26,7 @@
 #include "../game_display.hpp"
 #include "../game_events.hpp"
 #include "../game_preferences.hpp"
+#include "../gamestatus.hpp"
 #include "../gettext.hpp"
 #include "../log.hpp"
 #include "../map.hpp"
@@ -436,7 +437,7 @@ int battle_context::choose_defender_weapon(const unit &attacker,
 	// Multiple options:
 	// First pass : get the best weight and the minimum simple rating for this weight.
 	// simple rating = number of blows * damage per blows (resistance taken in account) * cth * weight
-	// Elligible attacks for defense should have a simple rating greater or equal to this weight.
+	// Eligible attacks for defense should have a simple rating greater or equal to this weight.
 
 	double max_weight = 0.0;
 	int min_rating = 0;

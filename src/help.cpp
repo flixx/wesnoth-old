@@ -843,7 +843,7 @@ help_manager::~help_manager()
 //	map = NULL;
 	toplevel.clear();
 	hidden_sections.clear();
-    // These last numbers must be reset so that the content is regenreated.
+    // These last numbers must be reset so that the content is regenerated.
     // Upon next start.
 	last_num_encountered_units = -1;
 	last_num_encountered_terrains = -1;
@@ -1154,34 +1154,6 @@ std::vector<topic> generate_weapon_special_topics(const bool sort_generated)
 }
 
 
-namespace {
-	/**
-	 * Strips the name of an ability/special from the description.
-	 * This is legacy support, introduced for version 1.11.1.
-	 * Can (should) be removed post-1.12.
-	 */
-	t_string legacy_description(const t_string & description)
-	{
-		// The legacy format is name + ':' + newline + description.
-		// We identify this by the colon.
-		std::string revision = description.str();
-		const size_t colon_pos = revision.find(':');
-		if ( colon_pos != std::string::npos )
-			// Make sure this colon ends the first line.
-			if ( revision.find('\n') == colon_pos + 1 ) {
-				//@deprecated Format changed for 1.11.1.
-				lg::wml_error << "Descriptions should no longer include the name as the first line.\n";
-
-				// Remove the first line.
-				revision.erase(0, colon_pos + 2);
-				return t_string(revision);
-			}
-
-		// No adaptation needed.
-		return description;
-	}
-}
-
 std::vector<topic> generate_ability_topics(const bool sort_generated)
 {
 	std::vector<topic> topics;
@@ -1210,7 +1182,7 @@ std::vector<topic> generate_ability_topics(const bool sort_generated)
 				for(size_t j=0; j < abil_vec.size(); ++j) {
 					t_string const& abil_name = abil_vec[j];
 					std::string const abil_desc =
-						j >= desc_vec.size() ? "" : legacy_description(desc_vec[j]).str();
+						j >= desc_vec.size() ? "" : desc_vec[j].str();
 
 					ability_description.insert(std::make_pair(abil_name, abil_desc));
 
@@ -1466,7 +1438,7 @@ public:
 			ss << "\n";
 		}
 
-		// Print the extra AMLA upgrage abilities, cross-reference them
+		// Print the extra AMLA upgrade abilities, cross-reference them
 		// to their respective topics.
 		if (!type_.adv_abilities().empty()) {
 			ss << _("Ability Upgrades: ");
@@ -2194,7 +2166,7 @@ int help_menu::process()
 			int x = mousex - menu::location().x;
 
 			const std::string icon_img = expanded(*sec) ? open_section_img : closed_section_img;
-			// we remove the right tickness (ne present bewteen icon and text)
+			// we remove the right thickness (ne present between icon and text)
 			int text_start = style_->item_size(indented_icon(icon_img, sec->level)).w - style_->get_thickness();
 
 			// NOTE: if you want to forbid click to the left of the icon
@@ -2406,7 +2378,7 @@ void help_text_area::handle_ref_cfg(const config &cfg)
 		// terrains. This will lead to the unit page generator creating
 		// invalid references.
 		//
-		// Disabling this is a kludgy workaround until the
+		// Disabling this is a kludgey workaround until the
 		// encountered_terrains system is fixed
 		//
 		// -- Ayin apr 8 2005

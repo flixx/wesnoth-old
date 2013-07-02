@@ -383,8 +383,13 @@ namespace {
 						} else {
 							std::cerr << " size: " << (file_size(campaign["filename"])/1024) << "KiB\n";
 							network::send_file(campaign["filename"], sock);
-							int downloads = campaign["downloads"].to_int() + 1;
-							campaign["downloads"] = downloads;
+							// Clients doing upgrades or some other specific thing shouldn't bump
+							// the downloads count. Default to true for compatibility with old
+							// clients that won't tell us what they are trying to do.
+							if(req["increase_downloads"].to_bool(true)) {
+								int downloads = campaign["downloads"].to_int() + 1;
+								campaign["downloads"] = downloads;
+							}
 						}
 
 					}
@@ -408,10 +413,16 @@ namespace {
 								break;
 							}
 						}
+
+						// TODO: remove for next add-ons server instance.
+						bool illegal_name_upload = false;
+
 						if (!data) {
 							LOG_CS << "Upload aborted - no add-on data.\n";
 							network::send_data(construct_error("Add-on rejected: No add-on data was supplied."), sock);
-						} else if (!addon_name_legal(upload["name"])) {
+						} else if ((illegal_name_upload = !addon_name_legal(upload["name"])) && campaign == NULL) {
+							// Only deny upload if we don't have an add-on with that id/name
+							// already. TODO: remove for next add-ons server instance.
 							LOG_CS << "Upload aborted - invalid add-on name.\n";
 							network::send_data(construct_error("Add-on rejected: The name of the add-on is invalid."), sock);
 						} else if (is_text_markup_char(upload["name"].str()[0])) {
@@ -446,6 +457,13 @@ namespace {
 							LOG_CS << "Upload aborted - incorrect passphrase.\n";
 							network::send_data(construct_error("Add-on rejected: The add-on already exists, and your passphrase was incorrect."), sock);
 						} else {
+							// Warn admins in the log about reuploading add-ons whose names don't
+							// pass the addon_name_legal() whitelist check above.
+
+							if(illegal_name_upload) {
+								LOG_CS << "Ignoring invalid add-on name '" << upload["name"] << "' because it already exists on the server.\n";
+							}
+
 							LOG_CS << "Upload is owner upload.\n";
 							std::string message = "Add-on accepted.";
 

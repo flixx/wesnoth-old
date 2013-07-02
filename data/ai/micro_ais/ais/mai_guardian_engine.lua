@@ -1,17 +1,18 @@
 return {
-    init = function(ai)
+    init = function(ai, existing_engine)
 
-        local guardians = {}
+        local engine = existing_engine or {}
 
         local H = wesnoth.require "lua/helper.lua"
         local AH = wesnoth.require "ai/lua/ai_helper.lua"
+        local LS = wesnoth.require "lua/location_set.lua"
 
         ----- The coward guardian AI -----
-        function guardians:coward_eval(cfg)
+        function engine:mai_guardian_coward_eval(cfg)
             local unit = wesnoth.get_units{ id = cfg.id }[1]
 
-            -- Don't need to check if unit exists as this is a sticky CA
-            if unit.moves > 0 then
+            -- Check if unit exists as sticky BCAs are not always removed successfully
+            if unit and (unit.moves > 0) then
                 return 300000
             else
                 return 0
@@ -19,7 +20,7 @@ return {
         end
 
         -- cfg parameters: id, distance, seek_x, seek_y, avoid_x, avoid_y
-        function guardians:coward_exec(cfg)
+        function engine:mai_guardian_coward_exec(cfg)
             --print("Coward exec " .. cfg.id)
             local unit = wesnoth.get_units{ id = cfg.id }[1]
             local reach = wesnoth.find_reach(unit)
@@ -110,22 +111,31 @@ return {
 
 
         ----- The return guardian AI -----
-        function guardians:return_guardian_eval(cfg)
+        function engine:mai_guardian_return_eval(cfg)
             local unit = wesnoth.get_units { id = cfg.id }[1]
 
-            -- Don't need to check if unit exists as this is a sticky CA
-            if (unit.x ~= cfg.return_x) or (unit.y ~= cfg.return_y) then
-                return 100010
-            else
-                return 99990
+            -- Check if unit exists as sticky BCAs are not always removed successfully
+            if unit then
+                if ((unit.x ~= cfg.return_x) or (unit.y ~= cfg.return_y)) then
+                    return 100010
+                else
+                    return 99990
+                end
             end
+            return 0
         end
 
-        function guardians:return_guardian_exec(cfg)
+        function engine:mai_guardian_return_exec(cfg)
             local unit = wesnoth.get_units { id = cfg.id }[1]
             --print("Exec guardian move",unit.id)
 
-            local nh = AH.next_hop(unit, cfg.return_x, cfg.return_y)
+            -- In case the return hex is occupied:
+            local x, y = cfg.return_x, cfg.return_y
+            if (unit.x ~= x) or (unit.y ~= y) then
+                x, y = wesnoth.find_vacant_tile(x, y, unit)
+            end
+
+            local nh = AH.next_hop(unit, x, y)
             if unit.moves~=0 then
                 AH.movefull_stopunit(ai, unit, nh)
             end
@@ -140,17 +150,17 @@ return {
         -- it "detects" an enemy in filter_location_enemy (if specified) or in the filter_location (otherwise).
         -- It then attacks this enemy until it goes out of the "attack zone"
 
-        function guardians:zone_guardian_eval(cfg)
+        function engine:mai_guardian_zone_eval(cfg)
             local unit = wesnoth.get_units { id = cfg.id }[1]
 
-            -- Don't need to check if unit exists as this is a sticky CA
-            if (unit.moves > 0) then
+            -- Check if unit exists as sticky BCAs are not always removed successfully
+            if unit and (unit.moves > 0) then
                 return 100010
 			end
         end
 
         --Check if an enemy is detected in filter_location_enemy (or filter_location) and attack it or start the "move" randomly function
-        function guardians:zone_guardian_exec(cfg)
+        function engine:mai_guardian_zone_exec(cfg)
             local unit = wesnoth.get_units { id = cfg.id }[1]
             local reach = wesnoth.find_reach(unit)
             local zone_enemy = cfg.filter_location_enemy or cfg.filter_location
@@ -231,14 +241,43 @@ return {
             -- If no enemy around or within the zone, move toward "random" position which are mainy the borders
             else
                 --print "Move toward newpos"
-                local width, height = wesnoth.get_map_size()
-                local locs = wesnoth.get_locations {
-                    x = '1-' .. width,
-                    y = '1-' .. height,
-                    { "and", cfg.filter_location }
-                }
-                local newpos = math.random(#locs)
-                local nh = AH.next_hop(unit, locs[newpos][1], locs[newpos][2])
+                local newpos
+                -- If cfg.station_x/y are given, move toward that location
+                if cfg.station_x and cfg.station_y then
+                    newpos = { cfg.station_x, cfg.station_y }
+                -- Otherwise choose one randomly from those given in filter_location
+                else
+                    local width, height = wesnoth.get_map_size()
+                    local locs_map = LS.of_pairs(wesnoth.get_locations {
+                        x = '1-' .. width,
+                        y = '1-' .. height,
+                        { "and", cfg.filter_location }
+                    })
+
+                    -- Check out which of those hexes the unit can reach
+                    local reach_map = LS.of_pairs(wesnoth.find_reach(unit))
+                    reach_map:inter(locs_map)
+
+                    -- If it can reach some hexes, use only reachable locations,
+                    -- otherwise move toward any (random) one from the entire set
+                    if (reach_map:size() > 0) then
+                        locs_map = reach_map
+                    end
+
+                    local locs = locs_map:to_pairs()
+
+                    -- If possible locations were found, move unit toward a random one,
+                    -- otherwise the unit stays where it is
+                    if (#locs > 0) then
+                        local newind = math.random(#locs)
+                        newpos = { locs[newind][1], locs[newind][2] }
+                    else
+                        newpos = { unit.x, unit.y }
+                    end
+                end
+
+                -- Next hop toward that position
+                local nh = AH.next_hop(unit, newpos[1], newpos[2])
                 if nh then
                     AH.movefull_stopunit(ai, unit, nh)
                 end
@@ -252,11 +291,11 @@ return {
 
 
         ----- The stationed guardian AI -----
-        function guardians:stationed_guardian_eval(cfg)
+        function engine:mai_guardian_stationed_eval(cfg)
             local unit = wesnoth.get_units { id = cfg.id }[1]
 
-            -- Don't need to check if unit exists as this is a sticky CA
-            if (unit.moves > 0) then
+            -- Check if unit exists as sticky BCAs are not always removed successfully
+            if unit and (unit.moves > 0) then
                 return 100010
             else
                 return 0
@@ -264,7 +303,7 @@ return {
         end
 
         -- cfg parameters: id, distance, s_x, s_y, g_x, g_y
-        function guardians:stationed_guardian_exec(cfg)
+        function engine:mai_guardian_stationed_exec(cfg)
             -- (s_x,s_y): coordinates where unit is stationed; tries to move here if there is nobody to attack
             -- (g_x,g_y): location that the unit guards
 
@@ -366,6 +405,6 @@ return {
             -- If there are attacks left and unit ended up next to an enemy, we'll leave this to RCA AI
         end
 
-        return guardians
+        return engine
     end
 }

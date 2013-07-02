@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Battle for Wesnoth 0.8.2-CVS\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-22 22:09-0400\n"
+"POT-Creation-Date: 2013-06-24 15:23+0200\n"
 "PO-Revision-Date: 2012-04-18 23:26-0300\n"
 "Last-Translator: Davi Duarte Pinheiro <daviduartep@gmail.com>\n"
 "Language-Team: Portuguese - Brasil\n"
@@ -27,7 +27,7 @@ msgstr ""
 # File: data/core/macros/schedules.cfg, line: 78
 #. [time]: id=underground
 #: data/campaigns/Heir_To_The_Throne/utils/httt_utils.cfg:529
-#: data/core/macros/schedules.cfg:78
+#: data/core/macros/schedules.cfg:99
 msgid "Underground"
 msgstr "Subsolo"
 
@@ -1432,7 +1432,7 @@ msgstr "Efeitos das Armas"
 # File: src/help.cpp, line: 1309
 #. #-#-#-#-#  wesnoth-help.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [section]: id=factions_section
-#: data/core/help.cfg:56 src/help.cpp:1307 src/help.cpp:1309
+#: data/core/help.cfg:56 src/help.cpp:1279 src/help.cpp:1281
 msgid "Factions"
 msgstr "Facções"
 
@@ -2569,7 +2569,7 @@ msgstr ""
 #. [time]: id=dawn_hour
 #. [topic]: id=time_of_day
 #: data/core/help.cfg:281 data/core/macros/schedules.cfg:6
-#: data/core/macros/schedules.cfg:246
+#: data/core/macros/schedules.cfg:285
 msgid "Dawn"
 msgstr "Amanhecer"
 
@@ -2595,7 +2595,7 @@ msgstr "Manhã"
 # File: data/core/macros/schedules.cfg, line: 26
 #. [time]: id=afternoon
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:283 data/core/macros/schedules.cfg:26
+#: data/core/help.cfg:283 data/core/macros/schedules.cfg:35
 msgid "Afternoon"
 msgstr "Tarde"
 
@@ -2612,8 +2612,8 @@ msgstr "Tarde"
 #. [time]: id=dusk
 #. [time]: id=dusk_hour
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:284 data/core/macros/schedules.cfg:35
-#: data/core/macros/schedules.cfg:358
+#: data/core/help.cfg:284 data/core/macros/schedules.cfg:44
+#: data/core/macros/schedules.cfg:397
 msgid "Dusk"
 msgstr "Anoitecer"
 
@@ -2626,7 +2626,7 @@ msgstr "Anoitecer"
 # File: data/core/macros/schedules.cfg, line: 46
 #. [time]: id=first_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:285 data/core/macros/schedules.cfg:46
+#: data/core/help.cfg:285 data/core/macros/schedules.cfg:55
 msgid "First Watch"
 msgstr "Noite"
 
@@ -2639,7 +2639,7 @@ msgstr "Noite"
 # File: data/core/macros/schedules.cfg, line: 58
 #. [time]: id=second_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:286 data/core/macros/schedules.cfg:58
+#: data/core/help.cfg:286 data/core/macros/schedules.cfg:79
 msgid "Second Watch"
 msgstr "Madrugada"
 
@@ -6034,11 +6034,31 @@ msgid "Max HP bonus +3, Max XP +20%"
 msgstr "Bônus Máximo de HP +3, Exp. Máxima +20%"
 
 #
+# File: data/core/macros/schedules.cfg, line: 293
+# File: data/core/macros/schedules.cfg, line: 293
+# File: data/core/macros/schedules.cfg, line: 293
+#. [time]: id=midday
+#. [time]: id=midday_hour
+#: data/core/macros/schedules.cfg:26 data/core/macros/schedules.cfg:332
+msgid "Midday"
+msgstr "Meio Dia"
+
+#
+# File: data/core/macros/schedules.cfg, line: 162
+# File: data/core/macros/schedules.cfg, line: 162
+# File: data/core/macros/schedules.cfg, line: 162
+#. [time]: id=midnight
+#. [time]: id=midnight_hour
+#: data/core/macros/schedules.cfg:67 data/core/macros/schedules.cfg:201
+msgid "Midnight"
+msgstr "Meia Noite"
+
+#
 # File: data/core/macros/schedules.cfg, line: 70
 # File: data/core/macros/schedules.cfg, line: 70
 # File: data/core/macros/schedules.cfg, line: 70
 #. [time]: id=indoors
-#: data/core/macros/schedules.cfg:70
+#: data/core/macros/schedules.cfg:91
 msgid "Indoors"
 msgstr ""
 
@@ -6047,25 +6067,16 @@ msgstr ""
 # File: data/core/macros/schedules.cfg, line: 90
 # File: data/core/macros/schedules.cfg, line: 90
 #. [time]: id=deep_underground
-#: data/core/macros/schedules.cfg:90
+#: data/core/macros/schedules.cfg:111
 msgid "Deep Underground"
 msgstr "Subsolo Profundo"
-
-#
-# File: data/core/macros/schedules.cfg, line: 162
-# File: data/core/macros/schedules.cfg, line: 162
-# File: data/core/macros/schedules.cfg, line: 162
-#. [time]: id=midnight_hour
-#: data/core/macros/schedules.cfg:162
-msgid "Midnight"
-msgstr "Meia Noite"
 
 #
 # File: data/core/macros/schedules.cfg, line: 174
 # File: data/core/macros/schedules.cfg, line: 174
 # File: data/core/macros/schedules.cfg, line: 174
 #. [time]: id=second_watch_hour1
-#: data/core/macros/schedules.cfg:174
+#: data/core/macros/schedules.cfg:213
 msgid "Second Watch — First Hour"
 msgstr "Segundo Relógio - Primeira Hora"
 
@@ -6074,7 +6085,7 @@ msgstr "Segundo Relógio - Primeira Hora"
 # File: data/core/macros/schedules.cfg, line: 186
 # File: data/core/macros/schedules.cfg, line: 186
 #. [time]: id=second_watch_hour2
-#: data/core/macros/schedules.cfg:186
+#: data/core/macros/schedules.cfg:225
 msgid "Second Watch — Second Hour"
 msgstr "Segundo Relógio - Segunda Hora"
 
@@ -6083,7 +6094,7 @@ msgstr "Segundo Relógio - Segunda Hora"
 # File: data/core/macros/schedules.cfg, line: 198
 # File: data/core/macros/schedules.cfg, line: 198
 #. [time]: id=second_watch_hour3
-#: data/core/macros/schedules.cfg:198
+#: data/core/macros/schedules.cfg:237
 msgid "Second Watch — Third Hour"
 msgstr "Segundo Relógio - Terceira Hora"
 
@@ -6092,7 +6103,7 @@ msgstr "Segundo Relógio - Terceira Hora"
 # File: data/core/macros/schedules.cfg, line: 210
 # File: data/core/macros/schedules.cfg, line: 210
 #. [time]: id=second_watch_hour4
-#: data/core/macros/schedules.cfg:210
+#: data/core/macros/schedules.cfg:249
 msgid "Second Watch — Fourth Hour"
 msgstr "Segundo Relógio - Quarta Hora"
 
@@ -6101,7 +6112,7 @@ msgstr "Segundo Relógio - Quarta Hora"
 # File: data/core/macros/schedules.cfg, line: 222
 # File: data/core/macros/schedules.cfg, line: 222
 #. [time]: id=second_watch_hour5
-#: data/core/macros/schedules.cfg:222
+#: data/core/macros/schedules.cfg:261
 msgid "Second Watch — Fifth Hour"
 msgstr "Segundo Relógio - Quinta Hora"
 
@@ -6110,7 +6121,7 @@ msgstr "Segundo Relógio - Quinta Hora"
 # File: data/core/macros/schedules.cfg, line: 234
 # File: data/core/macros/schedules.cfg, line: 234
 #. [time]: id=second_watch_hour6
-#: data/core/macros/schedules.cfg:234
+#: data/core/macros/schedules.cfg:273
 msgid "Second Watch — Sixth Hour"
 msgstr "Segundo Relógio - Sexta Hora"
 
@@ -6119,7 +6130,7 @@ msgstr "Segundo Relógio - Sexta Hora"
 # File: data/core/macros/schedules.cfg, line: 257
 # File: data/core/macros/schedules.cfg, line: 257
 #. [time]: id=morning_hour1
-#: data/core/macros/schedules.cfg:257
+#: data/core/macros/schedules.cfg:296
 msgid "Morning — First Hour"
 msgstr "Manhã - Primeira Hora"
 
@@ -6128,7 +6139,7 @@ msgstr "Manhã - Primeira Hora"
 # File: data/core/macros/schedules.cfg, line: 266
 # File: data/core/macros/schedules.cfg, line: 266
 #. [time]: id=morning_hour2
-#: data/core/macros/schedules.cfg:266
+#: data/core/macros/schedules.cfg:305
 msgid "Morning — Second Hour"
 msgstr "Manhã - Segundas Hora"
 
@@ -6137,7 +6148,7 @@ msgstr "Manhã - Segundas Hora"
 # File: data/core/macros/schedules.cfg, line: 275
 # File: data/core/macros/schedules.cfg, line: 275
 #. [time]: id=morning_hour3
-#: data/core/macros/schedules.cfg:275
+#: data/core/macros/schedules.cfg:314
 msgid "Morning — Third Hour"
 msgstr "Manhã - Terceira Hora"
 
@@ -6146,25 +6157,16 @@ msgstr "Manhã - Terceira Hora"
 # File: data/core/macros/schedules.cfg, line: 284
 # File: data/core/macros/schedules.cfg, line: 284
 #. [time]: id=morning_hour4
-#: data/core/macros/schedules.cfg:284
+#: data/core/macros/schedules.cfg:323
 msgid "Morning — Fourth Hour"
 msgstr "Manhã - Quarta Hora"
-
-#
-# File: data/core/macros/schedules.cfg, line: 293
-# File: data/core/macros/schedules.cfg, line: 293
-# File: data/core/macros/schedules.cfg, line: 293
-#. [time]: id=midday_hour
-#: data/core/macros/schedules.cfg:293
-msgid "Midday"
-msgstr "Meio Dia"
 
 #
 # File: data/core/macros/schedules.cfg, line: 302
 # File: data/core/macros/schedules.cfg, line: 302
 # File: data/core/macros/schedules.cfg, line: 302
 #. [time]: id=afternoon_hour1
-#: data/core/macros/schedules.cfg:302
+#: data/core/macros/schedules.cfg:341
 msgid "Afternoon — First Hour"
 msgstr "Tarde - Primeira Hora"
 
@@ -6173,7 +6175,7 @@ msgstr "Tarde - Primeira Hora"
 # File: data/core/macros/schedules.cfg, line: 311
 # File: data/core/macros/schedules.cfg, line: 311
 #. [time]: id=afternoon_hour2
-#: data/core/macros/schedules.cfg:311
+#: data/core/macros/schedules.cfg:350
 msgid "Afternoon — Second Hour"
 msgstr "Tarde - Segunda Hora"
 
@@ -6182,7 +6184,7 @@ msgstr "Tarde - Segunda Hora"
 # File: data/core/macros/schedules.cfg, line: 320
 # File: data/core/macros/schedules.cfg, line: 320
 #. [time]: id=afternoon_hour3
-#: data/core/macros/schedules.cfg:320
+#: data/core/macros/schedules.cfg:359
 msgid "Afternoon — Third Hour"
 msgstr "Tarde - Terceira Hora"
 
@@ -6191,7 +6193,7 @@ msgstr "Tarde - Terceira Hora"
 # File: data/core/macros/schedules.cfg, line: 329
 # File: data/core/macros/schedules.cfg, line: 329
 #. [time]: id=afternoon_hour4
-#: data/core/macros/schedules.cfg:329
+#: data/core/macros/schedules.cfg:368
 msgid "Afternoon — Fourth Hour"
 msgstr "Tarde - Quarta Hora"
 
@@ -6200,7 +6202,7 @@ msgstr "Tarde - Quarta Hora"
 # File: data/core/macros/schedules.cfg, line: 338
 # File: data/core/macros/schedules.cfg, line: 338
 #. [time]: id=afternoon_hour5
-#: data/core/macros/schedules.cfg:338
+#: data/core/macros/schedules.cfg:377
 msgid "Afternoon — Fifth Hour"
 msgstr "Tarde - Quinta Hora"
 
@@ -6209,7 +6211,7 @@ msgstr "Tarde - Quinta Hora"
 # File: data/core/macros/schedules.cfg, line: 347
 # File: data/core/macros/schedules.cfg, line: 347
 #. [time]: id=afternoon_hour6
-#: data/core/macros/schedules.cfg:347
+#: data/core/macros/schedules.cfg:386
 msgid "Afternoon — Sixth Hour"
 msgstr "Tarde - Sexta Hora"
 
@@ -6218,7 +6220,7 @@ msgstr "Tarde - Sexta Hora"
 # File: data/core/macros/schedules.cfg, line: 369
 # File: data/core/macros/schedules.cfg, line: 369
 #. [time]: id=first_watch_hour1
-#: data/core/macros/schedules.cfg:369
+#: data/core/macros/schedules.cfg:408
 msgid "First Watch — First Hour"
 msgstr "Primeiro Relógio - Primeira Hora"
 
@@ -6227,7 +6229,7 @@ msgstr "Primeiro Relógio - Primeira Hora"
 # File: data/core/macros/schedules.cfg, line: 381
 # File: data/core/macros/schedules.cfg, line: 381
 #. [time]: id=first_watch_hour2
-#: data/core/macros/schedules.cfg:381
+#: data/core/macros/schedules.cfg:420
 msgid "First Watch — Second Hour"
 msgstr "Primeiro Relógio - Segunda Hora"
 
@@ -6236,7 +6238,7 @@ msgstr "Primeiro Relógio - Segunda Hora"
 # File: data/core/macros/schedules.cfg, line: 393
 # File: data/core/macros/schedules.cfg, line: 393
 #. [time]: id=first_watch_hour3
-#: data/core/macros/schedules.cfg:393
+#: data/core/macros/schedules.cfg:432
 msgid "First Watch — Third Hour"
 msgstr "Primeiro Relógio - Terceira Hora"
 
@@ -6245,7 +6247,7 @@ msgstr "Primeiro Relógio - Terceira Hora"
 # File: data/core/macros/schedules.cfg, line: 405
 # File: data/core/macros/schedules.cfg, line: 405
 #. [time]: id=first_watch_hour4
-#: data/core/macros/schedules.cfg:405
+#: data/core/macros/schedules.cfg:444
 msgid "First Watch — Fourth Hour"
 msgstr "Primeiro Relógio - Quarta Hora"
 
@@ -8107,7 +8109,7 @@ msgstr "<header>text='Unidades que possuem este ataque especial'</header>"
 # File: src/help.cpp, line: 1236
 # File: src/help.cpp, line: 1236
 # File: src/help.cpp, line: 1236
-#: src/help.cpp:1236
+#: src/help.cpp:1208
 msgid "<header>text='Units having this ability'</header>"
 msgstr "<header>text='Unidades que possuem esta habilidade'</header>"
 
@@ -8115,7 +8117,7 @@ msgstr "<header>text='Unidades que possuem esta habilidade'</header>"
 # File: src/help.cpp, line: 1269
 # File: src/help.cpp, line: 1269
 # File: src/help.cpp, line: 1269
-#: src/help.cpp:1269
+#: src/help.cpp:1241
 msgid "Leaders:"
 msgstr "Lideres: "
 
@@ -8123,7 +8125,7 @@ msgstr "Lideres: "
 # File: src/help.cpp, line: 1278
 # File: src/help.cpp, line: 1278
 # File: src/help.cpp, line: 1278
-#: src/help.cpp:1278
+#: src/help.cpp:1250
 msgid "Recruits:"
 msgstr "Recrutas: "
 
@@ -8131,7 +8133,7 @@ msgstr "Recrutas: "
 # File: src/help.cpp, line: 1292
 # File: src/help.cpp, line: 1292
 # File: src/help.cpp, line: 1292
-#: src/help.cpp:1292
+#: src/help.cpp:1264
 msgid "Era:"
 msgstr "Era:"
 
@@ -8139,7 +8141,7 @@ msgstr "Era:"
 # File: src/help.cpp, line: 1300
 # File: src/help.cpp, line: 1300
 # File: src/help.cpp, line: 1300
-#: src/help.cpp:1300
+#: src/help.cpp:1272
 msgid "Factions:"
 msgstr "Facções:"
 
@@ -8147,7 +8149,7 @@ msgstr "Facções:"
 # File: src/help.cpp, line: 1310
 # File: src/help.cpp, line: 1310
 # File: src/help.cpp, line: 1310
-#: src/help.cpp:1310
+#: src/help.cpp:1282
 msgid "Factions are only used in multiplayer"
 msgstr "Facções são somente usadas em multiplayer"
 
@@ -8155,7 +8157,7 @@ msgstr "Facções são somente usadas em multiplayer"
 # File: src/help.cpp, line: 1354
 # File: src/help.cpp, line: 1354
 # File: src/help.cpp, line: 1354
-#: src/help.cpp:1354
+#: src/help.cpp:1326
 msgid "level"
 msgstr "nível"
 
@@ -8163,7 +8165,7 @@ msgstr "nível"
 # File: src/help.cpp, line: 1387
 # File: src/help.cpp, line: 1387
 # File: src/help.cpp, line: 1387
-#: src/help.cpp:1387
+#: src/help.cpp:1359
 msgid "Advances from: "
 msgstr "Avança de: "
 
@@ -8171,7 +8173,7 @@ msgstr "Avança de: "
 # File: src/help.cpp, line: 1389
 # File: src/help.cpp, line: 1389
 # File: src/help.cpp, line: 1389
-#: src/help.cpp:1389
+#: src/help.cpp:1361
 msgid "Advances to: "
 msgstr "Avança para: "
 
@@ -8179,7 +8181,7 @@ msgstr "Avança para: "
 # File: src/help.cpp, line: 1412
 # File: src/help.cpp, line: 1412
 # File: src/help.cpp, line: 1412
-#: src/help.cpp:1412
+#: src/help.cpp:1384
 msgid "Base unit: "
 msgstr ""
 
@@ -8187,7 +8189,7 @@ msgstr ""
 # File: src/help.cpp, line: 1422
 # File: src/help.cpp, line: 1422
 # File: src/help.cpp, line: 1422
-#: src/help.cpp:1422
+#: src/help.cpp:1394
 #, fuzzy
 msgid "Variations: "
 msgstr "Facções:"
@@ -8202,7 +8204,7 @@ msgstr "Facções:"
 # File: src/help.cpp, line: 1446
 # File: src/help.cpp, line: 1818
 # File: src/help.cpp, line: 1891
-#: src/help.cpp:1446 src/help.cpp:1818 src/help.cpp:1891
+#: src/help.cpp:1418 src/help.cpp:1790 src/help.cpp:1863
 msgid "race^Miscellaneous"
 msgstr "Miscelânea"
 
@@ -8210,7 +8212,7 @@ msgstr "Miscelânea"
 # File: src/help.cpp, line: 1448
 # File: src/help.cpp, line: 1448
 # File: src/help.cpp, line: 1448
-#: src/help.cpp:1448
+#: src/help.cpp:1420
 msgid "Race: "
 msgstr "Raça: "
 
@@ -8218,7 +8220,7 @@ msgstr "Raça: "
 # File: src/help.cpp, line: 1455
 # File: src/help.cpp, line: 1455
 # File: src/help.cpp, line: 1455
-#: src/help.cpp:1455
+#: src/help.cpp:1427
 msgid "Abilities: "
 msgstr "Habilidades: "
 
@@ -8226,7 +8228,7 @@ msgstr "Habilidades: "
 # File: src/help.cpp, line: 1472
 # File: src/help.cpp, line: 1472
 # File: src/help.cpp, line: 1472
-#: src/help.cpp:1472
+#: src/help.cpp:1444
 msgid "Ability Upgrades: "
 msgstr "Habilidades Melhoradas: "
 
@@ -8234,7 +8236,7 @@ msgstr "Habilidades Melhoradas: "
 # File: src/help.cpp, line: 1488
 # File: src/help.cpp, line: 1488
 # File: src/help.cpp, line: 1488
-#: src/help.cpp:1488
+#: src/help.cpp:1460
 msgid "HP: "
 msgstr "HP: "
 
@@ -8242,7 +8244,7 @@ msgstr "HP: "
 # File: src/help.cpp, line: 1489
 # File: src/help.cpp, line: 1489
 # File: src/help.cpp, line: 1489
-#: src/help.cpp:1489
+#: src/help.cpp:1461
 msgid "Moves: "
 msgstr "Movimento: "
 
@@ -8250,7 +8252,7 @@ msgstr "Movimento: "
 # File: src/help.cpp, line: 1491
 # File: src/help.cpp, line: 1491
 # File: src/help.cpp, line: 1491
-#: src/help.cpp:1491
+#: src/help.cpp:1463
 msgid "Vision: "
 msgstr ""
 
@@ -8258,7 +8260,7 @@ msgstr ""
 # File: src/help.cpp, line: 1493
 # File: src/help.cpp, line: 1493
 # File: src/help.cpp, line: 1493
-#: src/help.cpp:1493
+#: src/help.cpp:1465
 msgid "Jamming: "
 msgstr ""
 
@@ -8266,7 +8268,7 @@ msgstr ""
 # File: src/help.cpp, line: 1494
 # File: src/help.cpp, line: 1494
 # File: src/help.cpp, line: 1494
-#: src/help.cpp:1494
+#: src/help.cpp:1466
 msgid "Cost: "
 msgstr "Custo: "
 
@@ -8274,7 +8276,7 @@ msgstr "Custo: "
 # File: src/help.cpp, line: 1495
 # File: src/help.cpp, line: 1495
 # File: src/help.cpp, line: 1495
-#: src/help.cpp:1495
+#: src/help.cpp:1467
 msgid "Alignment: "
 msgstr "Alinhamento: "
 
@@ -8282,7 +8284,7 @@ msgstr "Alinhamento: "
 # File: src/help.cpp, line: 1501
 # File: src/help.cpp, line: 1501
 # File: src/help.cpp, line: 1501
-#: src/help.cpp:1501
+#: src/help.cpp:1473
 msgid "Required XP: "
 msgstr "XP necessário: "
 
@@ -8290,7 +8292,7 @@ msgstr "XP necessário: "
 # File: src/help.cpp, line: 1510
 # File: src/help.cpp, line: 1510
 # File: src/help.cpp, line: 1510
-#: src/help.cpp:1510
+#: src/help.cpp:1482
 msgid "unit help^Attacks"
 msgstr "Ataques"
 
@@ -8298,7 +8300,7 @@ msgstr "Ataques"
 # File: src/help.cpp, line: 1517
 # File: src/help.cpp, line: 1517
 # File: src/help.cpp, line: 1517
-#: src/help.cpp:1517
+#: src/help.cpp:1489
 msgid "unit help^Name"
 msgstr "Nome"
 
@@ -8306,7 +8308,7 @@ msgstr "Nome"
 # File: src/help.cpp, line: 1518
 # File: src/help.cpp, line: 1518
 # File: src/help.cpp, line: 1518
-#: src/help.cpp:1518
+#: src/help.cpp:1490
 msgid "Type"
 msgstr "Tipo"
 
@@ -8314,7 +8316,7 @@ msgstr "Tipo"
 # File: src/help.cpp, line: 1519
 # File: src/help.cpp, line: 1519
 # File: src/help.cpp, line: 1519
-#: src/help.cpp:1519
+#: src/help.cpp:1491
 msgid "Strikes"
 msgstr "Golpes"
 
@@ -8322,7 +8324,7 @@ msgstr "Golpes"
 # File: src/help.cpp, line: 1520
 # File: src/help.cpp, line: 1520
 # File: src/help.cpp, line: 1520
-#: src/help.cpp:1520
+#: src/help.cpp:1492
 msgid "Range"
 msgstr "Distância"
 
@@ -8330,7 +8332,7 @@ msgstr "Distância"
 # File: src/help.cpp, line: 1521
 # File: src/help.cpp, line: 1521
 # File: src/help.cpp, line: 1521
-#: src/help.cpp:1521
+#: src/help.cpp:1493
 msgid "Special"
 msgstr "Especial"
 
@@ -8338,7 +8340,7 @@ msgstr "Especial"
 # File: src/help.cpp, line: 1567
 # File: src/help.cpp, line: 1567
 # File: src/help.cpp, line: 1567
-#: src/help.cpp:1567
+#: src/help.cpp:1539
 msgid "Resistances"
 msgstr "Resistências"
 
@@ -8346,7 +8348,7 @@ msgstr "Resistências"
 # File: src/help.cpp, line: 1571
 # File: src/help.cpp, line: 1571
 # File: src/help.cpp, line: 1571
-#: src/help.cpp:1571
+#: src/help.cpp:1543
 msgid "Attack Type"
 msgstr "Tipo de ataque"
 
@@ -8354,7 +8356,7 @@ msgstr "Tipo de ataque"
 # File: src/help.cpp, line: 1572
 # File: src/help.cpp, line: 1572
 # File: src/help.cpp, line: 1572
-#: src/help.cpp:1572
+#: src/help.cpp:1544
 msgid "Resistance"
 msgstr "Resistência"
 
@@ -8362,7 +8364,7 @@ msgstr "Resistência"
 # File: src/help.cpp, line: 1602
 # File: src/help.cpp, line: 1602
 # File: src/help.cpp, line: 1602
-#: src/help.cpp:1602
+#: src/help.cpp:1574
 msgid "Terrain Modifiers"
 msgstr "Modificadores de Terreno"
 
@@ -8370,7 +8372,7 @@ msgstr "Modificadores de Terreno"
 # File: src/help.cpp, line: 1606
 # File: src/help.cpp, line: 1606
 # File: src/help.cpp, line: 1606
-#: src/help.cpp:1606
+#: src/help.cpp:1578
 msgid "Terrain"
 msgstr "Terreno"
 
@@ -8378,7 +8380,7 @@ msgstr "Terreno"
 # File: src/help.cpp, line: 1607
 # File: src/help.cpp, line: 1607
 # File: src/help.cpp, line: 1607
-#: src/help.cpp:1607
+#: src/help.cpp:1579
 msgid "Defense"
 msgstr "Defesa"
 
@@ -8386,7 +8388,7 @@ msgstr "Defesa"
 # File: src/help.cpp, line: 1608
 # File: src/help.cpp, line: 1608
 # File: src/help.cpp, line: 1608
-#: src/help.cpp:1608
+#: src/help.cpp:1580
 msgid "Movement Cost"
 msgstr "Custo de Movimento"
 
@@ -8394,7 +8396,7 @@ msgstr "Custo de Movimento"
 # File: src/help.cpp, line: 1612
 # File: src/help.cpp, line: 1612
 # File: src/help.cpp, line: 1612
-#: src/help.cpp:1612
+#: src/help.cpp:1584
 msgid "Vision Cost"
 msgstr ""
 
@@ -8402,7 +8404,7 @@ msgstr ""
 # File: src/help.cpp, line: 1615
 # File: src/help.cpp, line: 1615
 # File: src/help.cpp, line: 1615
-#: src/help.cpp:1615
+#: src/help.cpp:1587
 msgid "Jamming Cost"
 msgstr ""
 
@@ -8410,7 +8412,7 @@ msgstr ""
 # File: src/help.cpp, line: 1897
 # File: src/help.cpp, line: 1897
 # File: src/help.cpp, line: 1897
-#: src/help.cpp:1897
+#: src/help.cpp:1869
 msgid "<header>text='Units of this race'</header>"
 msgstr "<header>text='Unidades desta raça'</header>"
 
@@ -8418,7 +8420,7 @@ msgstr "<header>text='Unidades desta raça'</header>"
 # File: src/help.cpp, line: 2809
 # File: src/help.cpp, line: 2809
 # File: src/help.cpp, line: 2809
-#: src/help.cpp:2809
+#: src/help.cpp:2781
 msgid " < Back"
 msgstr "< Voltar"
 
@@ -8426,7 +8428,7 @@ msgstr "< Voltar"
 # File: src/help.cpp, line: 2810
 # File: src/help.cpp, line: 2810
 # File: src/help.cpp, line: 2810
-#: src/help.cpp:2810
+#: src/help.cpp:2782
 msgid "Forward >"
 msgstr "Prosseguir >"
 
@@ -8434,7 +8436,7 @@ msgstr "Prosseguir >"
 # File: src/help.cpp, line: 2918
 # File: src/help.cpp, line: 2918
 # File: src/help.cpp, line: 2918
-#: src/help.cpp:2918
+#: src/help.cpp:2890
 msgid "Reference to unknown topic: "
 msgstr "Referência a um tópico desconhecido: "
 
@@ -8442,7 +8444,7 @@ msgstr "Referência a um tópico desconhecido: "
 # File: src/help.cpp, line: 3174
 # File: src/help.cpp, line: 3174
 # File: src/help.cpp, line: 3174
-#: src/help.cpp:3174
+#: src/help.cpp:3146
 msgid "corrupted original file"
 msgstr "arquivo original corrompido"
 
@@ -8450,7 +8452,7 @@ msgstr "arquivo original corrompido"
 # File: src/help.cpp, line: 3273
 # File: src/help.cpp, line: 3273
 # File: src/help.cpp, line: 3273
-#: src/help.cpp:3273
+#: src/help.cpp:3245
 msgid "Close"
 msgstr "Fechar"
 
@@ -8458,7 +8460,7 @@ msgstr "Fechar"
 # File: src/help.cpp, line: 3276
 # File: src/help.cpp, line: 3276
 # File: src/help.cpp, line: 3276
-#: src/help.cpp:3276
+#: src/help.cpp:3248
 msgid "The Battle for Wesnoth Help"
 msgstr "Ajuda para Battle for Wesnoth"
 
@@ -8466,6 +8468,6 @@ msgstr "Ajuda para Battle for Wesnoth"
 # File: src/help.cpp, line: 3332
 # File: src/help.cpp, line: 3332
 # File: src/help.cpp, line: 3332
-#: src/help.cpp:3332
+#: src/help.cpp:3304
 msgid "Parse error when parsing help text: "
 msgstr "Erro de formato ao ler o texto de ajuda: "

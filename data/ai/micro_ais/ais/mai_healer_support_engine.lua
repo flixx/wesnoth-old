@@ -1,7 +1,7 @@
 return {
-    init = function(ai)
+    init = function(ai, existing_engine)
 
-        local healer_support = {}
+        local engine = existing_engine or {}
 
         local H = wesnoth.require "lua/helper.lua"
         local W = H.set_wml_action_metatable {}
@@ -17,12 +17,12 @@ return {
 
         -- Set variables and aspects correctly at the beginning of the turn
         -- This will be blacklisted after first execution each turn
-        function healer_support:initialize_healer_support_eval()
+        function engine:mai_healer_initialize_eval()
             local score = 999990
             return score
         end
 
-        function healer_support:initialize_healer_support_exec()
+        function engine:mai_healer_initialize_exec(cfg)
             --print(' Initializing healer_support at beginning of Turn ' .. wesnoth.current.turn)
 
             -- First, modify the attacks aspect to exclude healers
@@ -39,10 +39,12 @@ return {
                 action = "add",
                 path = "aspect[attacks].facet",
                 { "facet", {
-                   name = "ai_default_rca::aspect_attacks",
-                   id = "no_healers_attack",
-                   invalidate_on_gamestate_change = "yes",
-                   { "filter_own", { { "not", { ability = "healing" } } } }
+                    name = "ai_default_rca::aspect_attacks",
+                    id = "no_healers_attack",
+                    invalidate_on_gamestate_change = "yes",
+                    { "filter_own", {
+                       { "not", { ability = "healing", { "and", cfg.filter } } }
+                    } }
                 } }
             }
 
@@ -54,12 +56,12 @@ return {
 
         -- After attacks by all other units are done, reset things so that healers can attack, if desired
         -- This will be blacklisted after first execution each turn
-        function healer_support:healers_can_attack_eval()
+        function engine:mai_healer_may_attack_eval()
             local score = 99990
             return score
         end
 
-        function healer_support:healers_can_attack_exec()
+        function engine:mai_healer_may_attack_exec()
             --print(' Letting healers participate in attacks from now on')
 
             --local leader = wesnoth.get_units { side = wesnoth.current.side, canrecruit = 'yes' }[1]
@@ -80,7 +82,7 @@ return {
 
         ------ Place healers -----------
 
-        function healer_support:healer_support_eval(cfg)
+        function engine:mai_healer_move_eval(cfg)
 
             -- Should happen with higher priority than attacks, except at beginning of turn,
             -- when we want attacks done first
@@ -101,7 +103,7 @@ return {
                 formula = '$this_unit.moves = 0', { "and", cfg.filter }
             }
 
-            local all_units = wesnoth.get_units{ side = wesnoth.current.side, 
+            local all_units = wesnoth.get_units{ side = wesnoth.current.side,
                 {"and", cfg.filter_second}
             }
 
@@ -139,7 +141,7 @@ return {
             }
             local enemy_attack_map = BC.get_attack_map(enemies)
             --AH.put_labels(enemy_attack_map.units)
-            
+
             local avoid_map = LS.of_pairs(ai.get_avoid())
 
             -- Put units back out there
@@ -167,7 +169,7 @@ return {
                                 if (H.distance_between(u.x, u.y, r[1], r[2]) == 1) then
                                     -- !!!!!!! These ratings have to be positive or the method doesn't work !!!!!!!!!
                                     rating = rating + u.max_hitpoints - u.hitpoints
-    
+
                                     -- If injured_units_only = true then don't count units with full HP
                                     if (u.max_hitpoints - u.hitpoints > 0) or (not cfg.injured_units_only) then
                                         rating = rating + 15 * (enemy_attack_map.units:get(u.x, u.y) or 0)
@@ -218,7 +220,7 @@ return {
             return 0
         end
 
-        function healer_support:healer_support_exec()
+        function engine:mai_healer_move_exec()
             -- Only show this message in the healer_support scenario in AI-Demos
             local scenario = wesnoth.get_variable("scenario_name")
             if (scenario == 'healer_support') then
@@ -229,6 +231,6 @@ return {
             self.data.HS_unit, self.data.HS_hex =  nil, nil
         end
 
-        return healer_support
+        return engine
     end
 }

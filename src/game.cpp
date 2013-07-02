@@ -18,8 +18,8 @@
 #include "addon/manager.hpp"
 #include "addon/manager_ui.hpp"
 #include "commandline_options.hpp"
+#include "game_config_manager.hpp"
 #include "game_controller.hpp"
-#include "game_controller_new.hpp"
 #include "gui/dialogs/title_screen.hpp"
 #ifdef DEBUG_WINDOW_LAYOUT_GRAPHS
 #include "gui/widgets/debug.hpp"
@@ -30,9 +30,10 @@
 #include "playcampaign.hpp"
 #include "preferences_display.hpp"
 #include "replay.hpp"
-#include "statistics.hpp"
+#include "serialization/binary_or_text.hpp"
 #include "serialization/parser.hpp"
 #include "serialization/validator.hpp"
+#include "statistics.hpp"
 #include "version.hpp"
 #include "wml_exception.hpp"
 
@@ -353,9 +354,6 @@ static int process_command_args(const commandline_options& cmdline_opts) {
 		std::cout << lg::list_logdomains(*cmdline_opts.logdomains);
 		return 0;
 	}
-	if(cmdline_opts.new_syntax) {
-		game_config::new_syntax = true;
-	}
 	if(cmdline_opts.path) {
 		std::cout <<  game_config::path << "\n";
 		return 0;
@@ -375,7 +373,7 @@ static int process_command_args(const commandline_options& cmdline_opts) {
 		return 0;
 	}
 
-	// Options changing their behavior dependant on some others should be checked below.
+	// Options changing their behavior dependent on some others should be checked below.
 
 	if ( cmdline_opts.preprocess ) {
 		handle_preprocess_command(cmdline_opts);
@@ -425,11 +423,8 @@ static int do_gameloop(int argc, char** argv)
 	//ensure recorder has an actually random seed instead of what it got during
 	//static initialization (before any srand() call)
 	recorder.set_seed(rand());
-	boost::shared_ptr<game_controller_abstract> game;
-	if (game_config::new_syntax)
-		game = boost::shared_ptr<game_controller_abstract>(new game_controller_new(cmdline_opts));
-	else
-		game = boost::shared_ptr<game_controller_abstract>(new game_controller(cmdline_opts,argv[0]));
+	boost::scoped_ptr<game_controller> game(
+		new game_controller(cmdline_opts,argv[0]));
 	const int start_ticks = SDL_GetTicks();
 
 	init_locale();
@@ -473,8 +468,11 @@ static int do_gameloop(int argc, char** argv)
 	gui2::init();
 	const gui2::event::tmanager gui_event_manager;
 
+	game_config_manager config_manager(cmdline_opts, game->disp(),
+	    game->jump_to_editor());
+
 	loadscreen::start_stage("load config");
-	res = game->init_config();
+	res = config_manager.init_game_config(game_config_manager::NO_FORCE_RELOAD);
 	if(res == false) {
 		std::cerr << "could not initialize game config\n";
 		return 1;
@@ -509,7 +507,8 @@ static int do_gameloop(int argc, char** argv)
 		statistics::fresh_stats();
 
         if (!game->is_loading()) {
-			const config &cfg = game->game_config().child("titlescreen_music");
+			const config &cfg =
+			    config_manager.game_config().child("titlescreen_music");
 			if (cfg) {
 	            sound::play_music_repeatedly(game_config::title_music);
 				BOOST_FOREACH(const config &i, cfg.child_range("music")) {
@@ -574,7 +573,8 @@ static int do_gameloop(int argc, char** argv)
 			res = static_cast<gui2::ttitle_screen::tresult>(dlg.get_retval());
 		}
 
-		game_controller_abstract::RELOAD_GAME_DATA should_reload = game_controller_abstract::RELOAD_DATA;
+		game_controller::RELOAD_GAME_DATA should_reload =
+			game_controller::RELOAD_DATA;
 
 		if(res == gui2::ttitle_screen::QUIT_GAME) {
 			LOG_GENERAL << "quitting game...\n";
@@ -585,7 +585,7 @@ static int do_gameloop(int argc, char** argv)
 				res = gui2::ttitle_screen::NOTHING;
 				continue;
 			}
-			should_reload = game_controller_abstract::NO_RELOAD_DATA;
+			should_reload = game_controller::NO_RELOAD_DATA;
 		} else if(res == gui2::ttitle_screen::TUTORIAL) {
 			game->set_tutorial();
 		} else if(res == gui2::ttitle_screen::NEW_CAMPAIGN) {
@@ -611,20 +611,20 @@ static int do_gameloop(int argc, char** argv)
 			about::show_about(game->disp());
 			continue;
 		} else if(res == gui2::ttitle_screen::SHOW_HELP) {
-			help::help_manager help_manager(&game->game_config());
+			help::help_manager help_manager(&config_manager.game_config());
 			help::show_help(game->disp());
 			continue;
 		} else if(res == gui2::ttitle_screen::GET_ADDONS) {
 			// NOTE: we need the help_manager to get access to the Add-ons
 			// section in the game help!
-			help::help_manager help_manager(&game->game_config());
+			help::help_manager help_manager(&config_manager.game_config());
 			if(manage_addons(game->disp())) {
-				game->reload_changed_game_config();
+				config_manager.reload_changed_game_config();
 			}
 			continue;
 		} else if(res == gui2::ttitle_screen::RELOAD_GAME_DATA) {
 			loadscreen::global_loadscreen_manager loadscreen(game->disp().video());
-			game->reload_changed_game_config();
+			config_manager.reload_changed_game_config();
 			image::flush_cache();
 			continue;
 		} else if(res == gui2::ttitle_screen::START_MAP_EDITOR) {

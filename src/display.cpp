@@ -1847,30 +1847,30 @@ void display::draw_minimap_units()
 		}
 
 		int side = u->side();
-		//bool new_encoding = true;
 		SDL_Color col = team::get_minimap_color(side);
 
-		if ((*teams_)[currentTeam_].is_enemy(side)) {
-			col = team::get_minimap_color(5);
-		} else {
+		if (preferences::minimap_movement_coding()) {
 
-			if (currentTeam_ +1 == (unsigned)side) {
-
-				//movement_left() == total_movement()
-
-				if (u->movement_left() == u->total_movement()) {
-					col = team::get_minimap_color(3);
-				} else {
-
-					if (u->movement_left() == 0) {
-						col = team::get_minimap_color(1);
-					} else {
-						col = team::get_minimap_color(7);
-					}
-				}
-
+			if ((*teams_)[currentTeam_].is_enemy(side)) {
+				col = team::get_minimap_color(5);
 			} else {
-				col = team::get_minimap_color(2);
+
+				if (currentTeam_ +1 == static_cast<unsigned>(side)) {
+
+					if (u->movement_left() == u->total_movement()) {
+						col = team::get_minimap_color(3);
+					} else {
+
+						if (u->movement_left() == 0) {
+							col = team::get_minimap_color(1);
+						} else {
+							col = team::get_minimap_color(7);
+						}
+					}
+
+				} else {
+					col = team::get_minimap_color(2);
+				}
 			}
 		}
 
@@ -1978,7 +1978,7 @@ bool display::zoom_at_min() const
 	return zoom_ == MinZoom;
 }
 
-void display::set_zoom(int amount, bool absolute)
+bool display::set_zoom(int amount, bool absolute)
 {
 	int new_zoom = zoom_ + amount;
 	if (absolute)
@@ -2012,6 +2012,9 @@ void display::set_zoom(int amount, bool absolute)
 		// Forces a redraw after zooming.
 		// This prevents some graphic glitches from occurring.
 		draw();
+		return true;
+	} else {
+		return false;
 	}
 }
 

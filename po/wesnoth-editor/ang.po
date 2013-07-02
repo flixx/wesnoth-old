@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ang\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-22 22:03-0400\n"
+"POT-Creation-Date: 2013-06-23 10:20+0200\n"
 "PO-Revision-Date: 2012-05-24 12:01-0500\n"
 "Last-Translator: Steven Panek (Espreon) <Majora700@gmail.com>\n"
 "Language-Team: Old English <http://wiki.wesnoth.org/OldEnglishTranslation>\n"
@@ -50,12 +50,12 @@ msgstr ""
 #. [editor_group]: id=water
 #: data/core/editor/terrain-groups.cfg:17
 msgid "water"
-msgstr "ᚹᚫᛏᛖᚱ"
+msgstr ""
 
 #. [editor_group]: id=flat
 #: data/core/editor/terrain-groups.cfg:24
 msgid "flat"
-msgstr "ᚠᛁᛚᛞ"
+msgstr ""
 
 #. [editor_group]: id=desert
 #: data/core/editor/terrain-groups.cfg:31
@@ -70,7 +70,7 @@ msgstr ""
 #. [editor_group]: id=forest
 #: data/core/editor/terrain-groups.cfg:45
 msgid "forest"
-msgstr "ᚹᛠᛚᛞ"
+msgstr ""
 
 #. [editor_group]: id=fall
 #: data/core/editor/terrain-groups.cfg:52
@@ -80,17 +80,17 @@ msgstr ""
 #. [editor_group]: id=frozen
 #: data/core/editor/terrain-groups.cfg:59
 msgid "frozen"
-msgstr "ᚷᛖᚠᚱᚩᚱᛖᚾ"
+msgstr ""
 
 #. [editor_group]: id=rough
 #: data/core/editor/terrain-groups.cfg:66
 msgid "rough"
-msgstr "ᚱᚢᚻ"
+msgstr ""
 
 #. [editor_group]: id=cave
 #: data/core/editor/terrain-groups.cfg:73
 msgid "cave"
-msgstr "ᛋᚳᚱᚫᚠ"
+msgstr ""
 
 #. [editor_group]: id=obstacle
 #: data/core/editor/terrain-groups.cfg:80
@@ -100,17 +100,17 @@ msgstr ""
 #. [editor_group]: id=village
 #: data/core/editor/terrain-groups.cfg:87
 msgid "village"
-msgstr "ᚦᚩᚱᛈ"
+msgstr ""
 
 #. [editor_group]: id=castle
 #: data/core/editor/terrain-groups.cfg:94
 msgid "castle"
-msgstr "ᛒᚢᚱᚷ"
+msgstr ""
 
 #. [editor_group]: id=bridge
 #: data/core/editor/terrain-groups.cfg:101
 msgid "bridge"
-msgstr "ᛒᚱᚣᚳᚷ"
+msgstr ""
 
 #. [editor_group]: id=special
 #: data/core/editor/terrain-groups.cfg:108
@@ -127,23 +127,38 @@ msgstr ""
 msgid "Default"
 msgstr ""
 
+#. [editor_times]: id=summer
+#: data/core/editor/time-of-day.cfg:22
+msgid "Summer"
+msgstr ""
+
+#. [editor_times]: id=winter
+#: data/core/editor/time-of-day.cfg:28
+msgid "Winter"
+msgstr ""
+
 #. [editor_times]: id=underground
-#: data/core/editor/time-of-day.cfg:27
+#: data/core/editor/time-of-day.cfg:34
 msgid "Underground"
 msgstr ""
 
 #. [editor_times]: id=deep_underground
-#: data/core/editor/time-of-day.cfg:33
+#: data/core/editor/time-of-day.cfg:40
 msgid "Deep Underground"
 msgstr ""
 
+#. [editor_times]: id=indoors
+#: data/core/editor/time-of-day.cfg:46
+msgid "Indoors"
+msgstr ""
+
 #. [editor_times]: id=24
-#: data/core/editor/time-of-day.cfg:39
+#: data/core/editor/time-of-day.cfg:52
 msgid "24 Hour Schedule"
 msgstr ""
 
 #. [editor_times]: id=after_the_fall
-#: data/core/editor/time-of-day.cfg:46
+#: data/core/editor/time-of-day.cfg:59
 msgid "After the Fall"
 msgstr ""
 
@@ -185,11 +200,11 @@ msgstr ""
 #. [menu]: id=menu-editor-map
 #: data/themes/editor.cfg:89
 msgid "Map"
-msgstr "ᛚᚪᚾᛞᚳᚪᚱᛏᛖ"
+msgstr ""
 
 #. [menu]: id=menu-editor-transitions
 #: data/themes/editor.cfg:98
-msgid "Transition update"
+msgid "Transition Update"
 msgstr ""
 
 #. [menu]: id=menu-editor-window
@@ -210,7 +225,7 @@ msgstr ""
 #. [label]: id=villages-icon
 #: data/themes/editor.cfg:144
 msgid "villages"
-msgstr "ᚦᚩᚱᛈᚪᛋ"
+msgstr ""
 
 #. [label]: id=units-icon
 #: data/themes/editor.cfg:161
@@ -218,27 +233,27 @@ msgid "units"
 msgstr ""
 
 #. [menu]: id=switch_time
-#: data/themes/editor.cfg:489
+#: data/themes/editor.cfg:500
 msgid "Time Schedule Menu"
 msgstr ""
 
 #. [menu]: id=menu-playlist
-#: data/themes/editor.cfg:499
+#: data/themes/editor.cfg:510
 msgid "Playlist"
 msgstr ""
 
 #. [menu]: id=menu-editor-schedule
-#: data/themes/editor.cfg:505
+#: data/themes/editor.cfg:516
 msgid "Assign Time Schedule"
 msgstr ""
 
 #. [label]: id=terrain-icon
-#: data/themes/editor.cfg:609
+#: data/themes/editor.cfg:610
 msgid "terrain"
 msgstr ""
 
 #. [action]: id=flip_map_button_editor, type=checkbox
-#: data/themes/editor.cfg:669
+#: data/themes/editor.cfg:689
 msgid "Not implemented yet."
 msgstr ""
 
@@ -254,31 +269,39 @@ msgstr ""
 msgid "Type: "
 msgstr ""
 
-#: src/editor/editor_controller.cpp:175
+#: src/editor/action/mouse/mouse_action_unit.cpp:61
+msgid "Level: "
+msgstr ""
+
+#: src/editor/action/mouse/mouse_action_unit.cpp:62
+msgid "Cost: "
+msgstr ""
+
+#: src/editor/editor_controller.cpp:173
 msgid "Fatal error"
 msgstr ""
 
-#: src/editor/editor_controller.cpp:203
+#: src/editor/editor_controller.cpp:201
 msgid "Do you really want to quit?"
 msgstr ""
 
-#: src/editor/editor_controller.cpp:205
+#: src/editor/editor_controller.cpp:203
 msgid ""
 "Do you really want to quit? Changes in the map since the last save will be "
 "lost."
 msgstr ""
 
-#: src/editor/editor_controller.cpp:207
+#: src/editor/editor_controller.cpp:205
 msgid ""
 "Do you really want to quit? The following maps were modified and all changes "
 "since the last save will be lost:"
 msgstr ""
 
-#: src/editor/editor_controller.cpp:210
+#: src/editor/editor_controller.cpp:208
 msgid "Quit"
-msgstr "ᛚᚫᚠᚪᚾ"
+msgstr ""
 
-#: src/editor/editor_controller.cpp:221
+#: src/editor/editor_controller.cpp:219
 msgid "No editor time-of-day found."
 msgstr ""
 
@@ -301,23 +324,19 @@ msgstr ""
 #: src/editor/map/context_manager.cpp:119
 #: src/editor/map/context_manager.cpp:202
 msgid "(New Map)"
-msgstr "(ᚾᛁᚹᚢ ᛚᚪᚾᛞᚳᚪᚱᛏᛖ)"
+msgstr ""
 
 #: src/editor/map/context_manager.cpp:176
 msgid "Choose a Map to Open"
 msgstr ""
 
 #: src/editor/map/context_manager.cpp:234
-#, fuzzy
-#| msgid "(New Map)"
 msgid "(New Area)"
-msgstr "(ᚾᛁᚹᚢ ᛚᚪᚾᛞᚳᚪᚱᛏᛖ)"
+msgstr ""
 
 #: src/editor/map/context_manager.cpp:257
-#, fuzzy
-#| msgid "(New Map)"
 msgid "(New Side)"
-msgstr "(ᚾᛁᚹᚢ ᛚᚪᚾᛞᚳᚪᚱᛏᛖ)"
+msgstr ""
 
 #: src/editor/map/context_manager.cpp:303
 msgid "Choose a Mask to Apply"
@@ -416,26 +435,30 @@ msgstr ""
 msgid "Could not save the map: $msg"
 msgstr ""
 
-#: src/editor/palette/editor_palettes.cpp:56
-#: src/editor/palette/editor_palettes.cpp:101
+#: src/editor/palette/editor_palettes.cpp:58
+#: src/editor/palette/editor_palettes.cpp:105
 msgid "(Unknown Group)"
 msgstr ""
 
-#: src/editor/palette/editor_palettes.cpp:340
+#: src/editor/palette/editor_palettes.cpp:356
 msgid "(non-core)"
 msgstr ""
 
-#: src/editor/palette/editor_palettes.cpp:341
+#: src/editor/palette/editor_palettes.cpp:357
 msgid "Will not work in game without extra care."
 msgstr ""
 
 #: src/editor/palette/terrain_palettes.cpp:225
 msgid "FG: "
-msgstr "ᚠᚷ: "
+msgstr ""
 
 #: src/editor/palette/terrain_palettes.cpp:226
 msgid "BG: "
-msgstr "ᛒᚷ: "
+msgstr ""
+
+#: src/gui/dialogs/editor/custom_tod.cpp:123
+msgid "Choose file"
+msgstr ""
 
 #: src/gui/dialogs/editor_set_starting_position.cpp:86
 msgid "player^None"
@@ -444,13 +467,3 @@ msgstr ""
 #: src/gui/dialogs/editor_set_starting_position.cpp:98
 msgid "Player $player_number"
 msgstr ""
-
-#: src/gui/dialogs/editor_settings.cpp:161
-msgid "Custom setting"
-msgstr ""
-
-#~ msgid "Edit"
-#~ msgstr "ᚪᛞᛁᚻᛏᚪᚾ"
-
-#~ msgid "Quit Editor"
-#~ msgstr "ᚪᛞᛁᚻᛏᛖᚾᛞ ᛚᚫᚠᚪᚾ"

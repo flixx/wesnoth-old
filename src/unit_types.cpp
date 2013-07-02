@@ -591,7 +591,7 @@ void unit_type::build_help_index(const movement_type_map &mv_types,
 			const config::attribute_value &name = ab.cfg["name"];
 			if (!name.empty()) {
 				abilities_.push_back(name.t_str());
-				ability_tooltips_.push_back( ab.cfg["description"].t_str() );
+				ability_tooltips_.push_back( legacy::ability_description(ab.cfg["description"].t_str()) );
 			}
 		}
 	}
@@ -608,7 +608,7 @@ void unit_type::build_help_index(const movement_type_map &mv_types,
 				const config::attribute_value &name = ab.cfg["name"];
 				if (!name.empty()) {
 					adv_abilities_.push_back(name.t_str());
-					adv_ability_tooltips_.push_back( ab.cfg["description"].t_str() );
+					adv_ability_tooltips_.push_back( legacy::ability_description(ab.cfg["description"].t_str()) );
 				}
 			}
 		}
@@ -1084,7 +1084,7 @@ unit_type_data::unit_type_data() :
 
 namespace { // Helpers for set_config()
 	/**
-	 * Spits out an error message and throws a config::eror.
+	 * Spits out an error message and throws a config::error.
 	 * Called when apply_base_unit() detects a cycle.
 	 * (This exists merely to take the error message out of that function.)
 	 */
@@ -1168,7 +1168,7 @@ namespace { // Helpers for set_config()
 	}
 
 	/**
-	 * Processes [variation] tags of @a ut_cfg, handling inheritence and
+	 * Processes [variation] tags of @a ut_cfg, handling inheritance and
 	 * child clearing.
 	 */
 	void handle_variations(config & ut_cfg)
@@ -1215,23 +1215,32 @@ void unit_type_data::set_config(config &cfg)
 		loadscreen::increment_progress();
 	}
 
+	// Apply base units.
+	BOOST_FOREACH(config &ut, cfg.child_range("unit_type"))
+	{
+		if ( ut.has_child("base_unit") ) {
+			// Derived units must specify a new id.
+			// (An error message will be emitted later if id is empty.)
+			const std::string id = ut["id"];
+			if ( !id.empty() ) {
+				std::vector<std::string> base_tree(1, id);
+				apply_base_unit(ut, cfg, base_tree);
+				loadscreen::increment_progress();
+			}
+		}
+	}
+
+	// Handle inheritance and recording of unit types.
 	BOOST_FOREACH(config &ut, cfg.child_range("unit_type"))
 	{
 		std::string id = ut["id"];
+		// Every type is required to have an id.
 		if ( id.empty() ) {
 			ERR_CF << "[unit_type] with empty id=, ignoring:\n" << ut.debug();
-		} else {
-			std::vector<std::string> base_tree(1, id);
-			apply_base_unit(ut, cfg, base_tree);
-
-			if ( insert(std::make_pair(id, unit_type(ut))).second ) {
-				LOG_CONFIG << "added " << id << " to unit_type list (unit_type_data.unit_types)\n";
-			} else {
-				ERR_CF << "Multiple [unit_type]s with id=" << id << " encountered.\n";
-			}
+			continue;
 		}
 
-		// Handle genders and variations.
+		// Complete the gender-specific children of the config.
 		if ( config &male_cfg = ut.child("male") ) {
 			fill_unit_sub_type(male_cfg, ut, true);
 			handle_variations(male_cfg);
@@ -1240,14 +1249,24 @@ void unit_type_data::set_config(config &cfg)
 			fill_unit_sub_type(female_cfg, ut, true);
 			handle_variations(female_cfg);
 		}
+
+		// Complete the variation-defining children of the config.
 		handle_variations(ut);
+
+		// Record this unit type.
+		if ( insert(std::make_pair(id, unit_type(ut))).second ) {
+			LOG_CONFIG << "added " << id << " to unit_type list (unit_type_data.unit_types)\n";
+		} else {
+			ERR_CF << "Multiple [unit_type]s with id=" << id << " encountered.\n";
+		}
 
 		loadscreen::increment_progress();
 	}
-	// Now build all the types that were inserted above. (This was not done within
-	// the loop for performance.)
+
+	// Build all unit types. (This was not done within the loop for performance.)
 	build_all(unit_type::CREATED);
 
+	// Suppress some unit types (presumably used as base units) from the help.
 	if (const config &hide_help = cfg.child("hide_help")) {
 		hide_help_all_ = hide_help["all"].to_bool();
 		read_hide_help(hide_help);
@@ -1424,3 +1443,47 @@ void adjust_profile(std::string &small, std::string &big, std::string const &def
 			big = small;
 	}
 }
+
+
+namespace legacy {
+	/**
+	 * Strips the name of an ability/special from its description.
+	 * This adapts the pre-1.11.1 style of "<name>:\n<description>" to
+	 * the current style of simply "<description>".
+	 */
+	t_string ability_description(const t_string & description)
+	{
+		///	@deprecated This function is legacy support. Remove it post-1.12.
+
+		// We identify the legacy format by a colon ending the first line.
+		std::string desc_str = description.str();
+		const size_t colon_pos = desc_str.find(':');
+		const size_t first_end_line = desc_str.find_first_of("\r\n");
+		if ( colon_pos != std::string::npos  &&  colon_pos + 1 == first_end_line )
+		{
+			// Try to avoid spamming the deprecation message.
+			static std::set< std::string > reported;
+			const std::string name = desc_str.substr(0, colon_pos);
+			if ( reported.count(name) == 0 )
+			{
+				reported.insert(name);
+				// Inform the player.
+				lg::wml_error << '"' << name << '"'
+				              << " follows a deprecated format for its description,"
+				              << " using its name as the first line. Support"
+				              << " for that format will be removed in 1.12.\n";
+			}
+
+			// Strip the name from the description.
+			// This is sort of bad in that it messes with retranslating, if the
+			// player changes the game's language while playing. However, this
+			// is temporary, so I think simplicity trumps in this case.
+			desc_str.erase(0, colon_pos + 2);
+			return t_string(desc_str);
+		}
+
+		// Not legacy, so this function just falls through.
+		return description;
+	}
+}
+

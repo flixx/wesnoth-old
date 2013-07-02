@@ -34,6 +34,34 @@ namespace {
 		return "";
 	}
 
+	std::string colorify_addon_state_string(const std::string& str, const addon_tracking_info& state)
+	{
+		std::string colorname = "";
+
+		switch(state.state) {
+		case ADDON_NONE:
+			return str;
+		case ADDON_INSTALLED:
+		case ADDON_NOT_TRACKED:
+			colorname = "green";
+			break;
+		case ADDON_INSTALLED_UPGRADABLE:
+			colorname = "yellow";
+			break;
+		case ADDON_INSTALLED_OUTDATED:
+			colorname = "orange";
+			break;
+		case ADDON_INSTALLED_BROKEN:
+			colorname = "red";
+			break;
+		default:
+			colorname = "gray";
+			break;
+		}
+
+		return "<span color='" + colorname + "'>" + str + "</span>";
+	}
+
 	std::string describe_addon_state_info(const addon_tracking_info& state)
 	{
 		std::string s;
@@ -44,67 +72,111 @@ namespace {
 		switch(state.state) {
 		case ADDON_NONE:
 			if(!state.can_publish) {
-				s += _("addon_state^Not installed");
+				s = _("addon_state^Not installed");
 			} else {
-				s += _("addon_state^Published, not installed");
+				s = _("addon_state^Published, not installed");
 			}
 			break;
 		case ADDON_INSTALLED:
-			s += "<span color='green'>";
 			if(!state.can_publish) {
-				s += _("addon_state^Installed");
+				s = _("addon_state^Installed");
 			} else {
-				s += _("addon_state^Published");
+				s = _("addon_state^Published");
 			}
-			s += "</span>";
 			break;
 		case ADDON_NOT_TRACKED:
-			s += "<span color='green'>";
 			if(!state.can_publish) {
-				s += _("addon_state^Installed, not tracking local version");
+				s = _("addon_state^Installed, not tracking local version");
 			} else {
 				// Published add-ons often don't have local status information,
 				// hence untracked. This should be considered normal.
-				s += _("addon_state^Published, not tracking local version");
+				s = _("addon_state^Published, not tracking local version");
 			}
-			s += "</span>";
 			break;
 		case ADDON_INSTALLED_UPGRADABLE:
-			s += "<span color='yellow'>";
 			{
 				const char* const vstr = !state.can_publish
 					? _("addon_state^Installed ($local_version|), upgradable")
 					: _("addon_state^Published ($local_version| installed), upgradable");
-				s += utils::interpolate_variables_into_string(vstr, &i18n_symbols);
+				s = utils::interpolate_variables_into_string(vstr, &i18n_symbols);
 			}
-			s += "</span>";
 			break;
 		case ADDON_INSTALLED_OUTDATED:
-			s += "<span color='orange'>";
 			{
 				const char* const vstr = !state.can_publish
 					? _("addon_state^Installed ($local_version|), outdated on server")
 					: _("addon_state^Published ($local_version| installed), outdated on server");
-				s += utils::interpolate_variables_into_string(vstr, &i18n_symbols);
+				s = utils::interpolate_variables_into_string(vstr, &i18n_symbols);
 			}
-			s += "</span>";
 			break;
 		case ADDON_INSTALLED_BROKEN:
-			s += "<span color='red'>";
 			if(!state.can_publish) {
-				s += _("addon_state^Installed, broken");
+				s = _("addon_state^Installed, broken");
 			} else {
-				s += _("addon_state^Published, broken");
+				s = _("addon_state^Published, broken");
 			}
-			s += "</span>";
 			break;
 		default:
-			s += "<span color='gray'>";
-			s += _("addon_state^Unknown");
-			s += "</span>";
+			s = _("addon_state^Unknown");
 		}
 
-		return s;
+		return colorify_addon_state_string(s, state);
+	}
+
+	/**
+	 * Retrieves an element from the given associative container or dies in some way.
+	 *
+	 * It fails an @a assert() check or throws an exception if the requested element
+	 * does not exist.
+	 *
+	 * @return An element from the container that is guranteed to have existed before
+	 *         running this function.
+	 */
+	template<typename MapT>
+	typename MapT::mapped_type const& const_at(typename MapT::key_type const& key, MapT const& map)
+	{
+		typename MapT::const_iterator it = map.find(key);
+		if(it == map.end()) {
+			assert(it != map.end());
+			throw std::out_of_range("const_at()"); // Shouldn't get here without disabling assert()
+		}
+		return it->second;
+	}
+
+	std::string make_display_dependencies(const std::string& addon_id, const addons_list& addons_list, const addons_tracking_list& addon_states)
+	{
+		const addon_info& addon = const_at(addon_id, addons_list);
+		std::string str;
+
+		const std::set<std::string>& deps = addon.resolve_dependencies(addons_list);
+
+		FOREACH(const AUTO& dep_id, deps) {
+			addon_info dep;
+			addon_tracking_info depstate;
+
+			addons_list::const_iterator ali = addons_list.find(dep_id);
+			addons_tracking_list::const_iterator tli = addon_states.find(dep_id);
+
+			if(ali == addons_list.end()) {
+				dep.id = dep_id; // Build dummy addon_info.
+			} else {
+				dep = ali->second;
+			}
+
+			if(tli == addon_states.end()) {
+				depstate = get_addon_tracking_info(dep);
+			} else {
+				depstate = tli->second;
+			}
+
+			if(!str.empty()) {
+				str += ", ";
+			}
+
+			str += colorify_addon_state_string(dep.display_title(), depstate);
+		}
+
+		return str;
 	}
 }
 
@@ -160,8 +232,11 @@ namespace gui2 {
 
 REGISTER_DIALOG(addon_description)
 
-taddon_description::taddon_description(const addon_info& addon, const addon_tracking_info& state)
+taddon_description::taddon_description(const std::string& addon_id, const addons_list& addons_list, const addons_tracking_list& addon_states)
 {
+	const addon_info& addon = const_at(addon_id, addons_list);
+	const addon_tracking_info& state = const_at(addon_id, addon_states);
+
 	register_label("image", true, addon.display_icon());
 	register_label("title", true, addon.title);
 	register_label("version", true, addon.version);
@@ -172,6 +247,9 @@ taddon_description::taddon_description(const addon_info& addon, const addon_trac
 	register_label("downloads", true, str_cast(addon.downloads));
 	if(!addon.description.empty()) {
 		register_label("description", true, addon.description);
+	}
+	if(!addon.depends.empty()) {
+		register_label("dependencies", true, make_display_dependencies(addon_id, addons_list, addon_states), true);
 	}
 
 	std::string languages;

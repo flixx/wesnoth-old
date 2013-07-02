@@ -903,140 +903,181 @@ unit_map::iterator menu_handler::current_unit()
 	}
 }
 
-void menu_handler::create_unit_2(mouse_handler& mousehandler)
-{
-	assert(gui_ != NULL);
-	//
-	// The unit creation dialog makes sure unit types
-	// are properly cached.
-	//
-	gui2::tunit_create create_dlg;
-	create_dlg.show(gui_->video());
+namespace { // Helpers for create_unit()
+	/// Allows a function to return both a type and a gender.
+	typedef std::pair<const unit_type *, unit_race::GENDER> type_and_gender;
 
-	if(create_dlg.no_choice()) {
-		return;
-	}
-
-	const std::string& ut_id = create_dlg.choice();
-	const unit_type *utp = unit_types.find(ut_id);
-	if (!utp) {
-		ERR_NG << "Create unit dialog returned nonexistent or unusable unit_type id '" << ut_id << "'.\n";
-		return;
-	}
-
-	const unit_type &ut = *utp;
-
-	unit_race::GENDER gender = create_dlg.gender();
-
-	// Do not try to set bad genders, may mess up l10n
-	// FIXME: is this actually necessary?
-	if(ut.genders().end() == std::find(ut.genders().begin(), ut.genders().end(), gender)) {
-		gender = ut.genders().front();
-	}
-
-	unit chosen(ut, 1, true, gender);
-	chosen.new_turn();
-
-	const map_location& loc = mousehandler.get_last_hex();
-	units_.replace(loc, chosen);
-
-	if(map_.is_village(loc)) {
-		actions::get_village(loc, chosen.side());
-	}
-
-	gui_->invalidate(loc);
-	gui_->invalidate_unit();
-}
-
-void menu_handler::create_unit(mouse_handler& mousehandler)
-{
-	/** @todo reenable after releasing 1.7.4; as-is causes memory corruption */
-	if(gui2::new_widgets) {
-		create_unit_2(mousehandler);
-		return;
-	}
-
-	std::vector<std::string> options;
-	static int last_selection = -1;
-	static bool random_gender = false;
-	std::vector<const unit_type*> unit_choices;
-	const std::string heading = std::string(1,HEADING_PREFIX) +
-								_("Race")      + COLUMN_SEPARATOR +
-								_("Type");
-	options.push_back(heading);
-
-	BOOST_FOREACH(const unit_type_data::unit_type_map::value_type &i, unit_types.types())
+	/**
+	 * Allows the user to select a type of unit, using GUI2.
+	 * (Intended for use when a unit is created in debug mode via hotkey or
+	 * context menu.)
+	 * @returns the selected type and gender. If this is canceled, the
+	 *          returned type is NULL.
+	 *
+	 * @todo Replace choose_unit() when complete.
+	 */
+	type_and_gender choose_unit_2(game_display& gui)
 	{
-		std::stringstream row;
+		//
+		// The unit creation dialog makes sure unit types
+		// are properly cached.
+		//
+		gui2::tunit_create create_dlg;
+		create_dlg.show(gui.video());
 
-		// Make sure the unit type was built for the data we need.
-		unit_types.build_unit_type(i.second, unit_type::HELP_INDEX);
-
-		row << i.second.race()->plural_name() << COLUMN_SEPARATOR;
-		row << i.second.type_name() << COLUMN_SEPARATOR;
-
-		options.push_back(row.str());
-		unit_choices.push_back(&i.second);
-	}
-
-	int choice = 0;
-	bool random_gender_choice = random_gender;
-	{
-		gui::dialog umenu(*gui_, _("Create Unit (Debug!)"), "", gui::OK_CANCEL);
-
-		umenu.add_option(
-			(formatter()<<_("Gender: ")<<_("gender^Random")).str(),
-			random_gender_choice,
-			gui::dialog::BUTTON_EXTRA
-		);
-
-		gui::menu::basic_sorter sorter;
-		sorter.set_alpha_sort(0).set_alpha_sort(1);
-		umenu.set_menu(options, &sorter);
-
-		gui::filter_textbox* filter = new gui::filter_textbox(gui_->video(),
-			_("Filter: "), options, options, 1, umenu, 200);
-		umenu.set_textbox(filter);
-
-		//sort by race then by type name
-		umenu.get_menu().sort_by(1);
-		umenu.get_menu().sort_by(0);
-		if (last_selection >= 0)
-			umenu.get_menu().move_selection(last_selection);
-		else
-			umenu.get_menu().reset_selection();
-
-		dialogs::unit_types_preview_pane unit_preview(unit_choices, filter, 1, dialogs::unit_types_preview_pane::SHOW_ALL);
-		umenu.add_pane(&unit_preview);
-		unit_preview.set_selection(umenu.get_menu().selection());
-
-		choice = umenu.show();
-		choice = filter->get_index(choice);
-		random_gender_choice = umenu.option_checked(0);
-	}
-
-	if (size_t(choice) < unit_choices.size()) {
-		last_selection = choice;
-		random_gender  = random_gender_choice;
-
-		const unit_type& type = *unit_choices[choice];
-		const unit_race::GENDER gender = random_gender ? unit_race::NUM_GENDERS :
-		                                                 type.genders().front();
-
-		unit chosen(type, 1, true, gender);
-		chosen.new_turn();
-
-		const map_location loc = mousehandler.get_last_hex();
-		units_.replace(loc, chosen);
-		unit_display::unit_recruited(loc);
-
-		if(map_.is_village(loc)) {
-			actions::get_village(loc, chosen.side());
+		if(create_dlg.no_choice()) {
+			return type_and_gender(NULL, unit_race::NUM_GENDERS);
 		}
 
-		gui_->invalidate(loc);
-		gui_->invalidate_unit();
+		const std::string& ut_id = create_dlg.choice();
+		const unit_type *utp = unit_types.find(ut_id);
+		if (!utp) {
+			ERR_NG << "Create unit dialog returned nonexistent or unusable unit_type id '" << ut_id << "'.\n";
+			return type_and_gender(NULL, unit_race::NUM_GENDERS);
+		}
+		const unit_type &ut = *utp;
+
+		unit_race::GENDER gender = create_dlg.gender();
+		// Do not try to set bad genders, may mess up l10n
+		/// @todo Is this actually necessary?
+		/// (Maybe create_dlg can enforce proper gender selection?)
+		if(ut.genders().end() == std::find(ut.genders().begin(), ut.genders().end(), gender)) {
+			gender = ut.genders().front();
+		}
+
+		return type_and_gender(utp, gender);
 	}
+
+	/**
+	 * Allows the user to select a type of unit.
+	 * (Intended for use when a unit is created in debug mode via hotkey or
+	 * context menu.)
+	 * @returns the selected type and gender. If this is canceled, the
+	 *          returned type is NULL.
+	 */
+	type_and_gender choose_unit(game_display& gui)
+	{
+		std::vector<std::string> options;
+		static int last_selection = -1;
+		static bool random_gender = false;
+		std::vector<const unit_type*> unit_choices;
+		const std::string heading = std::string(1,HEADING_PREFIX) +
+									_("Race")      + COLUMN_SEPARATOR +
+									_("Type");
+		options.push_back(heading);
+
+		BOOST_FOREACH(const unit_type_data::unit_type_map::value_type &i, unit_types.types())
+		{
+			std::stringstream row;
+
+			// Make sure the unit type was built for the data we need.
+			unit_types.build_unit_type(i.second, unit_type::HELP_INDEX);
+
+			row << i.second.race()->plural_name() << COLUMN_SEPARATOR;
+			row << i.second.type_name() << COLUMN_SEPARATOR;
+
+			options.push_back(row.str());
+			unit_choices.push_back(&i.second);
+		}
+
+		int choice = 0;
+		bool random_gender_choice = random_gender;
+		{
+			gui::dialog umenu(gui, _("Create Unit (Debug!)"), "", gui::OK_CANCEL);
+
+			umenu.add_option(
+				(formatter()<<_("Gender: ")<<_("gender^Random")).str(),
+				random_gender_choice,
+				gui::dialog::BUTTON_EXTRA
+			);
+
+			gui::menu::basic_sorter sorter;
+			sorter.set_alpha_sort(0).set_alpha_sort(1);
+			umenu.set_menu(options, &sorter);
+
+			gui::filter_textbox* filter = new gui::filter_textbox(gui.video(),
+				_("Filter: "), options, options, 1, umenu, 200);
+			umenu.set_textbox(filter);
+
+			//sort by race then by type name
+			umenu.get_menu().sort_by(1);
+			umenu.get_menu().sort_by(0);
+			if (last_selection >= 0)
+				umenu.get_menu().move_selection(last_selection);
+			else
+				umenu.get_menu().reset_selection();
+
+			dialogs::unit_types_preview_pane unit_preview(unit_choices, filter, 1, dialogs::unit_types_preview_pane::SHOW_ALL);
+			umenu.add_pane(&unit_preview);
+			unit_preview.set_selection(umenu.get_menu().selection());
+
+			choice = umenu.show();
+			choice = filter->get_index(choice);
+			random_gender_choice = umenu.option_checked(0);
+		}
+
+		if (size_t(choice) < unit_choices.size()) {
+			last_selection = choice;
+			random_gender  = random_gender_choice;
+
+			return type_and_gender(unit_choices[choice],
+			                       random_gender ? unit_race::NUM_GENDERS :
+			                                       unit_choices[choice]->genders().front());
+		}
+		else
+			return type_and_gender(NULL, unit_race::NUM_GENDERS);
+	}
+
+	/**
+	 * Creates a unit and places it on the board.
+	 * (Intended for use with any units created via debug mode.)
+	 */
+	void create_and_place(game_display& gui, const gamemap & map, unit_map & units,
+	                      const map_location & loc, const unit_type & u_type,
+	                      unit_race::GENDER gender = unit_race::NUM_GENDERS)
+	{
+		// Create the unit.
+		unit created(u_type, 1, true, gender);
+		created.new_turn();
+
+		// Add the unit to the board.
+		std::pair<unit_map::iterator, bool> add_result =
+			units.replace(loc, created);
+		gui.invalidate_unit();
+		unit_display::unit_recruited(loc);
+
+		// Village capture?
+		if ( map.is_village(loc) )
+			actions::get_village(loc, created.side());
+
+		// Update fog/shroud.
+		actions::shroud_clearer clearer;
+		clearer.clear_unit(loc, created);
+		clearer.fire_events();
+		if ( add_result.first.valid() ) // In case sighted events messed with the unit.
+			actions::actor_sighted(*add_result.first);
+	}
+
+}// Anonymous namespace
+
+
+/**
+ * Creates a unit (in debug mode via hotkey or context menu).
+ */
+void menu_handler::create_unit(mouse_handler& mousehandler)
+{
+	// Save the current mouse location before popping up the choice menu (which
+	// gives time for the mouse to move, changing the location).
+	const map_location destination = mousehandler.get_last_hex();
+	assert(gui_ != NULL);
+
+	// Let the user select the kind of unit to create.
+	type_and_gender selection = gui2::new_widgets ? choose_unit_2(*gui_) :
+	                                                choose_unit(*gui_);
+	if ( selection.first != NULL )
+		// Make it so.
+		create_and_place(*gui_, map_, units_, destination,
+		                 *selection.first, selection.second);
 }
 
 void menu_handler::change_side(mouse_handler& mousehandler)
@@ -1066,6 +1107,23 @@ void menu_handler::change_side(mouse_handler& mousehandler)
 		if(map_.is_village(loc)) {
 			actions::get_village(loc, side);
 		}
+	}
+}
+
+void menu_handler::kill_unit(mouse_handler& mousehandler)
+{
+	const map_location& loc = mousehandler.get_last_hex();
+	const unit_map::iterator i = units_.find(loc);
+	if(i != units_.end()) {
+		const int dying_side = i->side();
+		game_events::fire("last breath", loc, loc);
+		if (i.valid()) {
+			unit_display::unit_die(loc, *i);
+		}
+		resources::screen->redraw_minimap();
+		game_events::fire("die", loc, loc);
+		resources::units->erase(i);
+		actions::recalculate_fog(dying_side);
 	}
 }
 
@@ -2290,11 +2348,10 @@ void chat_command_handler::do_ignore()
 		const std::map<std::string, std::string>& tmp = preferences::get_acquaintances_nice("ignore");
 		print(_("ignores list"), tmp.empty() ? _("(empty)") : utils::join_map(tmp, ")\n", " (") + ")");
 	} else {
-		std::string reason = get_data(2);
 		utils::string_map symbols;
 		symbols["nick"] = get_arg(1);
 
-		if (preferences::add_ignore(get_arg(1), reason)) {
+		if (preferences::add_ignore(get_arg(1), get_data(2))) {
 			print(_("ignores list"),  VGETTEXT("Added to ignore list: $nick", symbols));
 			chat_handler_.user_relation_changed(get_arg(1));
 		} else {
@@ -2309,11 +2366,10 @@ void chat_command_handler::do_friend()
 		const std::map<std::string, std::string>& tmp = preferences::get_acquaintances_nice("friend");
 		print(_("friends list"), tmp.empty() ? _("(empty)") : utils::join_map(tmp, ")\n", " (") + ")");
 	} else {
-		std::string notes = get_data(2);
 		utils::string_map symbols;
 		symbols["nick"] = get_arg(1);
 
-		if (preferences::add_friend(get_arg(1), notes)) {
+		if (preferences::add_friend(get_arg(1), get_data(2))) {
 			print(_("friends list"),  VGETTEXT("Added to friends list: $nick", symbols));
 			chat_handler_.user_relation_changed(get_arg(1));
 		} else {
@@ -3035,6 +3091,9 @@ void console_handler::do_undiscover() {
 		preferences::encountered_units().clear();
 	}
 }
+/**
+ * Implements the (debug mode) console command that creates a unit.
+ */
 void console_handler::do_create() {
 	const mouse_handler& mousehandler = resources::controller->get_mouse_handler_base();
 	const map_location &loc = mousehandler.get_last_hex();
@@ -3045,14 +3104,9 @@ void console_handler::do_create() {
 			return;
 		}
 
-		menu_handler_.units_.erase(loc);
-
-		unit created(*ut, 1, true);
-		created.new_turn();
-
-		menu_handler_.units_.add(loc, created);
-		menu_handler_.gui_->invalidate(loc);
-		menu_handler_.gui_->invalidate_unit();
+		// Create the unit.
+		create_and_place(*menu_handler_.gui_, menu_handler_.map_,
+		                 menu_handler_.units_, loc, *ut);
 	} else {
 		command_failed(_("Invalid location"));
 	}

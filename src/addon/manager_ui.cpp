@@ -232,7 +232,7 @@ bool do_resolve_addon_dependencies(display& disp, addons_client& client, const a
 		config archive;
 
 		if(!(
-			client.download_addon(archive, addon.id, addon.title) &&
+			client.download_addon(archive, addon.id, addon.title, !is_addon_installed(addon.id)) &&
 			client.install_addon(archive, addon)
 		)) {
 			const std::string& server_error = client.get_last_server_error();
@@ -344,11 +344,11 @@ class description_display_action : public gui::dialog_button_action
 	display& disp_;
 	std::vector<std::string> display_ids_;
 	addons_list addons_;
-	std::map<std::string, addon_tracking_info> tracking_;
+	addons_tracking_list tracking_;
 	gui::filter_textbox* filter_;
 
 public:
-	description_display_action(display& disp, const std::vector<std::string>& display_ids, const addons_list& addons, const std::map<std::string, addon_tracking_info>& tracking, gui::filter_textbox* filter)
+	description_display_action(display& disp, const std::vector<std::string>& display_ids, const addons_list& addons, const addons_tracking_list& tracking, gui::filter_textbox* filter)
 		: disp_(disp) , display_ids_(display_ids), addons_(addons), tracking_(tracking), filter_(filter)
 	{}
 
@@ -363,7 +363,7 @@ public:
 		if(choice < display_ids_.size()) {
 			const std::string& id = display_ids_[choice];
 			assert(tracking_.find(id) != tracking_.end());
-			gui2::taddon_description::display(addons_[id], tracking_[id], disp_.video());
+			gui2::taddon_description::display(id, addons_, tracking_, disp_.video());
 		}
 
 		return gui::CONTINUE_DIALOG;
@@ -495,7 +495,7 @@ void show_addons_manager_dialog(display& disp, addons_client& client, addons_lis
 	std::vector<std::string> can_delete_ids;
 
 	// Status tracking information about add-ons.
-	std::map<std::string, addon_tracking_info> tracking;
+	addons_tracking_list tracking;
 
 	// UI markup.
 	const std::string sep(1, COLUMN_SEPARATOR);
@@ -591,7 +591,7 @@ void show_addons_manager_dialog(display& disp, addons_client& client, addons_lis
 		filter_options.push_back(row);
 
 		// Now we enter information for list row display.
-		// Three fields are truncated to accomodate for GUI1's limitations.
+		// Three fields are truncated to accommodate for GUI1's limitations.
 
 		utils::ellipsis_truncate(display_author, 14);
 
@@ -805,7 +805,7 @@ void show_addons_manager_dialog(display& disp, addons_client& client, addons_lis
 		config archive;
 
 		if(!(
-			client.download_addon(archive, addon.id, addon.title) &&
+			client.download_addon(archive, addon.id, addon.title, !is_addon_installed(addon.id)) &&
 			client.install_addon(archive, addon)
 		)) {
 			failed_titles.push_back(addon.title);

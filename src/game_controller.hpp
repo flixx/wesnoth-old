@@ -14,16 +14,14 @@
 #ifndef GAME_CONTROLLER_H_INCLUDED
 #define GAME_CONTROLLER_H_INCLUDED
 
-#include "game_controller_abstract.hpp"
-
 #include "commandline_options.hpp"
-#include "config_cache.hpp"
-#include "filesystem.hpp"
+#include "editor/editor_main.hpp"
 #include "gamestatus.hpp"
-#include "game_config.hpp"
+#include "game_config_manager.hpp"
 #include "game_display.hpp"
 #include "game_preferences.hpp"
 #include "hotkeys.hpp"
+#include "resources.hpp"
 #include "sound.hpp"
 #include "thread.hpp"
 
@@ -42,17 +40,20 @@ public:
 	std::string campaign_id_,scenario_id_;
 };
 
-class game_controller : public game_controller_abstract
+class game_controller
 {
 public:
 	game_controller(const commandline_options& cmdline_opts, const char* appname);
 	~game_controller();
 
-	bool init_config() { return init_config(false); }
+	game_display& disp();
+
+	bool init_video();
+	bool init_language();
+	bool init_joystick();
+
 	bool play_test();
 	bool play_screenshot_mode();
-
-	void reload_changed_game_config();
 
 	bool is_loading() const;
 	void clear_loaded_game() { game::load_game_exception::game.clear(); }
@@ -65,31 +66,32 @@ public:
 	bool goto_multiplayer();
 	bool goto_editor();
 
+	bool jump_to_editor() const { return jump_to_editor_; }
+
 	bool play_multiplayer();
 	bool play_multiplayer_commandline();
 	bool change_language();
 
 	void show_preferences();
 
+	enum RELOAD_GAME_DATA { RELOAD_DATA, NO_RELOAD_DATA };
 	void launch_game(RELOAD_GAME_DATA reload=RELOAD_DATA);
 	void play_replay();
 
 	editor::EXIT_STATUS start_editor() { return start_editor(""); }
 
 	void start_wesnothd();
-	const config& game_config() const { return game_config_; }
-
 private:
 	game_controller(const game_controller&);
 	void operator=(const game_controller&);
 
-	bool init_config(const bool force);
-	void load_game_cfg(const bool force=false);
-	void set_unit_data();
-
 	void mark_completed_campaigns(std::vector<config>& campaigns);
 
 	editor::EXIT_STATUS start_editor(const std::string& filename);
+
+	const commandline_options& cmdline_opts_;
+	util::scoped_ptr<game_display> disp_;
+	CVideo video_;
 
 	//this should get destroyed *after* the video, since we want
 	//to clean up threads after the display disappears.
@@ -102,16 +104,11 @@ private:
 	const hotkey::manager hotkey_manager_;
 	sound::music_thinker music_thinker_;
 	resize_monitor resize_monitor_;
-	binary_paths_manager paths_manager_;
 
 	std::string test_scenario_;
 
 	std::string screenshot_map_, screenshot_filename_;
 
-	config game_config_;
-	preproc_map old_defines_map_;
-
-	/// Stateful class taking over scenario-switching capabilities from the current game_controller and playsingle_controller. Currently only available when --new-syntax command line option is enabled.
 	game_state state_;
 
 	std::string multiplayer_server_;
@@ -119,8 +116,6 @@ private:
 	jump_to_campaign_info jump_to_campaign_;
 
 	bool jump_to_editor_;
-
-	game_config::config_cache& cache_;
 };
 
 #endif

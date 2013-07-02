@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: http://bugs.wesnoth.org/\n"
-"POT-Creation-Date: 2013-05-12 19:12+0200\n"
+"POT-Creation-Date: 2013-06-24 15:23+0200\n"
 "PO-Revision-Date: 2012-01-22 14:16+0100\n"
 "Last-Translator: Zbigniew Banach <z.banach@wsisiz.edu.pl>\n"
 "Language-Team:  <z.banach@wsisiz.edu.pl>\n"
@@ -23,7 +23,7 @@ msgstr ""
 
 #. [time]: id=underground
 #: data/campaigns/Heir_To_The_Throne/utils/httt_utils.cfg:529
-#: data/core/macros/schedules.cfg:78
+#: data/core/macros/schedules.cfg:99
 msgid "Underground"
 msgstr "Podziemie"
 
@@ -927,7 +927,7 @@ msgstr "Broń specjalna"
 
 #. #-#-#-#-#  wesnoth-help.wml.pot (PACKAGE VERSION)  #-#-#-#-#
 #. [section]: id=factions_section
-#: data/core/help.cfg:56 src/help.cpp:1307 src/help.cpp:1309
+#: data/core/help.cfg:56 src/help.cpp:1279 src/help.cpp:1281
 msgid "Factions"
 msgstr "Strony"
 
@@ -1793,7 +1793,7 @@ msgstr ""
 #. [time]: id=dawn_hour
 #. [topic]: id=time_of_day
 #: data/core/help.cfg:281 data/core/macros/schedules.cfg:6
-#: data/core/macros/schedules.cfg:246
+#: data/core/macros/schedules.cfg:285
 msgid "Dawn"
 msgstr "Świt"
 
@@ -1805,27 +1805,27 @@ msgstr "Ranek"
 
 #. [time]: id=afternoon
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:283 data/core/macros/schedules.cfg:26
+#: data/core/help.cfg:283 data/core/macros/schedules.cfg:35
 msgid "Afternoon"
 msgstr "Popołudnie"
 
 #. [time]: id=dusk
 #. [time]: id=dusk_hour
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:284 data/core/macros/schedules.cfg:35
-#: data/core/macros/schedules.cfg:358
+#: data/core/help.cfg:284 data/core/macros/schedules.cfg:44
+#: data/core/macros/schedules.cfg:397
 msgid "Dusk"
 msgstr "Zmierzch"
 
 #. [time]: id=first_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:285 data/core/macros/schedules.cfg:46
+#: data/core/help.cfg:285 data/core/macros/schedules.cfg:55
 msgid "First Watch"
 msgstr "Pierwsza straż"
 
 #. [time]: id=second_watch
 #. [topic]: id=time_of_day
-#: data/core/help.cfg:286 data/core/macros/schedules.cfg:58
+#: data/core/help.cfg:286 data/core/macros/schedules.cfg:79
 msgid "Second Watch"
 msgstr "Druga straż"
 
@@ -4398,123 +4398,125 @@ msgstr ""
 msgid "Max HP bonus +3, Max XP +20%"
 msgstr "Premia maks. PŻ +3, maks. PD +20%"
 
+#. [time]: id=midday
+#. [time]: id=midday_hour
+#: data/core/macros/schedules.cfg:26 data/core/macros/schedules.cfg:332
+msgid "Midday"
+msgstr "Południe"
+
+#. [time]: id=midnight
+#. [time]: id=midnight_hour
+#: data/core/macros/schedules.cfg:67 data/core/macros/schedules.cfg:201
+msgid "Midnight"
+msgstr "Północ"
+
 #. [time]: id=indoors
-#: data/core/macros/schedules.cfg:70
+#: data/core/macros/schedules.cfg:91
 msgid "Indoors"
 msgstr "W pomieszczeniu"
 
 #. [time]: id=deep_underground
-#: data/core/macros/schedules.cfg:90
+#: data/core/macros/schedules.cfg:111
 msgid "Deep Underground"
 msgstr "Głębokie podziemie"
 
-#. [time]: id=midnight_hour
-#: data/core/macros/schedules.cfg:162
-msgid "Midnight"
-msgstr "Północ"
-
 #. [time]: id=second_watch_hour1
-#: data/core/macros/schedules.cfg:174
+#: data/core/macros/schedules.cfg:213
 msgid "Second Watch — First Hour"
 msgstr "Druga straż — pierwsza godzina"
 
 #. [time]: id=second_watch_hour2
-#: data/core/macros/schedules.cfg:186
+#: data/core/macros/schedules.cfg:225
 msgid "Second Watch — Second Hour"
 msgstr "Druga straż — druga godzina"
 
 #. [time]: id=second_watch_hour3
-#: data/core/macros/schedules.cfg:198
+#: data/core/macros/schedules.cfg:237
 msgid "Second Watch — Third Hour"
 msgstr "Druga straż — trzecia godzina"
 
 #. [time]: id=second_watch_hour4
-#: data/core/macros/schedules.cfg:210
+#: data/core/macros/schedules.cfg:249
 msgid "Second Watch — Fourth Hour"
 msgstr "Druga straż — czwarta godzina"
 
 #. [time]: id=second_watch_hour5
-#: data/core/macros/schedules.cfg:222
+#: data/core/macros/schedules.cfg:261
 msgid "Second Watch — Fifth Hour"
 msgstr "Druga straż — piąta godzina"
 
 #. [time]: id=second_watch_hour6
-#: data/core/macros/schedules.cfg:234
+#: data/core/macros/schedules.cfg:273
 msgid "Second Watch — Sixth Hour"
 msgstr "Druga straż — szósta godzina"
 
 #. [time]: id=morning_hour1
-#: data/core/macros/schedules.cfg:257
+#: data/core/macros/schedules.cfg:296
 msgid "Morning — First Hour"
 msgstr "Ranek — pierwsza godzina"
 
 #. [time]: id=morning_hour2
-#: data/core/macros/schedules.cfg:266
+#: data/core/macros/schedules.cfg:305
 msgid "Morning — Second Hour"
 msgstr "Ranek — druga godzina"
 
 #. [time]: id=morning_hour3
-#: data/core/macros/schedules.cfg:275
+#: data/core/macros/schedules.cfg:314
 msgid "Morning — Third Hour"
 msgstr "Ranek — trzecia godzina"
 
 #. [time]: id=morning_hour4
-#: data/core/macros/schedules.cfg:284
+#: data/core/macros/schedules.cfg:323
 msgid "Morning — Fourth Hour"
 msgstr "Ranek — czwarta godzina"
 
-#. [time]: id=midday_hour
-#: data/core/macros/schedules.cfg:293
-msgid "Midday"
-msgstr "Południe"
-
 #. [time]: id=afternoon_hour1
-#: data/core/macros/schedules.cfg:302
+#: data/core/macros/schedules.cfg:341
 msgid "Afternoon — First Hour"
 msgstr "Popołudnie — pierwsza godzina"
 
 #. [time]: id=afternoon_hour2
-#: data/core/macros/schedules.cfg:311
+#: data/core/macros/schedules.cfg:350
 msgid "Afternoon — Second Hour"
 msgstr "Popołudnie — druga godzina"
 
 #. [time]: id=afternoon_hour3
-#: data/core/macros/schedules.cfg:320
+#: data/core/macros/schedules.cfg:359
 msgid "Afternoon — Third Hour"
 msgstr "Popołudnie — trzecia godzina"
 
 #. [time]: id=afternoon_hour4
-#: data/core/macros/schedules.cfg:329
+#: data/core/macros/schedules.cfg:368
 msgid "Afternoon — Fourth Hour"
 msgstr "Popołudnie — czwarta godzina"
 
 #. [time]: id=afternoon_hour5
-#: data/core/macros/schedules.cfg:338
+#: data/core/macros/schedules.cfg:377
 msgid "Afternoon — Fifth Hour"
 msgstr "Popołudnie — piąta godzina"
 
 #. [time]: id=afternoon_hour6
-#: data/core/macros/schedules.cfg:347
+#: data/core/macros/schedules.cfg:386
 msgid "Afternoon — Sixth Hour"
 msgstr "Popołudnie — szósta godzina"
 
 #. [time]: id=first_watch_hour1
-#: data/core/macros/schedules.cfg:369
+#: data/core/macros/schedules.cfg:408
 msgid "First Watch — First Hour"
 msgstr "Pierwsza straż — pierwsza godzina"
 
 #. [time]: id=first_watch_hour2
-#: data/core/macros/schedules.cfg:381
+#: data/core/macros/schedules.cfg:420
 msgid "First Watch — Second Hour"
 msgstr "Pierwsza straż — druga godzina"
 
 #. [time]: id=first_watch_hour3
-#: data/core/macros/schedules.cfg:393
+#: data/core/macros/schedules.cfg:432
 msgid "First Watch — Third Hour"
 msgstr "Pierwsza straż — trzecia godzina"
 
 #. [time]: id=first_watch_hour4
-#: data/core/macros/schedules.cfg:405
+#: data/core/macros/schedules.cfg:444
 msgid "First Watch — Fourth Hour"
 msgstr "Pierwsza straż — czwarta godzina"
 
@@ -5863,185 +5865,185 @@ msgstr "Pomoc"
 msgid "<header>text='Units having this special attack'</header>"
 msgstr "<header>text='Jednostki posiadające ten atak specjalny'</header>"
 
-#: src/help.cpp:1236
+#: src/help.cpp:1208
 msgid "<header>text='Units having this ability'</header>"
 msgstr "<header>text='Jednostki posiadające tę umiejętność'</header>"
 
-#: src/help.cpp:1269
+#: src/help.cpp:1241
 msgid "Leaders:"
 msgstr "Przywódcy:"
 
-#: src/help.cpp:1278
+#: src/help.cpp:1250
 msgid "Recruits:"
 msgstr "Rekruci:"
 
-#: src/help.cpp:1292
+#: src/help.cpp:1264
 msgid "Era:"
 msgstr "Era:"
 
-#: src/help.cpp:1300
+#: src/help.cpp:1272
 msgid "Factions:"
 msgstr "Strony:"
 
-#: src/help.cpp:1310
+#: src/help.cpp:1282
 msgid "Factions are only used in multiplayer"
 msgstr "Strony są używane tylko w rozgrywce wieloosobowej"
 
-#: src/help.cpp:1354
+#: src/help.cpp:1326
 msgid "level"
 msgstr "poziom"
 
-#: src/help.cpp:1387
+#: src/help.cpp:1359
 msgid "Advances from: "
 msgstr "Awansuje z:"
 
-#: src/help.cpp:1389
+#: src/help.cpp:1361
 msgid "Advances to: "
 msgstr "Awansuje na:"
 
-#: src/help.cpp:1412
+#: src/help.cpp:1384
 msgid "Base unit: "
 msgstr ""
 
-#: src/help.cpp:1422
+#: src/help.cpp:1394
 #, fuzzy
 #| msgid "Factions:"
 msgid "Variations: "
 msgstr "Strony:"
 
-#: src/help.cpp:1446 src/help.cpp:1818 src/help.cpp:1891
+#: src/help.cpp:1418 src/help.cpp:1790 src/help.cpp:1863
 msgid "race^Miscellaneous"
 msgstr "Inne"
 
-#: src/help.cpp:1448
+#: src/help.cpp:1420
 msgid "Race: "
 msgstr "Rasa: "
 
-#: src/help.cpp:1455
+#: src/help.cpp:1427
 msgid "Abilities: "
 msgstr "Zdolności:"
 
-#: src/help.cpp:1472
+#: src/help.cpp:1444
 msgid "Ability Upgrades: "
 msgstr "Polepszenia zdolności: "
 
-#: src/help.cpp:1488
+#: src/help.cpp:1460
 msgid "HP: "
 msgstr "PŻ: "
 
-#: src/help.cpp:1489
+#: src/help.cpp:1461
 msgid "Moves: "
 msgstr "Ruchy:"
 
-#: src/help.cpp:1491
+#: src/help.cpp:1463
 msgid "Vision: "
 msgstr ""
 
-#: src/help.cpp:1493
+#: src/help.cpp:1465
 msgid "Jamming: "
 msgstr ""
 
-#: src/help.cpp:1494
+#: src/help.cpp:1466
 msgid "Cost: "
 msgstr "Koszt:"
 
-#: src/help.cpp:1495
+#: src/help.cpp:1467
 msgid "Alignment: "
 msgstr "Charakter:"
 
-#: src/help.cpp:1501
+#: src/help.cpp:1473
 msgid "Required XP: "
 msgstr "Wymagane PD: "
 
-#: src/help.cpp:1510
+#: src/help.cpp:1482
 msgid "unit help^Attacks"
 msgstr "Ataki"
 
-#: src/help.cpp:1517
+#: src/help.cpp:1489
 msgid "unit help^Name"
 msgstr "Nazwa"
 
-#: src/help.cpp:1518
+#: src/help.cpp:1490
 msgid "Type"
 msgstr "Typ"
 
-#: src/help.cpp:1519
+#: src/help.cpp:1491
 msgid "Strikes"
 msgstr "Ciosy"
 
-#: src/help.cpp:1520
+#: src/help.cpp:1492
 msgid "Range"
 msgstr "Zasięg"
 
-#: src/help.cpp:1521
+#: src/help.cpp:1493
 msgid "Special"
 msgstr "Specjalna"
 
-#: src/help.cpp:1567
+#: src/help.cpp:1539
 msgid "Resistances"
 msgstr "Odporności"
 
-#: src/help.cpp:1571
+#: src/help.cpp:1543
 msgid "Attack Type"
 msgstr "Rodzaj ataku"
 
-#: src/help.cpp:1572
+#: src/help.cpp:1544
 msgid "Resistance"
 msgstr "Odporność"
 
-#: src/help.cpp:1602
+#: src/help.cpp:1574
 msgid "Terrain Modifiers"
 msgstr "Modyfikatory terenowe"
 
-#: src/help.cpp:1606
+#: src/help.cpp:1578
 msgid "Terrain"
 msgstr "Teren"
 
-#: src/help.cpp:1607
+#: src/help.cpp:1579
 msgid "Defense"
 msgstr "Obrona"
 
-#: src/help.cpp:1608
+#: src/help.cpp:1580
 msgid "Movement Cost"
 msgstr "Koszt ruchu"
 
-#: src/help.cpp:1612
+#: src/help.cpp:1584
 msgid "Vision Cost"
 msgstr ""
 
-#: src/help.cpp:1615
+#: src/help.cpp:1587
 msgid "Jamming Cost"
 msgstr ""
 
-#: src/help.cpp:1897
+#: src/help.cpp:1869
 msgid "<header>text='Units of this race'</header>"
 msgstr "<header>text='Jednostki tej rasy'</header>"
 
-#: src/help.cpp:2809
+#: src/help.cpp:2781
 msgid " < Back"
 msgstr " < Wróć"
 
-#: src/help.cpp:2810
+#: src/help.cpp:2782
 msgid "Forward >"
 msgstr "Dalej >"
 
-#: src/help.cpp:2918
+#: src/help.cpp:2890
 msgid "Reference to unknown topic: "
 msgstr "Odniesienie do nieznanego tematu:"
 
-#: src/help.cpp:3174
+#: src/help.cpp:3146
 msgid "corrupted original file"
 msgstr "uszkodzony plik oryginalny"
 
-#: src/help.cpp:3273
+#: src/help.cpp:3245
 msgid "Close"
 msgstr "Zamknij"
 
-#: src/help.cpp:3276
+#: src/help.cpp:3248
 msgid "The Battle for Wesnoth Help"
 msgstr "System pomocy Bitwy o Wesnoth"
 
-#: src/help.cpp:3332
+#: src/help.cpp:3304
 msgid "Parse error when parsing help text: "
 msgstr "Błąd podczas przetwarzania tekstu pomocy:"
 

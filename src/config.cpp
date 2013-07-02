@@ -135,7 +135,7 @@ config::attribute_value &config::attribute_value::operator=(long long v)
 		// We can store this as an int.
 		return *this = static_cast<int>(v);
 
-	// Getting to this point should be rare. (Currently, geting here means
+	// Getting to this point should be rare. (Currently, getting here means
 	// something like there was so much draining in a campaign that the
 	// total damage taken is not only negative, but so negative that an
 	// int cannot hold the value.) So rare that it is not worth precise
@@ -178,8 +178,8 @@ config::attribute_value &config::attribute_value::operator=(double v)
 namespace {
 	/**
 	 * Attempts to convert @a source to the template type.
-	 * This is to avoid "overzealous reinterpretation of certain WML strings as
-	 * numeric tpyes" (c.f. bug #19201).
+	 * This is to avoid "overzealous reinterpretations of certain WML strings as
+	 * numeric types" (c.f. bug #19201).
 	 * @returns true if the conversion was successful and the source string
 	 *          can be reobtained by streaming the result.
 	 */
@@ -358,14 +358,32 @@ bool config::attribute_value::empty() const
 }
 
 
+/// Visitor handling equality checks.
+class config::attribute_value::equality_visitor
+	: public boost::static_visitor<bool>
+{
+public:
+	// Most generic: not equal.
+	template <typename T, typename U>
+	bool operator()(const T &, const U &) const { return false; }
+
+	// Same types are comparable and might be equal.
+	template <typename T>
+	bool operator()(const T & lhs, const T & rhs) const { return lhs == rhs; }
+
+	// Boolean values can be compared.
+	bool operator()(const true_false & lhs, const yes_no & rhs) const { return bool(lhs) == bool(rhs); }
+	bool operator()(const yes_no & lhs, const true_false & rhs) const { return bool(lhs) == bool(rhs); }
+};
+
 /**
  * Checks for equality of the attribute values when viewed as strings.
- * One exception: blanks only equal other blanks, even though their string
- * representation is "".
+ * Exception: Boolean synonyms can be equal ("yes" == "true").
+ * Note: Blanks have no string representation, so do not equal "" (an empty string).
  */
 bool config::attribute_value::operator==(const config::attribute_value &other) const
 {
-	return value_ == other.value_;
+	return boost::apply_visitor(equality_visitor(), value_, other.value_);
 }
 
 std::ostream &operator<<(std::ostream &os, const config::attribute_value &v)
@@ -959,7 +977,7 @@ void config::clear()
 				}
 			} else {
 				//reached end of child map for this element - all child nodes
-				//have beed deleted, so it's safe to clear the map, delete the
+				//have been deleted, so it's safe to clear the map, delete the
 				//node and move up one level
 				state.c->children.clear();
 				if (state.c != this) delete state.c;

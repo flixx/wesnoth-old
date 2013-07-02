@@ -3,40 +3,40 @@ if(MSVC)
 	# This seems to break on some Linux systems in combination with strict
 	# compilation, so disabled for now. The problem occurred on Gentoo with
 	# boost 1.37. Debian with boost 1.34, 1.35 and 1.38 works properly.
-	include_directories( ${Boost_INCLUDE_DIR} )
+	include_directories(SYSTEM ${Boost_INCLUDE_DIR} )
 
 	#additional MSVC includes
-	include_directories( ${PANGO_INCLUDE_DIR} )
-	include_directories( ${CAIRO_INCLUDE_DIR} )
-	include_directories( ${GLIB_INCLUDE_DIR} )
-	include_directories( ${GLIBCONFIG_INCLUDE_PATH} )
+	include_directories(SYSTEM ${PANGO_INCLUDE_DIR} )
+	include_directories(SYSTEM ${CAIRO_INCLUDE_DIR} )
+	include_directories(SYSTEM ${GLIB_INCLUDE_DIR} )
+	include_directories(SYSTEM ${GLIBCONFIG_INCLUDE_PATH} )
 else(MSVC)
-	include_directories( ${FONTCONFIG_INCLUDE_DIRS} )
+	include_directories(SYSTEM ${FONTCONFIG_INCLUDE_DIRS} )
 endif(MSVC)
 
 
-include_directories( ${SDL_INCLUDE_DIR} )
-include_directories( ${PANGOCAIRO_INCLUDE_DIRS} )
-include_directories( ${GETTEXT_INCLUDE_DIR} )
-include_directories( ${LIBDBUS_INCLUDE_DIRS} )
-include_directories( ${LIBINTL_INCLUDE_DIR} )
-include_directories( ${VORBISFILE_INCLUDE_DIR} )
+include_directories(SYSTEM ${SDL_INCLUDE_DIR} )
+include_directories(SYSTEM ${PANGOCAIRO_INCLUDE_DIRS} )
+include_directories(SYSTEM ${GETTEXT_INCLUDE_DIR} )
+include_directories(SYSTEM ${LIBDBUS_INCLUDE_DIRS} )
+include_directories(SYSTEM ${LIBINTL_INCLUDE_DIR} )
+include_directories(SYSTEM ${VORBISFILE_INCLUDE_DIR} )
 
 #optional dependencies
 if(SDLIMAGE_INCLUDE_DIR)
-	include_directories( ${SDLIMAGE_INCLUDE_DIR} )
+	include_directories(SYSTEM ${SDLIMAGE_INCLUDE_DIR} )
 endif()
 if(SDLMIXER_INCLUDE_DIR)
-	include_directories( ${SDLMIXER_INCLUDE_DIR} )
+	include_directories(SYSTEM ${SDLMIXER_INCLUDE_DIR} )
 endif()
 if(SDLNET_INCLUDE_DIR)
-	include_directories( ${SDLNET_INCLUDE_DIR} )
+	include_directories(SYSTEM ${SDLNET_INCLUDE_DIR} )
 endif()
 if(SDLTTF_INCLUDE_DIR)
-	include_directories( ${SDLTTF_INCLUDE_DIR} )
+	include_directories(SYSTEM ${SDLTTF_INCLUDE_DIR} )
 endif()
 if(ZLIB_INCLUDE_DIR)
-	include_directories( ${ZLIB_INCLUDE_DIR} )
+	include_directories(SYSTEM ${ZLIB_INCLUDE_DIR} )
 endif()
 
 set(network_implementation_files network.cpp network_worker.cpp)
@@ -126,12 +126,12 @@ set(tools-external-libs
 )
 
 if(ENABLE_FRIBIDI AND FRIBIDI_LIBRARIES)
-	include_directories( ${FRIBIDI_INCLUDE_DIR} )
+	include_directories(SYSTEM ${FRIBIDI_INCLUDE_DIR} )
 	set(game-external-libs ${game-external-libs} ${FRIBIDI_LIBRARIES})
 endif(ENABLE_FRIBIDI AND FRIBIDI_LIBRARIES)
 
 if(X11_FOUND)
-	include_directories( ${X11_INCLUDE_DIR} )
+	include_directories(SYSTEM ${X11_INCLUDE_DIR} )
 	set(game-external-libs ${game-external-libs} ${X11_LIBRARIES})
 endif(X11_FOUND)
 
@@ -656,11 +656,13 @@ set(wesnoth-main_SRC
 	editor/action/action_label.cpp
 	editor/action/action_unit.cpp
 	editor/action/action_village.cpp
+	editor/action/action_select.cpp
 	editor/action/mouse/mouse_action.cpp
 	editor/action/mouse/mouse_action_item.cpp
 	editor/action/mouse/mouse_action_map_label.cpp
 	editor/action/mouse/mouse_action_unit.cpp
 	editor/action/mouse/mouse_action_village.cpp
+	editor/action/mouse/mouse_action_select.cpp
 	editor/map/editor_map.cpp
 	editor/map/map_context.cpp
 	editor/map/map_fragment.cpp
@@ -685,9 +687,8 @@ set(wesnoth-main_SRC
 	formula_function.cpp
 	formula_string_utils.cpp
 	formula_tokenizer.cpp
+	game_config_manager.cpp
 	game_controller.cpp
-	game_controller_abstract.cpp
-	game_controller_new.cpp
 	game_display.cpp
 	game_errors.cpp
 	game_events.cpp
@@ -718,7 +719,6 @@ set(wesnoth-main_SRC
 	gui/dialogs/editor_new_map.cpp
 	gui/dialogs/editor_resize_map.cpp
 	gui/dialogs/editor_set_starting_position.cpp
-	gui/dialogs/editor_settings.cpp
 	gui/dialogs/folder_create.cpp
 	gui/dialogs/formula_debugger.cpp
 	gui/dialogs/game_delete.cpp
@@ -890,6 +890,14 @@ set(libwesnoth-game_STAT_SRC
 	widgets/widget.cpp
 	wml_exception.cpp
 )
+
+# On windows only, this file needs to be linked, as its header is included #ifdef win32.
+if(MSVC)
+	set(libwesnoth-game_STAT_SRC
+		${libwesnoth-game_STAT_SRC}
+		windows_tray_notification.cpp
+	)
+endif(MSVC)
 
 if(ENABLE_GAME AND ENABLE_TESTS)
 	set(libwesnoth-game_STAT_SRC

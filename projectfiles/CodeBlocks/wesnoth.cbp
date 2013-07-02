@@ -31,7 +31,6 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-mthreads" />
-			<Add option="-march=native" />
 			<Add option="-fexceptions" />
 			<Add option="-fdiagnostics-show-option" />
 			<Add option="-fopenmp" />
@@ -227,6 +226,8 @@
 		<Unit filename="..\..\src\editor\action\action_item.hpp" />
 		<Unit filename="..\..\src\editor\action\action_label.cpp" />
 		<Unit filename="..\..\src\editor\action\action_label.hpp" />
+		<Unit filename="..\..\src\editor\action\action_select.cpp" />
+		<Unit filename="..\..\src\editor\action\action_select.hpp" />
 		<Unit filename="..\..\src\editor\action\action_unit.cpp" />
 		<Unit filename="..\..\src\editor\action\action_unit.hpp" />
 		<Unit filename="..\..\src\editor\action\action_village.cpp" />
@@ -237,6 +238,8 @@
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_item.hpp" />
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_map_label.cpp" />
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_map_label.hpp" />
+		<Unit filename="..\..\src\editor\action\mouse\mouse_action_select.cpp" />
+		<Unit filename="..\..\src\editor\action\mouse\mouse_action_select.hpp" />
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_unit.cpp" />
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_unit.hpp" />
 		<Unit filename="..\..\src\editor\action\mouse\mouse_action_village.cpp" />
@@ -304,12 +307,10 @@
 		<Unit filename="..\..\src\game.cpp" />
 		<Unit filename="..\..\src\game_config.cpp" />
 		<Unit filename="..\..\src\game_config.hpp" />
+		<Unit filename="..\..\src\game_config_manager.cpp" />
+		<Unit filename="..\..\src\game_config_manager.hpp" />
 		<Unit filename="..\..\src\game_controller.cpp" />
 		<Unit filename="..\..\src\game_controller.hpp" />
-		<Unit filename="..\..\src\game_controller_abstract.cpp" />
-		<Unit filename="..\..\src\game_controller_abstract.hpp" />
-		<Unit filename="..\..\src\game_controller_new.cpp" />
-		<Unit filename="..\..\src\game_controller_new.hpp" />
 		<Unit filename="..\..\src\game_display.cpp" />
 		<Unit filename="..\..\src\game_display.hpp" />
 		<Unit filename="..\..\src\game_end_exceptions.cpp" />
@@ -513,8 +514,6 @@
 		<Unit filename="..\..\src\gui\dialogs\editor_resize_map.hpp" />
 		<Unit filename="..\..\src\gui\dialogs\editor_set_starting_position.cpp" />
 		<Unit filename="..\..\src\gui\dialogs\editor_set_starting_position.hpp" />
-		<Unit filename="..\..\src\gui\dialogs\editor_settings.cpp" />
-		<Unit filename="..\..\src\gui\dialogs\editor_settings.hpp" />
 		<Unit filename="..\..\src\gui\dialogs\field-fwd.hpp" />
 		<Unit filename="..\..\src\gui\dialogs\field.hpp" />
 		<Unit filename="..\..\src\gui\dialogs\folder_create.cpp" />

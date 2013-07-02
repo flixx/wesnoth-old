@@ -29,10 +29,12 @@
 #include "game_preferences.hpp"
 #include "replay.hpp"
 #include "resources.hpp"
+#include "serialization/binary_or_text.hpp"
 #include "statistics.hpp"
 #include "team.hpp"
 #include "unit.hpp"
 #include "unit_id.hpp"
+#include "variable.hpp"
 #include "wesconfig.h"
 #include "wml_exception.hpp"
 #include "formula_string_utils.hpp"
@@ -168,15 +170,12 @@ carryover::carryover(const config& side)
 		, current_player_(side["current_player"])
 		, gold_(side["gold"].to_int())
 		, name_(side["name"])
-		, previous_recruits_()
+		, previous_recruits_(utils::set_split(side["previous_recruits"]))
 		, recall_list_()
 		, save_id_(side["save_id"])
 {
-	std::vector<std::string> temp_recruits = utils::split(side["previous_recruits"], ',');
-	previous_recruits_.insert(temp_recruits.begin(), temp_recruits.end());
-
 	BOOST_FOREACH(const config& u, side.child_range("unit")){
-		recall_list_.push_back(unit(u));
+		recall_list_.push_back(u);
 	}
 }
 
@@ -187,9 +186,14 @@ carryover::carryover(const team& t, const int gold, const bool add)
 		, gold_(gold)
 		, name_(t.name())
 		, previous_recruits_(t.recruits())
-		, recall_list_(t.recall_list())
+		, recall_list_()
 		, save_id_(t.save_id())
-		{}
+{
+	BOOST_FOREACH(const unit& u, t.recall_list()) {
+		recall_list_.push_back(config());
+		u.write(recall_list_.back());
+	}
+}
 
 static const int default_gold_qty = 100;
 
@@ -219,30 +223,19 @@ void carryover::transfer_all_recruits_to(config& side_cfg){
 }
 
 void carryover::transfer_all_recalls_to(config& side_cfg){
-	BOOST_FOREACH(unit& u, recall_list_){
-		config& new_unit = side_cfg.add_child("unit");
-		u.write(new_unit);
+	BOOST_FOREACH(const config & u_cfg, recall_list_) {
+		side_cfg.add_child("unit", u_cfg);
 	}
 	recall_list_.clear();
 }
 
 std::string carryover::get_recruits(bool erase){
-	std::stringstream can_recruit;
-	for(std::set<std::string>::iterator i = previous_recruits_.begin()
-			; i != previous_recruits_.end()
-			; ){
-		can_recruit << *i << ",";
-		if(erase){
-			previous_recruits_.erase(i++);
-		} else {
-			++i;
-		}
-	}
-	std::string can_recruit_str = can_recruit.str();
-	// Remove the trailing comma
-	if(can_recruit_str.empty() == false) {
-		can_recruit_str.resize(can_recruit_str.size()-1);
-	}
+	// Join the previous recruits into a string.
+	std::string can_recruit_str = utils::join(previous_recruits_);
+	if ( erase )
+		// Clear the previous recruits.
+		previous_recruits_.clear();
+
 	return can_recruit_str;
 }
 
@@ -253,7 +246,10 @@ void carryover::update_carryover(const team& t, const int gold, const bool add){
 	current_player_ = t.current_player();
 	name_ = t.name();
 	previous_recruits_.insert(t.recruits().begin(), t.recruits().end());
-	recall_list_.insert(recall_list_.end(), t.recall_list().begin(), t.recall_list().end());
+	BOOST_FOREACH(const unit& u, t.recall_list()) {
+		recall_list_.push_back(config());
+		u.write(recall_list_.back());
+	}
 }
 
 void carryover::initialize_team(config& side_cfg){
@@ -263,8 +259,8 @@ void carryover::initialize_team(config& side_cfg){
 const std::string carryover::to_string(){
 	std::string side = "";
 	side.append("Side " + save_id_ + ": gold " + str_cast<int>(gold_) + " recruits " + get_recruits(false) + " units ");
-	BOOST_FOREACH(const unit& u, recall_list_){
-		side.append(u.name() + ", ");
+	BOOST_FOREACH(const config & u_cfg, recall_list_) {
+		side.append(u_cfg["name"] + ", ");
 	}
 	return side;
 }
@@ -278,10 +274,8 @@ void carryover::to_config(config& cfg){
 	side["current_player"] = current_player_;
 	side["name"] = name_;
 	side["previous_recruits"] = get_recruits(false);
-	BOOST_FOREACH(unit& u, recall_list_){
-		config& unit_cfg = side.add_child("unit");
-		u.write(unit_cfg);
-	}
+	BOOST_FOREACH(const config & u_cfg, recall_list_)
+		side.add_child("unit", u_cfg);
 }
 
 carryover_info::carryover_info(const config& cfg)
@@ -904,7 +898,8 @@ game_classification::game_classification():
 	completion(),
 	end_credits(true),
 	end_text(),
-	end_text_duration()
+	end_text_duration(),
+	difficulty(DEFAULT_DIFFICULTY)
 	{}
 
 game_classification::game_classification(const config& cfg):
@@ -921,7 +916,8 @@ game_classification::game_classification(const config& cfg):
 	completion(cfg["completion"]),
 	end_credits(cfg["end_credits"].to_bool(true)),
 	end_text(cfg["end_text"]),
-	end_text_duration(cfg["end_text_duration"])
+	end_text_duration(cfg["end_text_duration"]),
+	difficulty(cfg["difficulty"])
 	{}
 
 game_classification::game_classification(const game_classification& gc):
@@ -938,7 +934,8 @@ game_classification::game_classification(const game_classification& gc):
 	completion(gc.completion),
 	end_credits(gc.end_credits),
 	end_text(gc.end_text),
-	end_text_duration(gc.end_text_duration)
+	end_text_duration(gc.end_text_duration),
+	difficulty(gc.difficulty)
 {
 }
 
@@ -959,6 +956,7 @@ config game_classification::to_config() const
 	cfg["end_credits"] = end_credits;
 	cfg["end_text"] = end_text;
 	cfg["end_text_duration"] = str_cast<unsigned int>(end_text_duration);
+	cfg["difficulty"] = difficulty;
 
 	return cfg;
 }
@@ -1238,6 +1236,8 @@ void game_state::write_snapshot(config& cfg, game_display* gui) const
 	cfg["end_credits"] = classification_.end_credits;
 	cfg["end_text"] = classification_.end_text;
 	cfg["end_text_duration"] = str_cast<unsigned int>(classification_.end_text_duration);
+
+	cfg["difficulty"] = classification_.difficulty;
 
 	if(resources::gamedata != NULL){
 		resources::gamedata->write_snapshot(cfg);

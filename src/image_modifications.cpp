@@ -210,11 +210,11 @@ surface crop_modification::operator()(const surface& src) const
 		area.h = src->h;
 	}
 	if(area.x < 0) {
-		ERR_DP << "start X coordinate of SECTION modification is negative - truncating to zero\n";
+		ERR_DP << "start X coordinate of CROP modification is negative - truncating to zero\n";
 		area.x = 0;
 	}
 	if(area.y < 0) {
-		ERR_DP << "start Y coordinate of SECTION modification is negative - truncating to zero\n";
+		ERR_DP << "start Y coordinate of CROP modification is negative - truncating to zero\n";
 		area.y = 0;
 	}
 	return cut_surface(src, area);
@@ -867,7 +867,7 @@ REGISTER_MOD_PARSER(O, args)
 }
 
 //
-// ~R(), ~G() and ~B() are the children of ~CS(). Merely syntatic sugar.
+// ~R(), ~G() and ~B() are the children of ~CS(). Merely syntactic sugar.
 // Hence they are at the end of the evaluation.
 //
 // Red component color-shift

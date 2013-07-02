@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -52,7 +53,15 @@ enum { REMOVE_EMPTY = 0x01,	/**< REMOVE_EMPTY : remove empty elements. */
 	  STRIP_SPACES  = 0x02	/**< STRIP_SPACES : strips leading and trailing blank spaces. */
 };
 
+/// Splits a (comma-)separated string into a vector of pieces.
 std::vector< std::string > split(std::string const &val, const char c = ',', const int flags = REMOVE_EMPTY | STRIP_SPACES);
+/// Splits a (comma-)separated string into a set of pieces.
+/// See split() for the meanings of the parameters.
+inline std::set< std::string > set_split(std::string const &val, const char c = ',', const int flags = REMOVE_EMPTY | STRIP_SPACES)
+{
+	std::vector< std::string > vec_split = split(val, c, flags);
+	return std::set< std::string >(vec_split.begin(), vec_split.end());
+}
 
 /**
  * Splits a string based on two separators into a map.
@@ -64,7 +73,12 @@ std::vector< std::string > split(std::string const &val, const char c = ',', con
  *  c => d
  *  e => f
 */
-std::map< std::string, std::string > map_split(std::string const &val, char major = ',', char minor = ':', int flags = REMOVE_EMPTY | STRIP_SPACES, std::string const default_value = "");
+std::map< std::string, std::string > map_split(
+		  std::string const &val
+		, char major = ','
+		, char minor = ':'
+		, int flags = REMOVE_EMPTY | STRIP_SPACES
+		, std::string const& default_value = "");
 
 /**
  * Splits a string based either on a separator where text within parenthesis
@@ -136,7 +150,10 @@ std::string join(T const &v, const std::string& s = ",")
 }
 
 template <typename T>
-std::string join_map(T const &v, std::string major = ",", std::string minor = ":")
+std::string join_map(
+		  const T& v
+		, const std::string& major = ","
+		, const std::string& minor = ":")
 {
         std::stringstream str;
         for(typename T::const_iterator i = v.begin(); i != v.end(); ++i) {

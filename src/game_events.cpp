@@ -226,7 +226,7 @@ static void fill_wml_messages_map(std::map<std::string, int>& msg_map, std::stri
 }
 
 /**
- * Shows a summary of the errors encountered in WML thusfar,
+ * Shows a summary of the errors encountered in WML so far,
  * to avoid a lot of the same messages to be shown.
  * Identical messages are shown once, with (between braces)
  * the number of times that message was encountered.
@@ -289,7 +289,7 @@ typedef std::map<std::string, wml_handler_function> static_wml_action_map;
 static static_wml_action_map static_wml_actions;
 
 /**
- * WML_HANDLER_FUNCTION macro handles auto registeration for wml handlers
+ * WML_HANDLER_FUNCTION macro handles auto registration for wml handlers
  *
  * @param pname wml tag name
  * @param pei the variable name of game_events::queued_event object inside function
@@ -866,14 +866,7 @@ WML_HANDLER_FUNCTION(teleport, event_info, cfg)
 	if (dst == u->get_location() || !resources::game_map->on_board(dst)) return;
 
 	const unit* pass_check = NULL;
-	//@deprecated ignore_passability 1.9.10
-	const config::attribute_value ignore_passability = cfg["ignore_passability"];
-	if (!ignore_passability.blank()) {
-		WRN_NG << "[teleport]ignore_passability= is deprecated, use check_passability=\n";
-			if (!ignore_passability.to_bool(false))
-				pass_check = &*u;
-	}
-	else if (cfg["check_passability"].to_bool(true))
+	if (cfg["check_passability"].to_bool(true))
 		pass_check = &*u;
 	const map_location vacant_dst = find_vacant_tile(dst, pathfind::VACANT_ANY, pass_check);
 	if (!resources::game_map->on_board(vacant_dst)) return;
@@ -993,6 +986,7 @@ WML_HANDLER_FUNCTION(modify_ai, /*event_info*/, cfg)
 	const vconfig& filter_side = cfg.child("filter_side");
 	std::vector<int> sides;
 	if(!filter_side.null()) {
+		// TODO: since 1.11.0-dev it seems
 		WRN_NG << "[modify_ai][filter_side] is deprecated, use only an inline SSF\n";
 		if(!cfg["side"].str().empty()) {
 			ERR_NG << "duplicate side information in [modify_ai]\n";
@@ -1044,11 +1038,7 @@ WML_HANDLER_FUNCTION(modify_side, /*event_info*/, cfg)
 		}
 		// Modify recruit list (override)
 		if (!recruit_str.empty()) {
-			std::vector<std::string> recruit = utils::split(recruit_str);
-			if (recruit.size() == 1 && recruit.back() == "")
-				recruit.clear();
-
-			teams[team_index].set_recruits(std::set<std::string>(recruit.begin(),recruit.end()));
+			teams[team_index].set_recruits(utils::set_split(recruit_str));
 		}
 		// Modify income
 		config::attribute_value income = cfg["income"];
@@ -1726,7 +1716,7 @@ WML_HANDLER_FUNCTION(role, /*event_info*/, cfg)
 	const bool has_any_types = !types.empty();
 	std::vector<std::string>::iterator ti = types.begin(),
 		ti_end = types.end();
-	// loop to give precendence based on type order
+	// loop to give precedence based on type order
 	do {
 		if (has_any_types) {
 			item["type"] = *ti;
@@ -1751,7 +1741,7 @@ WML_HANDLER_FUNCTION(role, /*event_info*/, cfg)
 				player_ids.insert((resources::teams->begin() + (side_num - 1))->save_id());
 			}
 		}
-		// loop to give precendence based on type order
+		// loop to give precedence based on type order
 		std::vector<std::string>::iterator ti = types.begin();
 		do {
 			if (has_any_types) {

@@ -25,6 +25,7 @@
 #include "../serialization/parser.hpp"
 #include "../serialization/preprocessor.hpp"
 #include "../team.hpp"
+#include "wml_exception.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -58,6 +59,7 @@ void configuration::init(const config &game_config)
 {
 	ai_configurations_.clear();
 	era_ai_configurations_.clear();
+	mod_ai_configurations_.clear();
 	well_known_aspects.clear();
 	well_known_aspects.push_back(well_known_aspect("advancements"));
 	well_known_aspects.push_back(well_known_aspect("aggression"));
@@ -117,17 +119,17 @@ void configuration::init(const config &game_config)
 	}
 }
 
-void configuration::add_era_ai_from_config(const config &era)
+namespace {
+void extract_ai_configurations(std::map<std::string, description> &storage, const config &input)
 {
-	era_ai_configurations_.clear();
-	BOOST_FOREACH(const config &ai_configuration, era.child_range("ai")) {
+	BOOST_FOREACH(const config &ai_configuration, input.child_range("ai")) {
 		const std::string &id = ai_configuration["id"];
 		if (id.empty()){
 
 			ERR_AI_CONFIGURATION << "skipped AI config due to missing id" << ". Config contains:"<< std::endl << ai_configuration << std::endl;
 			continue;
 		}
-		if (era_ai_configurations_.count(id)>0){
+		if (storage.count(id)>0){
 			ERR_AI_CONFIGURATION << "skipped AI config due to duplicate id [" << id << "]. Config contains:"<< std::endl << ai_configuration << std::endl;
 			continue;
 		}
@@ -137,8 +139,23 @@ void configuration::add_era_ai_from_config(const config &era)
 		desc.text = ai_configuration["description"].str();
 		desc.cfg=ai_configuration;
 
-		era_ai_configurations_.insert(std::make_pair(id,desc));
+		storage.insert(std::make_pair(id,desc));
 		LOG_AI_CONFIGURATION << "loaded AI config: " << ai_configuration["description"] << std::endl;
+	}
+}
+}
+
+void configuration::add_era_ai_from_config(const config &era)
+{
+	era_ai_configurations_.clear();
+	extract_ai_configurations(era_ai_configurations_, era);
+}
+
+void configuration::add_mod_ai_from_config(config::const_child_itors mods)
+{
+	mod_ai_configurations_.clear();
+	BOOST_FOREACH(const config &mod, mods) {
+		extract_ai_configurations(mod_ai_configurations_, mod);
 	}
 }
 
@@ -152,6 +169,10 @@ std::vector<description*> configuration::get_available_ais(){
 		ais_list.push_back(&desc->second);
 		DBG_AI_CONFIGURATION << "has ai with config: "<< std::endl << desc->second.cfg<< std::endl;
 	}
+	for(description_map::iterator desc = mod_ai_configurations_.begin(); desc!=mod_ai_configurations_.end(); ++desc) {
+		ais_list.push_back(&desc->second);
+		DBG_AI_CONFIGURATION << "has ai with config: "<< std::endl << desc->second.cfg<< std::endl;
+	}
 	return ais_list;
 }
 
@@ -161,7 +182,12 @@ const config& configuration::get_ai_config_for(const std::string &id)
 	if (cfg_it==ai_configurations_.end()){
 		description_map::iterator era_cfg_it = era_ai_configurations_.find(id);
 		if (era_cfg_it==era_ai_configurations_.end()){
-			return default_config_;
+			description_map::iterator mod_cfg_it = mod_ai_configurations_.find(id);
+			if (mod_cfg_it==mod_ai_configurations_.end()) {
+				return default_config_;
+			} else {
+				return mod_cfg_it->second.cfg;
+			}
 		} else {
 			return era_cfg_it->second.cfg;
 		}
@@ -172,6 +198,7 @@ const config& configuration::get_ai_config_for(const std::string &id)
 
 configuration::description_map configuration::ai_configurations_ = configuration::description_map();
 configuration::description_map configuration::era_ai_configurations_ = configuration::description_map();
+configuration::description_map configuration::mod_ai_configurations_ = configuration::description_map();
 config configuration::default_config_ = config();
 
 bool configuration::get_side_config_from_file(const std::string& file, config& cfg ){
@@ -373,6 +400,7 @@ bool configuration::upgrade_side_config_from_1_07_02_to_1_07_03(side_number side
 
 
 		BOOST_FOREACH(const config &aitarget, aiparam.child_range("target")) {
+			lg::wml_error << deprecate_wml_key_warning("target", "1.12.0") << "\n";
 			config aigoal;
 			transfer_turns_and_time_of_day_data(aiparam,aigoal);
 
@@ -391,6 +419,7 @@ bool configuration::upgrade_side_config_from_1_07_02_to_1_07_03(side_number side
 
 
 		BOOST_FOREACH(config &ai_protect_unit, aiparam.child_range("protect_unit")) {
+			lg::wml_error << deprecate_wml_key_warning("protect_unit", "1.12.0") << "\n";
 			transfer_turns_and_time_of_day_data(aiparam,ai_protect_unit);
 			upgrade_protect_goal_config_from_1_07_02_to_1_07_03(side,ai_protect_unit,parsed_cfg,true);
 		}
@@ -398,6 +427,7 @@ bool configuration::upgrade_side_config_from_1_07_02_to_1_07_03(side_number side
 
 
 		BOOST_FOREACH(config &ai_protect_location, aiparam.child_range("protect_location")) {
+			lg::wml_error << deprecate_wml_key_warning("protect_location", "1.12.0") << "\n";
 			transfer_turns_and_time_of_day_data(aiparam,ai_protect_location);
 			upgrade_protect_goal_config_from_1_07_02_to_1_07_03(side,ai_protect_location,parsed_cfg,false);
 		}
@@ -406,12 +436,14 @@ bool configuration::upgrade_side_config_from_1_07_02_to_1_07_03(side_number side
 
 		if (const config::attribute_value *v = aiparam.get("protect_leader"))
 		{
+			lg::wml_error << deprecate_wml_key_warning("protect_leader", "1.12.0") << "\n";
 			config c;
 			c["value"] = *v;
 			c["canrecruit"] = true;
 			c["side_number"] = side;
 			transfer_turns_and_time_of_day_data(aiparam,c);
 			if (const config::attribute_value *v = aiparam.get("protect_leader_radius")) {
+				lg::wml_error << deprecate_wml_key_warning("protect_leader_radius", "1.12.0") << "\n";
 				c["radius"] = *v;
 			}
 

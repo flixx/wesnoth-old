@@ -27,6 +27,7 @@
 #include "../game_display.hpp"
 #include "../game_events.hpp"
 #include "../game_preferences.hpp"
+#include "../gamestatus.hpp"
 #include "../gettext.hpp"
 #include "../log.hpp"
 #include "../map.hpp"
@@ -905,7 +906,7 @@ bool place_recruit(const unit &u, const map_location &recruit_location, const ma
 	// Fog clearing.
 	actions::shroud_clearer clearer;
 	if ( !wml_triggered ) // To preserve current WML behavior.
-		mutated |= clearer.clear_unit(current_loc, *new_unit_itor, true);
+		mutated |= clearer.clear_unit(current_loc, *new_unit_itor);
 
 	if ( fire_event ) {
 		const std::string event_name = is_recall ? "recall" : "recruit";
