@@ -110,7 +110,7 @@ public:
 private:
 	void invalidate();
 	void update_important_hexes();
-	void add_side_to_cost_map(pathfind::full_cost_map& cost_map, int side);
+	void add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map);
 
 	//Debug only
 	void show_important_hexes() const;
@@ -118,10 +118,10 @@ private:
 	std::set<map_location> important_hexes_;
 
 	// The CA Object will be persistent over turns.
-	// cheapest_unit_cost_ is updated in execute() and
+	// optional_cheapest_unit_cost_ is updated in execute() and
 	// used in evaluate().
 	// Use boost::optional to check for a uninitialized state.
-	boost::optional<int> cheapest_unit_cost_;
+	boost::optional<int> optional_cheapest_unit_cost_;
 
 };
 

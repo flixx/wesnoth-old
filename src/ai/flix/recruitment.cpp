@@ -55,7 +55,7 @@ const static bool MAP_IGNORE_ZOC = true;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
-		: candidate_action(context, cfg), cheapest_unit_cost_() { }
+		: candidate_action(context, cfg), optional_cheapest_unit_cost_() { }
 
 double recruitment::evaluate() {
 	const unit_map &units = *resources::units;
@@ -66,9 +66,10 @@ double recruitment::evaluate() {
 			return BAD_SCORE;
 		}
 
-		if (cheapest_unit_cost_) {  // if initialized (this is a boost::optional<int>)
+		if (optional_cheapest_unit_cost_) {
 			// Check Gold. But proceed if there is a unit with cost <= 0 (WML can do that)
-			if (current_team().gold() < cheapest_unit_cost_ && cheapest_unit_cost_ > 0) {
+			if (current_team().gold() < optional_cheapest_unit_cost_ &&
+					optional_cheapest_unit_cost_ > 0) {
 				// TODO(flix) && recruitment-list wasn't changed.
 				return BAD_SCORE;
 			}
@@ -126,8 +127,8 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (!cheapest_unit_cost_ || info->cost() < cheapest_unit_cost_) {
-				cheapest_unit_cost_ = info->cost();
+			if (!optional_cheapest_unit_cost_ || info->cost() < optional_cheapest_unit_cost_) {
+				optional_cheapest_unit_cost_ = info->cost();
 			}
 		}
 
@@ -138,8 +139,8 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 			const unit_type* const info = unit_types.find(recruit);
-			if (!cheapest_unit_cost_ || info->cost() < cheapest_unit_cost_) {
-				cheapest_unit_cost_ = info->cost();
+			if (!optional_cheapest_unit_cost_ || info->cost() < optional_cheapest_unit_cost_) {
+				optional_cheapest_unit_cost_ = info->cost();
 			}
 		}
 
@@ -151,13 +152,13 @@ void recruitment::execute() {
 		return;  // This CA is going to be blacklisted for this turn.
 	}
 
-	if (!cheapest_unit_cost_) {  // this is a boost::optional.
+	if (!optional_cheapest_unit_cost_) {
 		// When it is uninitialized it must be that:
 		DBG_AI_FLIX << "All leaders have empty recruitment lists. \n";
 		return;  // This CA is going to be blacklisted for this turn.
 	}
 
-	if (current_team().gold() < cheapest_unit_cost_ && cheapest_unit_cost_ > 0) {
+	if (current_team().gold() < optional_cheapest_unit_cost_ && optional_cheapest_unit_cost_ > 0) {
 		DBG_AI_FLIX << "Not enough gold for recruiting \n";
 		return;  // This CA is going to be blacklisted for this turn.
 	}
@@ -207,12 +208,12 @@ void recruitment::execute() {
 	std::map<std::string, int> own_units_count;
 	int total_own_units = 0;
 
-	for (unit_map::const_iterator unit = units.begin(); unit != units.end(); ++unit) {
-		if (unit->side() != get_side() || unit->can_recruit()) {
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side() || unit.can_recruit()) {
 			continue;
 		}
 
-		++own_units_count[unit->type_name()];
+		++own_units_count[unit.type_name()];
 		++total_own_units;
 	}
 
@@ -237,10 +238,10 @@ void recruitment::execute() {
 		data* best_leader_data = NULL;
 		double biggest_difference = -100;
 		BOOST_FOREACH(data& data, leader_data) {
-			double should_be = data.ratio_score * 100;  // %
-			double is = (total_recruit_count == 0) ? 0 :
-					(static_cast<double>(data.recruit_count) / total_recruit_count) * 100;  // %
-			double difference = should_be - is;
+			double desired_percentage = data.ratio_score * 100;
+			double current_percentage = (total_recruit_count == 0) ? 0 :
+					(static_cast<double>(data.recruit_count) / total_recruit_count) * 100;
+			double difference = desired_percentage - current_percentage;
 			if (difference > biggest_difference) {
 				biggest_difference = difference;
 				best_leader_data = &data;
@@ -255,10 +256,10 @@ void recruitment::execute() {
 			const std::string& unit = i.first;
 			const double score = i.second;
 
-			double should_be = score * 100;  // %
-			double is = (total_own_units == 0) ? 0 :
-					(static_cast<double>(own_units_count[unit]) / total_own_units) * 100;  // %
-			double difference = should_be - is;
+			double desired_percentage = score * 100;
+			double current_percentage = (total_own_units == 0) ? 0 :
+					(static_cast<double>(own_units_count[unit]) / total_own_units) * 100;
+			double difference = desired_percentage - current_percentage;
 			if (difference > biggest_difference) {
 				biggest_difference = difference;
 				best_recruit = unit;
@@ -293,44 +294,44 @@ recruitment::~recruitment() { }
 // This is going to be called when the recruitment list changes
 // (not implemented yet, just here as a reminder)
 void recruitment::invalidate() {
-	cheapest_unit_cost_ = boost::none;
+	optional_cheapest_unit_cost_ = boost::none;
 }
 
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
 	pathfind::full_cost_map cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
-	add_side_to_cost_map(cost_map, get_side());
+	add_side_to_cost_map(get_side(), &cost_map);
 }
 
-void recruitment::add_side_to_cost_map(pathfind::full_cost_map& cost_map, int side) {
-	const unit_map &units = *resources::units;
+void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map) {
+	const unit_map& units = *resources::units;
 	const gamemap& map = *resources::game_map;
 	const team& team = (*resources::teams)[side - 1];
 
-	// first add all existing units to cost_map
+	// First add all existing units to cost_map.
 	int unit_count = 0;
-	for (unit_map::const_iterator unit = units.begin(); unit != units.end(); ++unit) {
-		if (unit->side() != side) {
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != side) {
 			continue;
 		}
 		++unit_count;
-		cost_map.add_unit(*unit);
+		cost_map->add_unit(unit);
 	}
 
 	// If this side has not so many units yet, add unit_types with the leaders position as origin.
 	if (unit_count < MAP_UNIT_THRESHOLD) {
 		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
-		BOOST_FOREACH(unit_map::const_iterator leader, leaders) {
+		BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
 			// Yes, multiple leader support for enemies too.
 
 			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
-			BOOST_FOREACH(std::string recruit, team.recruits()) {
-				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			BOOST_FOREACH(const std::string& recruit, team.recruits()) {
+				cost_map->add_unit(leader->get_location(), unit_types.find(recruit), side);
 			}
 
 			// Next add extra-recruits.
-			BOOST_FOREACH(std::string recruit, leader->recruits()) {
-				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
+				cost_map->add_unit(leader->get_location(), unit_types.find(recruit), side);
 			}
 		}
 	}
@@ -338,8 +339,8 @@ void recruitment::add_side_to_cost_map(pathfind::full_cost_map& cost_map, int si
 	for(int x = 0; x < map.w(); ++x) {
 		for (int y = 0; y < map.h(); ++y) {
 			std::stringstream s;
-			s << cost_map.get_pair_at(x, y).first << " / " <<
-					cost_map.get_pair_at(x, y).second << "\n\n";
+			s << cost_map->get_pair_at(x, y).first << " / " <<
+					cost_map->get_pair_at(x, y).second << "\n\n";
 			resources::screen->labels().set_label(map_location(x, y), s.str());
 		}
 	}

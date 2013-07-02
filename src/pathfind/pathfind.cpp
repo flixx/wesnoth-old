@@ -304,9 +304,9 @@ static void find_routes(
 		if ( full_cost_map->size() != static_cast<unsigned>(map.w() * map.h()) )
 			full_cost_map = NULL;
 		else {
-			if ( full_cost_map->at(index(origin)).second == 0 )
-				full_cost_map->at(index(origin)).first = 0;
-			full_cost_map->at(index(origin)).second += 1;
+			if ( (*full_cost_map)[index(origin)].second == 0 )
+				(*full_cost_map)[index(origin)].first = 0;
+			(*full_cost_map)[index(origin)].second += 1;
 		}
 	}
 
@@ -405,11 +405,11 @@ static void find_routes(
 
 			// Update full_cost_map
 			if ( full_cost_map ) {
-				if ( full_cost_map->at(next_index).second == 0 )
-					full_cost_map->at(next_index).first = 0;
+				if ( (*full_cost_map)[next_index].second == 0 )
+					(*full_cost_map)[next_index].first = 0;
 				int summed_cost = (turns_left - next.turns_left + 1) * max_moves - next.moves_left;
-				full_cost_map->at(next_index).first += summed_cost;
-				full_cost_map->at(next_index).second += 1;
+				(*full_cost_map)[next_index].first += summed_cost;
+				(*full_cost_map)[next_index].second += 1;
 			}
 
 			// Mark next as being collected.
