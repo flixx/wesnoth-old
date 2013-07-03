@@ -52,6 +52,8 @@ namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
 const static int MAP_UNIT_THRESHOLD = 5;
 const static bool MAP_IGNORE_ZOC = true;
+const static double MAP_BORDER_THICKNESS = 5.0;
+const static double MAP_BORDER_WIDTH = 0.2;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -181,9 +183,9 @@ void recruitment::execute() {
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
 	update_important_hexes();
-//	if (game_config::debug) {
-//		show_important_hexes();
-//	}
+	if (game_config::debug) {
+		show_important_hexes();
+	}
 
 	// For now just fill the scores with dummy entries.
 	// The second and third unit get a score of 1000, all others 0
@@ -299,13 +301,71 @@ void recruitment::invalidate() {
 
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
-	pathfind::full_cost_map cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
-	add_side_to_cost_map(get_side(), &cost_map);
+	const gamemap& map = *resources::game_map;
+
+	// Build cost_maps
+	pathfind::full_cost_map my_cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
+	pathfind::full_cost_map enemy_cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
+	BOOST_FOREACH(const team& team, *resources::teams) {
+		if (team.side() == get_side()) {
+			add_side_to_cost_map(team.side(), &my_cost_map);
+		} else if (current_team().is_enemy(team.side())) {
+			add_side_to_cost_map(team.side(), &enemy_cost_map);
+		} else {
+			// Ignore allied teams.
+			// (As long as the MTT CA doesn't consider allied teams it
+			// does't make sense to consider them here).
+		}
+	}
+
+	// First collect all hexes where the average costs are similar in important_hexes_candidates
+	// Then chose only those hexes where the average costs are relatively low.
+	typedef std::map<map_location, double> border_cost_map;
+	border_cost_map important_hexes_candidates;
+	double smallest_border_movecost = 999999;
+	double biggest_border_movecost = 0;
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			double my_cost_average = my_cost_map.get_average_cost_at(x, y);
+			double enemy_cost_average = enemy_cost_map.get_average_cost_at(x, y);
+			if (my_cost_average == -1 || enemy_cost_average == -1) {
+				continue;
+			}
+			if (std::abs(my_cost_average - enemy_cost_average) < MAP_BORDER_THICKNESS / 2) {
+				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
+
+				important_hexes_candidates[map_location(x, y)] = border_movecost;
+
+				if (border_movecost < smallest_border_movecost) {
+					smallest_border_movecost = border_movecost;
+				}
+				if (border_movecost > biggest_border_movecost) {
+					biggest_border_movecost = border_movecost;
+				}
+			}
+
+//			Draw labels for debugging
+//			std::stringstream s;
+//			s << my_cost_map.get_pair_at(x, y).first << "/" <<
+//					my_cost_map.get_pair_at(x, y).second << " - " <<
+//					enemy_cost_map.get_pair_at(x, y).first << "/" <<
+//					enemy_cost_map.get_pair_at(x, y).second;
+//			resources::screen->labels().set_label(map_location(x, y), s.str());
+
+		}  // for
+	}  // for
+
+	double threshold = (biggest_border_movecost - smallest_border_movecost) *
+			MAP_BORDER_WIDTH + smallest_border_movecost;
+	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
+		if (candidate.second < threshold) {
+			important_hexes_.insert(candidate.first);
+		}
+	}
 }
 
 void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map) {
 	const unit_map& units = *resources::units;
-	const gamemap& map = *resources::game_map;
 	const team& team = (*resources::teams)[side - 1];
 
 	// First add all existing units to cost_map.
@@ -335,15 +395,6 @@ void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_m
 			}
 		}
 	}
-
-	for(int x = 0; x < map.w(); ++x) {
-		for (int y = 0; y < map.h(); ++y) {
-			std::stringstream s;
-			s << cost_map->get_pair_at(x, y).first << " / " <<
-					cost_map->get_pair_at(x, y).second << "\n\n";
-			resources::screen->labels().set_label(map_location(x, y), s.str());
-		}
-	}
 }
 
 void recruitment::show_important_hexes() const {
@@ -352,7 +403,8 @@ void recruitment::show_important_hexes() const {
 	}
 	resources::screen->labels().clear_all();
 	BOOST_FOREACH(const map_location& loc, important_hexes_) {
-		resources::screen->labels().set_label(loc, "\n\n\u2B24");
+		// Little hack: use map_location north from loc and make 2 linebreaks to center the dot
+		resources::screen->labels().set_label(loc.get_direction(map_location::NORTH), "\n\n\u2B24");
 	}
 }
 }  // namespace flix_recruitment
