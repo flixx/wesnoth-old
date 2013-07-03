@@ -929,6 +929,7 @@ std::pair<int, int> full_cost_map::get_pair_at(int x, int y) const
 
 	return cost_map[x + (y * map.w())];
 }
+
 /**
  * Accessor for the costs.
  * @param x
@@ -939,5 +940,21 @@ std::pair<int, int> full_cost_map::get_pair_at(int x, int y) const
 int full_cost_map::get_cost_at(int x, int y) const
 {
 	return get_pair_at(x, y).first;
+}
+
+/**
+ * Accessor for the costs.
+ * @param x
+ * @param y
+ * @return The average cost of all added units for this hex
+ *         or -1 if no unit can reach the hex.
+ */
+double full_cost_map::get_average_cost_at(int x, int y) const
+{
+	if (get_pair_at(x, y).second == 0) {
+		return -1;
+	} else {
+		return static_cast<double>(get_pair_at(x, y).first) / get_pair_at(x, y).second;
+	}
 }
 }//namespace pathfind
