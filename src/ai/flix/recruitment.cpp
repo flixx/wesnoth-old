@@ -26,6 +26,7 @@
 #include "../../map.hpp"
 #include "../../map_label.hpp"
 #include "../../pathfind/pathfind.hpp"
+#include "../../pathutils.hpp"
 #include "../../resources.hpp"
 #include "../../team.hpp"
 #include "../../unit_map.hpp"
@@ -54,6 +55,7 @@ const static int MAP_UNIT_THRESHOLD = 5;
 const static bool MAP_IGNORE_ZOC = true;
 const static double MAP_BORDER_THICKNESS = 5.0;
 const static double MAP_BORDER_WIDTH = 0.2;
+const static int MAP_VILLAGE_SURROUNDING = 1;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -360,6 +362,19 @@ void recruitment::update_important_hexes() {
 	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
 		if (candidate.second < threshold) {
 			important_hexes_.insert(candidate.first);
+		}
+	}
+
+	// Mark villages and area around them as important.
+	BOOST_FOREACH(const map_location& village, map.villages()) {
+		important_hexes_.insert(village);
+		std::vector<map_location> surrounding;
+		get_tiles_in_radius(village, MAP_VILLAGE_SURROUNDING, surrounding);
+		BOOST_FOREACH(const map_location& hex, surrounding) {
+			// only add hex if one of our units can reach the hex
+			if (map.on_board(hex) && my_cost_map.get_cost_at(hex.x, hex.y) != -1) {
+				important_hexes_.insert(hex);
+			}
 		}
 	}
 }
