@@ -23,6 +23,7 @@
 #include "../composite/engine.hpp"
 #include "../composite/rca.hpp"
 #include "../composite/stage.hpp"
+#include "../flix/recruitment.hpp"
 #include "../../display.hpp"  //REMOVE ME
 #include "../../game_display.hpp"  //REMOVE ME
 #include "../../gamestatus.hpp"
@@ -173,6 +174,11 @@ double aspect_recruitment_phase::evaluate()
 
 void aspect_recruitment_phase::execute()
 {
+	// Begin map analysis debug mod
+	flix_recruitment::recruitment flix_ca(get_rca_context(), config());
+	flix_ca.update_important_hexes();
+	flix_ca.show_important_hexes();
+	// End map analysis debug mod
 	raise_user_interact();
 	stage_ptr r = get_recruitment(*this);
 	if (r) {

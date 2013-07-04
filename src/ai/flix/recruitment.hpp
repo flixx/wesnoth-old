@@ -107,13 +107,12 @@ public:
 	virtual ~recruitment();
 	virtual double evaluate();
 	virtual void execute();
-private:
-	void invalidate();
 	void update_important_hexes();
-	void add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map);
-
 	//Debug only
 	void show_important_hexes() const;
+private:
+	void invalidate();
+	void add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map);
 
 	std::set<map_location> important_hexes_;
 
