@@ -305,63 +305,13 @@ void recruitment::update_important_hexes() {
 	important_hexes_.clear();
 	const gamemap& map = *resources::game_map;
 
-	// Build cost_maps
-	pathfind::full_cost_map my_cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
-	pathfind::full_cost_map enemy_cost_map(MAP_IGNORE_ZOC, true, current_team(), true, false);
+	// Mark area between enemies as important
+	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
 	BOOST_FOREACH(const team& team, *resources::teams) {
-		if (team.side() == get_side()) {
-			add_side_to_cost_map(team.side(), &my_cost_map);
-		} else if (current_team().is_enemy(team.side())) {
-			add_side_to_cost_map(team.side(), &enemy_cost_map);
-		} else {
-			// Ignore allied teams.
-			// (As long as the MTT CA doesn't consider allied teams it
-			// does't make sense to consider them here).
-		}
-	}
+		if (current_team().is_enemy(team.side())) {
+			const pathfind::full_cost_map enemy_cost_map= get_cost_map_of_side(team.side());
 
-	// First collect all hexes where the average costs are similar in important_hexes_candidates
-	// Then chose only those hexes where the average costs are relatively low.
-	typedef std::map<map_location, double> border_cost_map;
-	border_cost_map important_hexes_candidates;
-	double smallest_border_movecost = 999999;
-	double biggest_border_movecost = 0;
-	for(int x = 0; x < map.w(); ++x) {
-		for (int y = 0; y < map.h(); ++y) {
-			double my_cost_average = my_cost_map.get_average_cost_at(x, y);
-			double enemy_cost_average = enemy_cost_map.get_average_cost_at(x, y);
-			if (my_cost_average == -1 || enemy_cost_average == -1) {
-				continue;
-			}
-			if (std::abs(my_cost_average - enemy_cost_average) < MAP_BORDER_THICKNESS / 2) {
-				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
-
-				important_hexes_candidates[map_location(x, y)] = border_movecost;
-
-				if (border_movecost < smallest_border_movecost) {
-					smallest_border_movecost = border_movecost;
-				}
-				if (border_movecost > biggest_border_movecost) {
-					biggest_border_movecost = border_movecost;
-				}
-			}
-
-//			Draw labels for debugging
-//			std::stringstream s;
-//			s << my_cost_map.get_pair_at(x, y).first << "/" <<
-//					my_cost_map.get_pair_at(x, y).second << " - " <<
-//					enemy_cost_map.get_pair_at(x, y).first << "/" <<
-//					enemy_cost_map.get_pair_at(x, y).second;
-//			resources::screen->labels().set_label(map_location(x, y), s.str());
-
-		}  // for
-	}  // for
-
-	double threshold = (biggest_border_movecost - smallest_border_movecost) *
-			MAP_BORDER_WIDTH + smallest_border_movecost;
-	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
-		if (candidate.second < threshold) {
-			important_hexes_.insert(candidate.first);
+			compare_cost_maps_and_update_important_hexes(my_cost_map, enemy_cost_map);
 		}
 	}
 
@@ -379,9 +329,11 @@ void recruitment::update_important_hexes() {
 	}
 }
 
-void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map) {
+const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const {
 	const unit_map& units = *resources::units;
 	const team& team = (*resources::teams)[side - 1];
+
+	pathfind::full_cost_map cost_map(MAP_IGNORE_ZOC, true, team, true, true);
 
 	// First add all existing units to cost_map.
 	int unit_count = 0;
@@ -390,7 +342,7 @@ void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_m
 			continue;
 		}
 		++unit_count;
-		cost_map->add_unit(unit);
+		cost_map.add_unit(unit);
 	}
 
 	// If this side has not so many units yet, add unit_types with the leaders position as origin.
@@ -401,13 +353,56 @@ void recruitment::add_side_to_cost_map(int side, pathfind::full_cost_map* cost_m
 
 			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
 			BOOST_FOREACH(const std::string& recruit, team.recruits()) {
-				cost_map->add_unit(leader->get_location(), unit_types.find(recruit), side);
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
 			}
 
 			// Next add extra-recruits.
 			BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
-				cost_map->add_unit(leader->get_location(), unit_types.find(recruit), side);
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
 			}
+		}
+	}
+	return cost_map;
+}
+
+void recruitment::compare_cost_maps_and_update_important_hexes(
+		const pathfind::full_cost_map& my_cost_map,
+		const pathfind::full_cost_map& enemy_cost_map) {
+
+	const gamemap& map = *resources::game_map;
+
+	// First collect all hexes where the average costs are similar in important_hexes_candidates
+	// Then chose only those hexes where the average costs are relatively low.
+	typedef std::map<map_location, double> border_cost_map;
+	border_cost_map important_hexes_candidates;
+	double smallest_border_movecost = 999999;
+	double biggest_border_movecost = 0;
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			double my_cost_average = my_cost_map.get_average_cost_at(x, y);
+			double enemy_cost_average = enemy_cost_map.get_average_cost_at(x, y);
+			if (my_cost_average == -1 || enemy_cost_average == -1) {
+				continue;
+			}
+			if (std::abs(my_cost_average - enemy_cost_average) < MAP_BORDER_THICKNESS) {
+				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
+
+				important_hexes_candidates[map_location(x, y)] = border_movecost;
+
+				if (border_movecost < smallest_border_movecost) {
+					smallest_border_movecost = border_movecost;
+				}
+				if (border_movecost > biggest_border_movecost) {
+					biggest_border_movecost = border_movecost;
+				}
+			}
+		}  // for
+	}  // for
+	double threshold = (biggest_border_movecost - smallest_border_movecost) *
+			MAP_BORDER_WIDTH + smallest_border_movecost;
+	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
+		if (candidate.second < threshold) {
+			important_hexes_.insert(candidate.first);
 		}
 	}
 }

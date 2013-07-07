@@ -112,7 +112,10 @@ public:
 	void show_important_hexes() const;
 private:
 	void invalidate();
-	void add_side_to_cost_map(int side, pathfind::full_cost_map* cost_map);
+	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
+	void compare_cost_maps_and_update_important_hexes(
+			const pathfind::full_cost_map& my_cost_map,
+			const pathfind::full_cost_map& enemy_cost_map);
 
 	std::set<map_location> important_hexes_;
 
