@@ -53,7 +53,7 @@ namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
 const static int MAP_UNIT_THRESHOLD = 5;
 const static bool MAP_IGNORE_ZOC = true;
-const static double MAP_BORDER_THICKNESS = 5.0;
+const static double MAP_BORDER_THICKNESS = 3.0;
 const static double MAP_BORDER_WIDTH = 0.2;
 const static int MAP_VILLAGE_SURROUNDING = 1;
 }
@@ -304,6 +304,33 @@ void recruitment::invalidate() {
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
 	const gamemap& map = *resources::game_map;
+	const unit_map& units = *resources::units;
+
+	// Mark battle areas as important
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side()) {
+			continue;
+		}
+		std::vector<map_location> surrounding;
+		get_tiles_in_radius(unit.get_location(), MAP_VILLAGE_SURROUNDING, surrounding);
+		if (surrounding.empty()) {
+			continue;
+		}
+		BOOST_FOREACH(const map_location& loc, surrounding) {
+			const unit_map::const_iterator& enemy_it = units.find(loc);
+			if(enemy_it == units.end()) {
+				continue;
+			}
+			if (!current_team().is_enemy(enemy_it->side())) {
+				continue;
+			}
+			// We found a enemy next to us. Mark our unit and all adjacent
+			// hexes as important.
+			important_hexes_.insert(unit.get_location());
+			std::copy(surrounding.begin(), surrounding.end(),
+					std::inserter(important_hexes_, important_hexes_.begin()));
+		}
+	}
 
 	// Mark area between enemies as important
 	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
