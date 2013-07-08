@@ -55,6 +55,7 @@ const static int MAP_UNIT_THRESHOLD = 5;
 const static bool MAP_IGNORE_ZOC = true;
 const static double MAP_BORDER_THICKNESS = 3.0;
 const static double MAP_BORDER_WIDTH = 0.2;
+const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 const static int MAP_VILLAGE_SURROUNDING = 1;
 }
 
@@ -332,18 +333,32 @@ void recruitment::update_important_hexes() {
 		}
 	}
 
-	// Mark area between enemies as important
+	// Mark area between me and enemies as important
 	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
 	BOOST_FOREACH(const team& team, *resources::teams) {
 		if (current_team().is_enemy(team.side())) {
-			const pathfind::full_cost_map enemy_cost_map= get_cost_map_of_side(team.side());
+			const pathfind::full_cost_map enemy_cost_map = get_cost_map_of_side(team.side());
 
 			compare_cost_maps_and_update_important_hexes(my_cost_map, enemy_cost_map);
 		}
 	}
 
-	// Mark villages and area around them as important.
+	// Mark 'near' villages and area around them as important
+	// To prevent a 'feedback' of important locations collect all
+	// important villages first and add them and their surroundings
+	// to important_hexes_ in a second step.
+	std::vector<map_location> important_villages;
 	BOOST_FOREACH(const map_location& village, map.villages()) {
+		std::vector<map_location> surrounding;
+		get_tiles_in_radius(village, MAP_VILLAGE_NEARNESS_THRESHOLD, surrounding);
+		BOOST_FOREACH(const map_location& hex, surrounding) {
+			if (important_hexes_.find(hex) != important_hexes_.end()) {
+				important_villages.push_back(village);
+				break;
+			}
+		}
+	}
+	BOOST_FOREACH(const map_location& village, important_villages) {
 		important_hexes_.insert(village);
 		std::vector<map_location> surrounding;
 		get_tiles_in_radius(village, MAP_VILLAGE_SURROUNDING, surrounding);
