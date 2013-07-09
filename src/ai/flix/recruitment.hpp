@@ -116,8 +116,10 @@ private:
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
 			const pathfind::full_cost_map& enemy_cost_map);
+	void update_average_local_cost();
 
 	std::set<map_location> important_hexes_;
+	std::map<map_location, double> average_local_cost_;
 
 	// The CA Object will be persistent over turns.
 	// optional_cheapest_unit_cost_ is updated in execute() and

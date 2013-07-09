@@ -53,7 +53,7 @@ namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
 const static int MAP_UNIT_THRESHOLD = 5;
 const static bool MAP_IGNORE_ZOC = true;
-const static double MAP_BORDER_THICKNESS = 3.0;
+const static double MAP_BORDER_THICKNESS = 2.0;
 const static double MAP_BORDER_WIDTH = 0.2;
 const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 const static int MAP_VILLAGE_SURROUNDING = 1;
@@ -305,8 +305,12 @@ void recruitment::invalidate() {
 
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
+	update_average_local_cost();
 	const gamemap& map = *resources::game_map;
 	const unit_map& units = *resources::units;
+
+	// TODO(flix) If leader is in danger or only leader is left
+	// mark only hexes near to this leader as important.
 
 	// Mark battle areas as important
 	BOOST_FOREACH(const unit& unit, units) {
@@ -428,7 +432,7 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 				continue;
 			}
 			if (std::abs(my_cost_average - MAP_OFFENSIVE_SHIFT - enemy_cost_average) <
-					MAP_BORDER_THICKNESS) {
+					MAP_BORDER_THICKNESS * average_local_cost_[map_location(x, y)]) {
 				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
 
 				important_hexes_candidates[map_location(x, y)] = border_movecost;
@@ -459,6 +463,29 @@ void recruitment::show_important_hexes() const {
 	BOOST_FOREACH(const map_location& loc, important_hexes_) {
 		// Little hack: use map_location north from loc and make 2 linebreaks to center the dot
 		resources::screen->labels().set_label(loc.get_direction(map_location::NORTH), "\n\n\u2B24");
+	}
+}
+
+void recruitment::update_average_local_cost() {
+	average_local_cost_.clear();
+	const gamemap& map = *resources::game_map;
+	const team& team = (*resources::teams)[get_side() - 1];
+
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			map_location loc(x, y);
+			int summed_cost = 0;
+			int count = 0;
+			BOOST_FOREACH(const std::string& recruit, team.recruits()){
+				const unit_type* const ut = unit_types.find(recruit);
+				int cost = ut->movement_type().get_movement().cost(map[loc]);
+				if (cost < 99) {
+					summed_cost += cost;
+					++count;
+				}
+			}
+			average_local_cost_[loc] = (count == 0) ? 0 : static_cast<double>(summed_cost) / count;
+		}
 	}
 }
 }  // namespace flix_recruitment
