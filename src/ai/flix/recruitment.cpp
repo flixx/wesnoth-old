@@ -57,6 +57,7 @@ const static double MAP_BORDER_THICKNESS = 3.0;
 const static double MAP_BORDER_WIDTH = 0.2;
 const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 const static int MAP_VILLAGE_SURROUNDING = 1;
+const static int MAP_OFFENSIVE_SHIFT = 0;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -380,7 +381,7 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	// First add all existing units to cost_map.
 	int unit_count = 0;
 	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != side) {
+		if (unit.side() != side || unit.can_recruit()) {
 			continue;
 		}
 		++unit_count;
@@ -426,7 +427,8 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 			if (my_cost_average == -1 || enemy_cost_average == -1) {
 				continue;
 			}
-			if (std::abs(my_cost_average - enemy_cost_average) < MAP_BORDER_THICKNESS) {
+			if (std::abs(my_cost_average - MAP_OFFENSIVE_SHIFT - enemy_cost_average) <
+					MAP_BORDER_THICKNESS) {
 				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
 
 				important_hexes_candidates[map_location(x, y)] = border_movecost;
