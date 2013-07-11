@@ -25,6 +25,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
+#include <iomanip>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -52,6 +53,8 @@ typedef std::map<std::string, double> score_map;
 // Each leader will have a limit_map and there will also be a global limit_map for both leader.
 // This is just a dummy yet and will depend on the configuration definitions.
 typedef std::map<std::string, int> limit_map;
+
+typedef std::map<t_translation::t_terrain, int> terrain_count_map;
 
 struct data {
 	unit_map::const_iterator leader;
@@ -86,17 +89,20 @@ struct data {
 		}
 		return normalized;
 	}
-	std::string to_string() {
+	std::string to_string() const {
 		std::stringstream s;
-		s << "---------Content of leader data----------\n";
+		s << "---------------Content of leader data---------------\n";
 		s << "For leader: " << leader->name() << "\n";
 		s << "ratio_score: " << ratio_score << "\n";
-		s << "recruit_count: " << recruit_count << "\n";
+		s << "recruit_count: " << recruit_count << "\n\n";
 		BOOST_FOREACH(const score_map::value_type& entry, scores) {
-			s << entry.first << " ---- score: " << entry.second <<
-					" limit: " << limits[entry.first] << "\n";
+			limit_map::const_iterator limit_it = limits.find(entry.first);
+			int limit = (limit_it != limits.end()) ? (limit_it->second) : -1;
+			s << std::setw(20) << entry.first <<
+					" score: " << std::setw(7) << entry.second <<
+					" limit: " << limit << "\n";
 		}
-		s << "-----------------------------------------\n";
+		s << "----------------------------------------------------\n";
 		return s.str();
 	}
 };
@@ -117,6 +123,9 @@ private:
 			const pathfind::full_cost_map& my_cost_map,
 			const pathfind::full_cost_map& enemy_cost_map);
 	void update_average_local_cost();
+	void do_map_analysis(
+			const terrain_count_map& important_terrain,
+			std::vector<data>* leader_data);
 
 	std::set<map_location> important_hexes_;
 	std::map<map_location, double> average_local_cost_;

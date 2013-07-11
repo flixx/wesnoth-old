@@ -58,6 +58,8 @@ const static double MAP_BORDER_WIDTH = 0.2;
 const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 const static int MAP_VILLAGE_SURROUNDING = 1;
 const static int MAP_OFFENSIVE_SHIFT = 0;
+
+const static double MAP_ANALYSIS_WEIGHT = 1.;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -102,6 +104,7 @@ void recruitment::execute() {
 	 */
 
 	const unit_map &units = *resources::units;
+	const gamemap& map = *resources::game_map;
 	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
 	// this is the central datastructure with all score_tables in it.
@@ -177,6 +180,16 @@ void recruitment::execute() {
 	 * (TODO)
 	 */
 
+	update_important_hexes();
+	if (game_config::debug) {
+		show_important_hexes();
+	}
+
+	terrain_count_map important_terrain;
+	BOOST_FOREACH(const map_location& hex, important_hexes_) {
+		++important_terrain[map[hex]];
+	}
+
 	/**
 	 * Step 2: Filter own_recruits according to configurations
 	 * (TODO)
@@ -186,21 +199,10 @@ void recruitment::execute() {
 	/**
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
-	update_important_hexes();
-	if (game_config::debug) {
-		show_important_hexes();
-	}
 
-	// For now just fill the scores with dummy entries.
-	// The second and third unit get a score of 1000, all others 0
-	BOOST_FOREACH(data& data, leader_data) {
-		int idx = 0;
-		BOOST_FOREACH(score_map::value_type& entry, data.scores) {
-			const std::string& recruit = entry.first;
+	do_map_analysis(important_terrain, &leader_data);
 
-			data.scores[recruit] = (idx > 0 && idx < 3) ? 1000 : 0;
-			++idx;
-		}
+	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
 	}
 
@@ -477,14 +479,36 @@ void recruitment::update_average_local_cost() {
 			int summed_cost = 0;
 			int count = 0;
 			BOOST_FOREACH(const std::string& recruit, team.recruits()){
-				const unit_type* const ut = unit_types.find(recruit);
-				int cost = ut->movement_type().get_movement().cost(map[loc]);
+				const unit_type* const unit_type = unit_types.find(recruit);
+				int cost = unit_type->movement_type().get_movement().cost(map[loc]);
 				if (cost < 99) {
 					summed_cost += cost;
 					++count;
 				}
 			}
 			average_local_cost_[loc] = (count == 0) ? 0 : static_cast<double>(summed_cost) / count;
+		}
+	}
+}
+
+void recruitment::do_map_analysis(
+		const terrain_count_map& important_terrain,
+		std::vector<data>* leader_data) {
+	BOOST_FOREACH(data& data, *leader_data) {
+		BOOST_FOREACH(const std::string& recruit, data.recruits) {
+			const unit_type* const unit_type = unit_types.find(recruit);
+			long summed_defense = 0;
+			int total_terrains = 0;
+			BOOST_FOREACH(const terrain_count_map::value_type& entry, important_terrain) {
+				const t_translation::t_terrain& terrain = entry.first;
+				int count = entry.second;
+				int defense = 100 - unit_type->movement_type().defense_modifier(terrain);
+				summed_defense += defense * count;
+				total_terrains += count;
+			}
+			double average_defense = (total_terrains == 0) ? 0 :
+					static_cast<double>(summed_defense) / total_terrains;
+			data.scores[recruit] += average_defense * MAP_ANALYSIS_WEIGHT;
 		}
 	}
 }
