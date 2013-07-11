@@ -51,13 +51,27 @@ namespace flix_recruitment {
 
 namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
+
+// When a team has less then this much units, consider recruit-list too.
 const static int MAP_UNIT_THRESHOLD = 5;
-const static bool MAP_IGNORE_ZOC = true;
+
+// Defines the shape of the border-zone between enemies.
+// Higher values mean more important hexes.
 const static double MAP_BORDER_THICKNESS = 2.0;
 const static double MAP_BORDER_WIDTH = 0.2;
-const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
-const static int MAP_VILLAGE_SURROUNDING = 1;
+
+// This parameter can be used to shift all important hexes in one directon.
+// For example if our AI should act rather defensivly we may want to set
+// this value to a negative number. Then the AI will more care about hexes
+// nearer to the own units.
 const static int MAP_OFFENSIVE_SHIFT = 0;
+
+// When villages are this near to imprtant hexes they count as important.
+const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
+
+// Radius of area around important villages.
+const static int MAP_VILLAGE_SURROUNDING = 1;
+
 
 const static double MAP_ANALYSIS_WEIGHT = 1.;
 }
@@ -315,6 +329,8 @@ void recruitment::update_important_hexes() {
 	// mark only hexes near to this leader as important.
 
 	// Mark battle areas as important
+	// This are locations where one of my units is adjacent
+	// to a enemies unit.
 	BOOST_FOREACH(const unit& unit, units) {
 		if (unit.side() != get_side()) {
 			continue;
@@ -341,6 +357,11 @@ void recruitment::update_important_hexes() {
 	}
 
 	// Mark area between me and enemies as important
+	// This is done by creating a cost_map for each team.
+	// A cost_map maps to each hex the average costs to reach this hex
+	// for all units of the team.
+	// The important hexes are those where my value on the cost map is
+	// similar to a enemies one.
 	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
 	BOOST_FOREACH(const team& team, *resources::teams) {
 		if (current_team().is_enemy(team.side())) {
@@ -382,7 +403,7 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	const unit_map& units = *resources::units;
 	const team& team = (*resources::teams)[side - 1];
 
-	pathfind::full_cost_map cost_map(MAP_IGNORE_ZOC, true, team, true, true);
+	pathfind::full_cost_map cost_map(true, true, team, true, true);
 
 	// First add all existing units to cost_map.
 	int unit_count = 0;
@@ -398,8 +419,6 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	if (unit_count < MAP_UNIT_THRESHOLD) {
 		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
 		BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
-			// Yes, multiple leader support for enemies too.
-
 			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
 			BOOST_FOREACH(const std::string& recruit, team.recruits()) {
 				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
@@ -422,6 +441,8 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 
 	// First collect all hexes where the average costs are similar in important_hexes_candidates
 	// Then chose only those hexes where the average costs are relatively low.
+	// This is done to remove hexes to where the teams need a similar amount of moves but
+	// which are relatively far away comparing to other important hexes.
 	typedef std::map<map_location, double> border_cost_map;
 	border_cost_map important_hexes_candidates;
 	double smallest_border_movecost = 999999;
@@ -433,6 +454,8 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 			if (my_cost_average == -1 || enemy_cost_average == -1) {
 				continue;
 			}
+			// We multiply the threshold MAP_BORDER_THICKNESS by the average_local_cost
+			// to favor high cost hexes (a bit).
 			if (std::abs(my_cost_average - MAP_OFFENSIVE_SHIFT - enemy_cost_average) <
 					MAP_BORDER_THICKNESS * average_local_cost_[map_location(x, y)]) {
 				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
