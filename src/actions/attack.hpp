@@ -84,6 +84,14 @@ struct battle_context_unit_stats
 		   const unit &opp, const map_location& opp_loc,
 		   const attack_type *opp_weapon,
 		   const unit_map& units);
+
+	/** Used by AI for combat analysis */
+	battle_context_unit_stats(const unit_type* u_type,
+		   const attack_type* att_weapon, bool attacking,
+		   const unit_type* opp_type, const attack_type* opp_weapon,
+		   unsigned int opp_terrain_defense,
+		   int tod_modifier = 0);
+
 	~battle_context_unit_stats()
 	{}
 
