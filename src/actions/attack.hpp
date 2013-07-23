@@ -165,11 +165,11 @@ public:
 
 	/** Given this harm_weight, is this attack better than that? */
 	bool better_attack(class battle_context &that, double harm_weight);
+	static bool better_combat(const combatant &us_a, const combatant &them_a,
+						   const combatant &us_b, const combatant &them_b,
+						   double harm_weight);
 
 private:
-	bool better_combat(const combatant &us_a, const combatant &them_a,
-					   const combatant &us_b, const combatant &them_b,
-					   double harm_weight);
 
 	int choose_attacker_weapon(const unit &attacker, const unit &defender,
 	                           const unit_map& units,
