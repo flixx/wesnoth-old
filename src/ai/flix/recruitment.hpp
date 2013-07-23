@@ -123,11 +123,11 @@ private:
 			const pathfind::full_cost_map& my_cost_map,
 			const pathfind::full_cost_map& enemy_cost_map);
 	void update_average_local_cost();
-	void do_map_analysis(
-			const terrain_count_map& important_terrain,
-			std::vector<data>* leader_data);
+	void do_map_analysis(std::vector<data>* leader_data);
+	double get_average_defense(const std::string& unit_type) const;
 
 	std::set<map_location> important_hexes_;
+	terrain_count_map important_terrain_;
 	std::map<map_location, double> average_local_cost_;
 
 	// The CA Object will be persistent over turns.

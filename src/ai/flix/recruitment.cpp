@@ -199,9 +199,8 @@ void recruitment::execute() {
 		show_important_hexes();
 	}
 
-	terrain_count_map important_terrain;
 	BOOST_FOREACH(const map_location& hex, important_hexes_) {
-		++important_terrain[map[hex]];
+		++important_terrain_[map[hex]];
 	}
 
 	/**
@@ -214,7 +213,10 @@ void recruitment::execute() {
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
 
-	do_map_analysis(important_terrain, &leader_data);
+	int start =  SDL_GetTicks();
+	do_map_analysis(&leader_data);
+	int end =  SDL_GetTicks();
+	LOG_AI_FLIX << "Map-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
 
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -321,6 +323,7 @@ void recruitment::invalidate() {
 
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
+	important_terrain_.clear();
 	update_average_local_cost();
 	const gamemap& map = *resources::game_map;
 	const unit_map& units = *resources::units;
@@ -514,26 +517,31 @@ void recruitment::update_average_local_cost() {
 	}
 }
 
-void recruitment::do_map_analysis(
-		const terrain_count_map& important_terrain,
-		std::vector<data>* leader_data) {
+void recruitment::do_map_analysis(std::vector<data>* leader_data) {
 	BOOST_FOREACH(data& data, *leader_data) {
 		BOOST_FOREACH(const std::string& recruit, data.recruits) {
-			const unit_type* const unit_type = unit_types.find(recruit);
-			long summed_defense = 0;
-			int total_terrains = 0;
-			BOOST_FOREACH(const terrain_count_map::value_type& entry, important_terrain) {
-				const t_translation::t_terrain& terrain = entry.first;
-				int count = entry.second;
-				int defense = 100 - unit_type->movement_type().defense_modifier(terrain);
-				summed_defense += defense * count;
-				total_terrains += count;
-			}
-			double average_defense = (total_terrains == 0) ? 0 :
-					static_cast<double>(summed_defense) / total_terrains;
-			data.scores[recruit] += average_defense * MAP_ANALYSIS_WEIGHT;
+			data.scores[recruit] += get_average_defense(recruit) * MAP_ANALYSIS_WEIGHT;
 		}
 	}
+}
+
+double recruitment::get_average_defense(const std::string& u_type) const {
+	const unit_type* const u_info = unit_types.find(u_type);
+	if (!u_info) {
+		return 0.0;
+	}
+	long summed_defense = 0;
+	int total_terrains = 0;
+	BOOST_FOREACH(const terrain_count_map::value_type& entry, important_terrain_) {
+		const t_translation::t_terrain& terrain = entry.first;
+		int count = entry.second;
+		int defense = 100 - u_info->movement_type().defense_modifier(terrain);
+		summed_defense += defense * count;
+		total_terrains += count;
+	}
+	double average_defense = (total_terrains == 0) ? 0.0 :
+			static_cast<double>(summed_defense) / total_terrains;
+	return average_defense;
 }
 }  // namespace flix_recruitment
 }  // namespace ai
