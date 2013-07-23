@@ -125,6 +125,12 @@ private:
 	void update_average_local_cost();
 	void do_map_analysis(std::vector<data>* leader_data);
 	double get_average_defense(const std::string& unit_type) const;
+	void do_combat_analysis(std::vector<data>* leader_data);
+	double compare_unit_types(const std::string& a, const std::string& b) const;
+	void simulate_attack(
+			const unit_type* const attacker, const unit_type* const defender,
+			double attacker_defense, double defender_defense,
+			double* damage_to_attacker, double* damage_to_defender) const;
 
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;

@@ -21,6 +21,8 @@
 
 #include "../actions.hpp"
 #include "../composite/rca.hpp"
+#include "../../actions/attack.hpp"
+#include "../../attack_prediction.hpp"
 #include "../../game_display.hpp"
 #include "../../log.hpp"
 #include "../../map.hpp"
@@ -31,8 +33,10 @@
 #include "../../team.hpp"
 #include "../../unit_map.hpp"
 #include "../../unit_types.hpp"
+#include "../../util.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 static lg::log_domain log_ai_flix("ai/flix");
 #define LOG_AI_FLIX LOG_STREAM(info, log_ai_flix)
@@ -73,7 +77,8 @@ const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 const static int MAP_VILLAGE_SURROUNDING = 1;
 
 
-const static double MAP_ANALYSIS_WEIGHT = 1.;
+const static double MAP_ANALYSIS_WEIGHT = 0.;
+const static double COMABAT_ANALYSIS_WEIGHT = 1.;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -217,6 +222,10 @@ void recruitment::execute() {
 	do_map_analysis(&leader_data);
 	int end =  SDL_GetTicks();
 	LOG_AI_FLIX << "Map-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
+	start =  SDL_GetTicks();
+	do_combat_analysis(&leader_data);
+	end =  SDL_GetTicks();
+	LOG_AI_FLIX << "Combat-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
 
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -543,5 +552,185 @@ double recruitment::get_average_defense(const std::string& u_type) const {
 			static_cast<double>(summed_defense) / total_terrains;
 	return average_defense;
 }
+
+void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
+
+	const unit_map& units = *resources::units;
+
+	BOOST_FOREACH(data& leader, *leader_data) {
+		typedef std::map<std::string, double> simple_score_map;
+		simple_score_map temp_scores;
+		double summed_score = 0;
+
+		BOOST_FOREACH(const unit& unit, units) {
+			if (!current_team().is_enemy(unit.side())) {
+				continue;
+			}
+			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
+				double score = compare_unit_types(recruit, unit.type_name());
+				LOG_AI_FLIX << recruit << " : " << unit.type_name() << " = " << score << "\n";
+				summed_score += std::abs(score);
+				temp_scores[recruit] += score;
+			}
+		}
+
+		// Find things for normalization.
+		double max = -99999.;
+		double min = 99999.;
+		double sum = 0;
+		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
+			double score = entry.second;
+			if (score > max) {
+				max = score;
+			}
+			if (score < min) {
+				min = score;
+			}
+			sum += score;
+		}
+		double average = sum / temp_scores.size();
+		double new_100 = max;
+		double new_0 = average - (2 * (max - average));
+		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
+			const std::string& recruit = entry.first;
+			double score = entry.second;
+			double normalized_score = 100 * ((score - new_0) / (new_100 - new_0));
+			if (normalized_score < 0) {
+				normalized_score = 0;
+			}
+			leader.scores[recruit] += normalized_score * COMABAT_ANALYSIS_WEIGHT;
+		}
+	}
+}
+
+/**
+ * Calculates how good unit-type a is against unit type b.
+ * If value is bigger then 0, a is better then b.
+ */
+double recruitment::compare_unit_types(const std::string& a, const std::string& b) const {
+	const unit_type* const type_a = unit_types.find(a);
+	const unit_type* const type_b = unit_types.find(b);
+	if (!type_a || !type_b) {
+		ERR_AI_FLIX << "Couldn't find unit type: " << ((type_a) ? b : a) << ".\n";
+		return 0.0;
+	}
+	double defense_a = get_average_defense(a);
+	double defense_b = get_average_defense(b);
+	double damage_to_a = 0.0;
+	double damage_to_b = 0.0;
+
+	// a attacks b
+	simulate_attack(type_a, type_b, defense_a, defense_b, &damage_to_a, &damage_to_b);
+	// b attacks a
+	simulate_attack(type_b, type_a, defense_b, defense_a, &damage_to_b, &damage_to_a);
+
+	int a_cost = (type_a->cost() > 0) ? type_a->cost() : 1;
+	int b_cost = (type_b->cost() > 0) ? type_b->cost() : 1;
+	int a_max_hp = (type_a->hitpoints() > 0) ? type_a->hitpoints() : 1;
+	int b_max_hp = (type_b->hitpoints() > 0) ? type_b->hitpoints() : 1;
+
+	LOG_AI_FLIX << "bD:" << damage_to_b << " / (bHP:" << b_max_hp << " * aC:" << a_cost << ") - aD:" << damage_to_a << " / (aHP:" << a_max_hp << " * bC:" << b_cost << ")\n";
+	return damage_to_b / (b_max_hp * a_cost) - damage_to_a / (a_max_hp * b_cost);
+}
+
+struct attack_simulation {
+	const battle_context_unit_stats attacker_stats;
+	const battle_context_unit_stats defender_stats;
+	combatant attacker_combatant;
+	combatant defender_combatant;
+
+	attack_simulation(const unit_type* attacker, const unit_type* defender,
+			double attacker_defense, double defender_defense,
+			const attack_type* att_weapon, const attack_type* def_weapon) :
+			attacker_stats(attacker, att_weapon, true, defender, def_weapon,
+					      round_double(defender_defense), 0),
+			defender_stats(defender, def_weapon, false, attacker, att_weapon,
+					      round_double(attacker_defense), 0),
+			attacker_combatant(attacker_stats),
+			defender_combatant(defender_stats) {
+		attacker_combatant.fight(defender_combatant);
+	}
+
+	bool better_result(const attack_simulation* other, bool for_defender) {
+		assert(other);
+		if (for_defender) {
+			return battle_context::better_combat(
+					defender_combatant, attacker_combatant,
+					other->defender_combatant, other->attacker_combatant, 0);
+		} else {
+			return battle_context::better_combat(
+					attacker_combatant, defender_combatant,
+					other->attacker_combatant, other->defender_combatant, 0);
+		}
+	}
+
+	double get_avg_hp_of_defender() {
+		// TODO(flix) handle regenerates here (heal parameter of avarage_hp()).
+		return defender_combatant.average_hp(0);
+	}
+
+	double get_avg_hp_of_attacker() {
+		return attacker_combatant.average_hp(0);
+	}
+};
+void recruitment::simulate_attack(
+			const unit_type* const attacker, const unit_type* const defender,
+			double attacker_defense, double defender_defense,
+			double* damage_to_attacker, double* damage_to_defender) const {
+	if(!attacker || !defender || !damage_to_attacker || !damage_to_defender) {
+		ERR_AI_FLIX << "NULL pointer in simulate_attack()\n";
+		return;
+	}
+	const std::vector<attack_type> attacker_weapons = attacker->attacks();
+	const std::vector<attack_type> defender_weapons = defender->attacks();
+
+	boost::shared_ptr<attack_simulation> best_att_attack;
+
+	// Let attacker choose weapon
+	BOOST_FOREACH(const attack_type& att_weapon, attacker_weapons) {
+		boost::shared_ptr<attack_simulation> best_def_response;
+		// Let defender choose weapon
+		BOOST_FOREACH(const attack_type& def_weapon, defender_weapons) {
+			if (att_weapon.range() != def_weapon.range()) {
+				continue;
+			}
+			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
+					attacker, defender,
+					attacker_defense, defender_defense,
+					&att_weapon, &def_weapon));
+			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
+				best_def_response = simulation;
+			}
+		}  // for defender weapons
+
+		if (!best_def_response) {
+			// Defender can not fight back. Simulate this as well.
+			best_def_response.reset(new attack_simulation(
+					attacker, defender,
+					attacker_defense, defender_defense,
+					&att_weapon, NULL));
+		}
+		if (!best_att_attack || best_def_response->better_result(best_att_attack.get(), false)) {
+			best_att_attack = best_def_response;
+		}
+	}  // for attacker weapons
+
+	if (!best_att_attack) {
+		return;
+	}
+
+	*damage_to_defender += (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender());
+	*damage_to_attacker += (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker());
+	LOG_AI_FLIX << "Attacker: " << attacker->type_name() <<
+			" | best weapon: " << best_att_attack->attacker_stats.weapon->name() <<
+			" | avg-damage: " << (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender()) <<
+			" | attacker cth: " << 100 - defender_defense <<
+			" ||| Defender: " << defender->type_name() <<
+			" | best weapon: " << ((best_att_attack->defender_stats.weapon) ? best_att_attack->defender_stats.weapon->name() : "no weapon") <<
+			" | avg-damage: " << (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker()) <<
+			" | defender cth: " << 100 - attacker_defense <<
+			" \n";
+}
+
 }  // namespace flix_recruitment
 }  // namespace ai
