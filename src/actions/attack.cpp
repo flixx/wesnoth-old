@@ -239,15 +239,14 @@ battle_context_unit_stats::battle_context_unit_stats(const unit_type* u_type,
 			opp_weapon->set_specials_context(map_location::null_location, !attacking);
 		}
 		slows = weapon->get_special_bool("slow");
-		drains = !opp_type->has_ability_by_id("undrainable") && weapon->get_special_bool("drains");
+		drains = !opp_type->musthave_status("undrainable") && weapon->get_special_bool("drains");
 		petrifies = weapon->get_special_bool("petrifies");
-		poisons = !opp_type->has_ability_by_id("unpoisonable") &&
-				weapon->get_special_bool("poison");
+		poisons = !opp_type->musthave_status("unpoisonable") && weapon->get_special_bool("poison");
 		rounds = weapon->get_specials("berserk").highest("value", 1).first;
 		firststrike = weapon->get_special_bool("firststrike");
 
 		unit_ability_list plague_specials = weapon->get_specials("plague");
-		plagues = !opp_type->has_ability_by_id("unplagueable") && !plague_specials.empty() &&
+		plagues = !opp_type->musthave_status("unplagueable") && !plague_specials.empty() &&
 			strcmp(opp_type->undead_variation().c_str(), "null");
 
 		if (plagues) {
@@ -259,11 +258,8 @@ battle_context_unit_stats::battle_context_unit_stats(const unit_type* u_type,
 
 		signed int cth = 100 - opp_terrain_defense + weapon->accuracy() -
 				(opp_weapon ? opp_weapon->parry() : 0);
-		if (cth > 100) {
-			cth = 100;
-		} else if (cth < 0) {
-			cth = 0;
-		}
+		cth = std::min(100, cth);
+		cth = std::max(0, cth);
 		chance_to_hit = cth;
 
 		unit_ability_list cth_specials = weapon->get_specials("chance_to_hit");
