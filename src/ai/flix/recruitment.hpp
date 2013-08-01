@@ -118,6 +118,7 @@ public:
 	void show_important_hexes() const;
 private:
 	void invalidate();
+	const std::string* get_best_recruit_from_scores(const data& leader_data) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,

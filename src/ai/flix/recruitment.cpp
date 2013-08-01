@@ -101,12 +101,10 @@ double recruitment::evaluate() {
 				return BAD_SCORE;
 			}
 		}
-		std::set<map_location> checked_hexes;
 		const map_location &loc = leader->get_location();
-		checked_hexes.insert(loc);
 
 		if (resources::game_map->is_keep(loc) &&
-				count_free_hexes_in_castle(loc, checked_hexes) != 0) {
+				pathfind::find_vacant_castle(*leader) != map_location::null_location) {
 			return get_score();
 		}
 	}
@@ -137,9 +135,7 @@ void recruitment::execute() {
 			DBG_AI_FLIX << "Leader " << leader->name() << " is not on keep. \n";
 			continue;
 		}
-		std::set<map_location> checked_hexes;
-		checked_hexes.insert(keep);
-		if(count_free_hexes_in_castle(keep, checked_hexes) <= 0) {
+		if(pathfind::find_vacant_castle(*leader) == map_location::null_location) {
 			DBG_AI_FLIX << "Leader " << leader->name() << "is on keep but no hexes are free \n";
 			continue;
 		}
@@ -237,19 +233,6 @@ void recruitment::execute() {
 	 * the preferred mix of all units. So already existing units are considered.
 	 */
 
-	// Count all own units which are already on the map
-	std::map<std::string, int> own_units_count;
-	int total_own_units = 0;
-
-	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side() || unit.can_recruit()) {
-			continue;
-		}
-
-		++own_units_count[unit.type_name()];
-		++total_own_units;
-	}
-
 
 	// the ratio_scores are there to decide which leader should recruit
 	// normalize them.
@@ -262,7 +245,6 @@ void recruitment::execute() {
 	BOOST_FOREACH(data& data, leader_data) {
 		data.ratio_score /= ratio_score_sum;
 	}
-
 
 	int total_recruit_count = 0;
 	recruit_result_ptr recruit_result;
@@ -282,44 +264,63 @@ void recruitment::execute() {
 		}
 		assert(best_leader_data);
 
-		// find which unit should this leader recruit according to best_leader_data.scores
-		std::string best_recruit;
-		biggest_difference = -100;
-		BOOST_FOREACH(const score_map::value_type& i, best_leader_data->get_normalized_scores()) {
-			const std::string& unit = i.first;
-			const double score = i.second;
-
-			double desired_percentage = score * 100;
-			double current_percentage = (total_own_units == 0) ? 0 :
-					(static_cast<double>(own_units_count[unit]) / total_own_units) * 100;
-			double difference = desired_percentage - current_percentage;
-			if (difference > biggest_difference) {
-				biggest_difference = difference;
-				best_recruit = unit;
-			}
+		const std::string* best_recruit = get_best_recruit_from_scores(*best_leader_data);
+		if (!best_recruit) {
+			return;
 		}
 
 		// TODO(flix): find the best hex for recruiting best_recruit.
 		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
 		// "It also means there is a tendency to recruit from the outside in
 		// rather than the default inside out."
-		recruit_result = check_recruit_action(best_recruit,
+		recruit_result = check_recruit_action(*best_recruit,
 				map_location::null_location,
 				best_leader_data->leader->get_location());
 		if (recruit_result->is_ok()) {
 			recruit_result->execute();
-			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
-			++own_units_count[best_recruit];
-			++total_own_units;
+			LOG_AI_FLIX << "Recruited " << *best_recruit << "\n";
 			++best_leader_data->recruit_count;
 			++total_recruit_count;
 			// TODO(flix): here something is needed to check if something changed in WML
 			// if yes just return. evaluate() and execute() will be called again.
 		} else {
+			LOG_AI_FLIX << "Recruit result not ok.\n";
 			// TODO(flix): here something is needed to decide if we may want to recruit a
 			// cheaper unit, when recruitment failed because of unit costs.
 		}
-	}while(recruit_result->is_ok());
+	} while(recruit_result->is_ok());
+}
+
+const std::string* recruitment::get_best_recruit_from_scores(const data& leader_data) const {
+	const unit_map &units = *resources::units;
+
+	// Count all own units which are already on the map
+	std::map<std::string, int> own_units_count;
+	int total_own_units = 0;
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side() || unit.can_recruit()) {
+			continue;
+		}
+		++own_units_count[unit.type_name()];
+		++total_own_units;
+	}
+
+	// find which unit should this leader recruit according to best_leader_data.scores
+	const std::string* best_recruit;
+	double biggest_difference = 0;
+	BOOST_FOREACH(const score_map::value_type& i, leader_data.get_normalized_scores()) {
+		const std::string& unit = i.first;
+		const double score = i.second;
+
+		double desired_ammount = score * (total_own_units + 1);
+		double current_ammount = own_units_count[unit];
+		double difference = desired_ammount - current_ammount;
+		if (difference > biggest_difference) {
+			biggest_difference = difference;
+			best_recruit = &unit;
+		}
+	}
+	return best_recruit;
 }
 
 recruitment::~recruitment() { }
