@@ -44,6 +44,8 @@
 #include "../whiteboard/manager.hpp"
 #include "../wml_exception.hpp"
 
+#include <boost/foreach.hpp>
+
 static lg::log_domain log_engine("engine");
 #define DBG_NG LOG_STREAM(debug, log_engine)
 #define LOG_NG LOG_STREAM(info, log_engine)
@@ -270,12 +272,53 @@ battle_context_unit_stats::battle_context_unit_stats(const unit_type* u_type,
 		int damage_multiplier = 100;
 		damage_multiplier += tod_modifier;
 
-		// handle resistance
-		// to handle also custom WML (resistance) abilities (including steadfast)
-		// we need to create a fake unit to call damage_from().
-		unit fake_unit(*opp_type, 1, false);
-		damage_multiplier *=
-				fake_unit.damage_from(*weapon, !attacking, map_location::null_location);
+		// Handle resistance.
+		int resistance = opp_type->movement_type().resistance_against(*weapon);
+
+		// Handle resistance abilities (like steadfast).
+		// This is very bad design. This functionality to filter custom
+		// resistance abilities is already implemented in unit.cpp resistance_against().
+		unit_ability_list resistance_abilities;
+		if (const config& abilities = opp_type->get_cfg().child("abilities")) {
+			BOOST_FOREACH(const config& cfg, abilities.child_range("resistance")) {
+				if (!(cfg["active_on"] == "" || (!attacking && cfg["active_on"] == "offense") ||
+						(attacking && cfg["active_on"] == "defense"))) {
+					continue;
+				}
+				const std::string& apply_to = cfg["apply_to"];
+				if (!apply_to.empty()) {
+					if (weapon->name() != apply_to) {
+						if (apply_to.find(',') != std::string::npos &&
+								apply_to.find(weapon->name()) != std::string::npos) {
+							const std::vector<std::string>& vals = utils::split(apply_to);
+							if (std::find(vals.begin(), vals.end(), weapon->name()) == vals.end()) {
+								continue;
+							}
+						} else {
+							continue;
+						}
+					}
+				}
+				if (!unit_abilities::filter_base_matches(cfg, 100 - resistance)) {
+					continue;
+				}
+				resistance_abilities.push_back(unit_ability(&cfg, map_location::null_location));
+			}
+		}
+		if (!resistance_abilities.empty()) {
+			unit_abilities::effect resist_effect(resistance_abilities, 100 - resistance, false);
+			resistance = 100 - std::min<int>(resist_effect.get_composite_value(),
+					resistance_abilities.highest("max_value").first);
+		}
+
+		damage_multiplier *= resistance;
+
+		// The following would be a slightly cleaner solution.
+		// But creating units is expensive. (Combat analysis would be 8 times slower)
+
+		// unit fake_unit(*opp_type, 1, false);
+		// damage_multiplier *=
+		// 		fake_unit.damage_from(*weapon, !attacking, map_location::null_location);
 
 		damage = round_damage(base_damage, damage_multiplier, 10000);
 		slow_damage = round_damage(base_damage, damage_multiplier, 20000);
