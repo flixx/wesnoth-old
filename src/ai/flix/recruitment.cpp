@@ -37,6 +37,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <math.h>
 
 static lg::log_domain log_ai_flix("ai/flix");
 #define LOG_AI_FLIX LOG_STREAM(info, log_ai_flix)
@@ -76,9 +77,37 @@ const static int MAP_VILLAGE_NEARNESS_THRESHOLD = 3;
 // Radius of area around important villages.
 const static int MAP_VILLAGE_SURROUNDING = 1;
 
+// Determines the power of a raw unit comparison
+// A higher power means that *very good* units will be
+// stronger favored compared to just *good* units.
+const static double COMBAT_SCORE_POWER = 1.;
+
+// Determines a kind of *lower threshold* for combat scores.
+// A smaller value means that combat analysis will give more 0 scores.
+// 0 means that only the best unit gets a 100 score and all other a 0 score.
+// 1 means that all units which are worse than average will get a 0 score.
+// Formula: zero_threshold = max_score - (COMBAT_SCORE_THRESHOLD * (max_score - average_score));
+const static double COMBAT_SCORE_THRESHOLD = 1.;
+
+// If set to true combat analysis will work as follows:
+// For each enemy unit determine what unit would be best against it.
+// Then the scores are distributed according to the enemy-units distribution.
+// (For each enemy the enemies HP are added to the score of our best unit against it)
+// COMBAT_SCORE_POWER and COMBAT_SCORE_THRESHOLD are ignored then.
+const static bool COMBAT_DIRECT_RESPONSE = false;
+
+// A cache is used to store the simulation results.
+// This value determines how much the average defenses of the important hexes can differ
+// until the simulation will run again.
+const static double COMBAT_CACHE_TOLERANCY = 0.5;
 
 const static double MAP_ANALYSIS_WEIGHT = 0.;
 const static double COMABAT_ANALYSIS_WEIGHT = 1.;
+
+// Used for time measurements.
+// REMOVE ME
+static long timer_fight = 0;
+static long timer_simulation = 0;
 }
 
 recruitment::recruitment(rca_context &context, const config &cfg)
@@ -222,6 +251,10 @@ void recruitment::execute() {
 	do_combat_analysis(&leader_data);
 	end =  SDL_GetTicks();
 	LOG_AI_FLIX << "Combat-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
+	LOG_AI_FLIX << "In fight: " << static_cast<double>(timer_fight) / 1000 << " seconds.\n";
+	LOG_AI_FLIX << "In simulation: " << static_cast<double>(timer_simulation) / 1000 << " seconds.\n";
+	timer_simulation = 0;
+	timer_fight = 0;
 
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -559,56 +592,80 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 	const unit_map& units = *resources::units;
 
 	BOOST_FOREACH(data& leader, *leader_data) {
+		if (leader.recruits.empty()) {
+			continue;
+		}
 		typedef std::map<std::string, double> simple_score_map;
 		simple_score_map temp_scores;
-		double summed_score = 0;
 
 		BOOST_FOREACH(const unit& unit, units) {
 			if (!current_team().is_enemy(unit.side())) {
 				continue;
 			}
+			std::string best_response;
+			double best_response_score = -99999.;
 			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
-				double score = compare_unit_types(recruit, unit.type_name());
-				LOG_AI_FLIX << recruit << " : " << unit.type_name() << " = " << score << "\n";
-				summed_score += std::abs(score);
-				temp_scores[recruit] += score;
+				double score = compare_unit_types(recruit, unit.type_id()) - 1;
+				LOG_AI_FLIX << recruit << " : " << unit.type_id() << " = " << score << "\n";
+				score *= unit.hitpoints();
+				score = pow(score, COMBAT_SCORE_POWER);
+				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
+				if (score > best_response_score) {
+					best_response_score = score;
+					best_response = recruit;
+				}
+			}
+			if (COMBAT_DIRECT_RESPONSE) {
+				temp_scores[best_response] += unit.hitpoints();
 			}
 		}
 
 		// Find things for normalization.
 		double max = -99999.;
-		double min = 99999.;
 		double sum = 0;
 		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
 			double score = entry.second;
 			if (score > max) {
 				max = score;
 			}
-			if (score < min) {
-				min = score;
-			}
 			sum += score;
 		}
+		assert(!temp_scores.empty());
 		double average = sum / temp_scores.size();
+
+		// What we do now is a linear transformation.
+		// We want to map the scores in temp_scores to something between 0 and 100.
+		// The max score shall always be 100.
+		// The min score depends on parameters.
 		double new_100 = max;
-		double new_0 = average - (2 * (max - average));
+		double score_threshold = (COMBAT_SCORE_THRESHOLD > 0) ? COMBAT_SCORE_THRESHOLD : 0.000001;
+		double new_0 = (COMBAT_DIRECT_RESPONSE) ? 0 : max - (score_threshold * (max - average));
+		if (new_100 == new_0) {
+			// This can happen if max == average. (E.g. only one possible recruit)
+			new_0 -= 0.000001;
+		}
+
 		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
 			const std::string& recruit = entry.first;
 			double score = entry.second;
+
+			// Here we transform.
+			// (If score <= new_0 then normalized_score will be 0)
+			// (If score = new_100 then normalized_score will be 100)
 			double normalized_score = 100 * ((score - new_0) / (new_100 - new_0));
 			if (normalized_score < 0) {
 				normalized_score = 0;
 			}
 			leader.scores[recruit] += normalized_score * COMABAT_ANALYSIS_WEIGHT;
 		}
-	}
+	}  // for all leaders
 }
 
 /**
  * Calculates how good unit-type a is against unit type b.
- * If value is bigger then 0, a is better then b.
+ * If value is bigger then 1, a is better then b.
  */
-double recruitment::compare_unit_types(const std::string& a, const std::string& b) const {
+double recruitment::compare_unit_types(const std::string& a, const std::string& b) {
 	const unit_type* const type_a = unit_types.find(a);
 	const unit_type* const type_b = unit_types.find(b);
 	if (!type_a || !type_b) {
@@ -617,6 +674,12 @@ double recruitment::compare_unit_types(const std::string& a, const std::string& 
 	}
 	double defense_a = get_average_defense(a);
 	double defense_b = get_average_defense(b);
+
+	const double* cache_value = get_cached_combat_value(a, b, defense_a, defense_b);
+	if (cache_value) {
+		return *cache_value;
+	}
+
 	double damage_to_a = 0.0;
 	double damage_to_b = 0.0;
 
@@ -630,11 +693,49 @@ double recruitment::compare_unit_types(const std::string& a, const std::string& 
 	int a_max_hp = (type_a->hitpoints() > 0) ? type_a->hitpoints() : 1;
 	int b_max_hp = (type_b->hitpoints() > 0) ? type_b->hitpoints() : 1;
 
-	LOG_AI_FLIX << "bD:" << damage_to_b << " / (bHP:" << b_max_hp << " * aC:" << a_cost << ") - aD:" << damage_to_a << " / (aHP:" << a_max_hp << " * bC:" << b_cost << ")\n";
-	return damage_to_b / (b_max_hp * a_cost) - damage_to_a / (a_max_hp * b_cost);
+	double retval = 1.;
+	// There are rare cases where a unit deals 0 damage (eg. Elvish Lady).
+	// Then we just set the value to something reasonable.
+	if (damage_to_a <= 0 && damage_to_b <= 0) {
+		retval = 1.;
+	} else if (damage_to_a <= 0) {
+		retval = 2.;
+	} else if (damage_to_b <= 0) {
+		retval = 0.5;
+	} else {
+		// Normal case
+		retval = (damage_to_b / (b_max_hp * a_cost)) / (damage_to_a / (a_max_hp * b_cost));
+	}
+
+	// Insert in cache.
+	const cached_combat_value entry(defense_a, defense_b, retval);
+	std::set<cached_combat_value>& cache = combat_cache[a][b];
+	cache.insert(entry);
+
+	return retval;
+}
+
+const double* recruitment::get_cached_combat_value(const std::string& a, const std::string& b,
+		double a_defense, double b_defense) {
+	double best_distance = 999;
+	const double* best_value = NULL;
+	const std::set<cached_combat_value>& cache = combat_cache[a][b];
+	BOOST_FOREACH(const cached_combat_value& entry, cache) {
+		double distance_a = std::abs(entry.a_defense - a_defense);
+		double distance_b = std::abs(entry.b_defense - b_defense);
+		if (distance_a <= COMBAT_CACHE_TOLERANCY && distance_b <= COMBAT_CACHE_TOLERANCY) {
+			if(distance_a + distance_b <= best_distance) {
+				best_distance = distance_a + distance_b;
+				best_value = &entry.value;
+			}
+		}
+	}
+	return best_value;
 }
 
 struct attack_simulation {
+	const unit_type* attacker_type;
+	const unit_type* defender_type;
 	const battle_context_unit_stats attacker_stats;
 	const battle_context_unit_stats defender_stats;
 	combatant attacker_combatant;
@@ -643,13 +744,18 @@ struct attack_simulation {
 	attack_simulation(const unit_type* attacker, const unit_type* defender,
 			double attacker_defense, double defender_defense,
 			const attack_type* att_weapon, const attack_type* def_weapon) :
+			attacker_type(attacker),
+			defender_type(defender),
 			attacker_stats(attacker, att_weapon, true, defender, def_weapon,
-					      round_double(defender_defense), 0),
+					round_double(defender_defense), 0),
 			defender_stats(defender, def_weapon, false, attacker, att_weapon,
-					      round_double(attacker_defense), 0),
+					round_double(attacker_defense), 0),
 			attacker_combatant(attacker_stats),
-			defender_combatant(defender_stats) {
+			defender_combatant(defender_stats)
+	{
+		int start = SDL_GetTicks();  // REMOVE ME
 		attacker_combatant.fight(defender_combatant);
+		timer_fight += SDL_GetTicks() - start;  // REMOVE ME
 	}
 
 	bool better_result(const attack_simulation* other, bool for_defender) {
@@ -665,15 +771,39 @@ struct attack_simulation {
 		}
 	}
 
-	double get_avg_hp_of_defender() {
-		// TODO(flix) handle regenerates here (heal parameter of avarage_hp()).
-		return defender_combatant.average_hp(0);
+	double get_avg_hp_of_defender() const {
+		return get_avg_hp_of_combatant(false);
 	}
 
-	double get_avg_hp_of_attacker() {
-		return attacker_combatant.average_hp(0);
+	double get_avg_hp_of_attacker() const {
+		return get_avg_hp_of_combatant(true);
+	}
+	double get_avg_hp_of_combatant(bool attacker) const {
+		const combatant& combatant = (attacker) ? attacker_combatant : defender_combatant;
+		const unit_type* unit_type = (attacker) ? attacker_type : defender_type;
+		double avg_hp = combatant.average_hp(0);
+
+		// handle poisson
+		avg_hp -= combatant.poisoned * game_config::poison_amount;
+
+		// handle regenaration
+		// (test shown that it is better not to do this here)
+		// REMOVE ME
+//		unit_ability_list regen_list;
+//		if (const config &abilities = unit_type->get_cfg().child("abilities")) {
+//			BOOST_FOREACH(const config &i, abilities.child_range("regenerate")) {
+//				regen_list.push_back(unit_ability(&i, map_location::null_location));
+//			}
+//		}
+//		unit_abilities::effect regen_effect(regen_list, 0, false);
+//		avg_hp += regen_effect.get_composite_value();
+
+		avg_hp = std::max(0., avg_hp);
+		avg_hp = std::min(static_cast<double>(unit_type->hitpoints()), avg_hp);
+		return avg_hp;
 	}
 };
+
 void recruitment::simulate_attack(
 			const unit_type* const attacker, const unit_type* const defender,
 			double attacker_defense, double defender_defense,
@@ -695,10 +825,12 @@ void recruitment::simulate_attack(
 			if (att_weapon.range() != def_weapon.range()) {
 				continue;
 			}
+			int start = SDL_GetTicks();  // REMOVE ME
 			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
 					attacker, defender,
 					attacker_defense, defender_defense,
 					&att_weapon, &def_weapon));
+			timer_simulation += SDL_GetTicks() - start;  // REMOVE ME
 			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
 				best_def_response = simulation;
 			}
@@ -730,7 +862,7 @@ void recruitment::simulate_attack(
 			" | best weapon: " << ((best_att_attack->defender_stats.weapon) ? best_att_attack->defender_stats.weapon->name() : "no weapon") <<
 			" | avg-damage: " << (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker()) <<
 			" | defender cth: " << 100 - attacker_defense <<
-			" \n";
+			" \n";  // REMOVE ME
 }
 
 }  // namespace flix_recruitment

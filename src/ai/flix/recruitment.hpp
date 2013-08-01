@@ -107,6 +107,22 @@ struct data {
 	}
 };
 
+struct cached_combat_value {
+
+	double a_defense;
+	double b_defense;
+	double value;
+	cached_combat_value(double a_def, double b_def, double v) :
+		a_defense(a_def), b_defense(b_def), value(v) {
+	}
+	bool operator<(const cached_combat_value& o) const {
+		return value < o.value;
+	}
+};
+
+typedef std::map<std::string, std::set<cached_combat_value> > table_row;
+typedef std::map<std::string, table_row> cache_table;
+
 class recruitment : public candidate_action {
 public:
 	recruitment(rca_context &context, const config &cfg);
@@ -127,7 +143,9 @@ private:
 	void do_map_analysis(std::vector<data>* leader_data);
 	double get_average_defense(const std::string& unit_type) const;
 	void do_combat_analysis(std::vector<data>* leader_data);
-	double compare_unit_types(const std::string& a, const std::string& b) const;
+	double compare_unit_types(const std::string& a, const std::string& b);
+	const double* get_cached_combat_value(const std::string& a, const std::string& b,
+			double a_defense, double b_defense);
 	void simulate_attack(
 			const unit_type* const attacker, const unit_type* const defender,
 			double attacker_defense, double defender_defense,
@@ -143,6 +161,7 @@ private:
 	// Use boost::optional to check for a uninitialized state.
 	boost::optional<int> optional_cheapest_unit_cost_;
 
+	cache_table combat_cache;
 };
 
 }  // of namespace flix_recruitment
