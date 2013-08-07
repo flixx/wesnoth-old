@@ -321,6 +321,11 @@ void recruitment::execute() {
 	} while(recruit_result->is_ok());
 }
 
+/**
+ * A helper function for execute().
+ * Counts own units and then decides what unit should be recruited so that the
+ * unit distribution approches the given scores.
+ */
 const std::string recruitment::get_best_recruit_from_scores(const data& leader_data) const {
 	const unit_map &units = *resources::units;
 
@@ -361,6 +366,10 @@ void recruitment::invalidate() {
 	optional_cheapest_unit_cost_ = boost::none;
 }
 
+/**
+ * For Map Analysis.
+ * Creates a std::set of hexes where a fight will occur with high probability.
+ */
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
 	important_terrain_.clear();
@@ -442,6 +451,13 @@ void recruitment::update_important_hexes() {
 	}
 }
 
+/**
+ * For Map Analysis
+ * Creates cost maps for a side. Each hex is map to
+ * a) the summed movecost and
+ * b) how many units can reach this hex
+ * for all units of side.
+ */
 const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const {
 	const unit_map& units = *resources::units;
 	const team& team = (*resources::teams)[side - 1];
@@ -476,6 +492,10 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	return cost_map;
 }
 
+/**
+ * For Map Analysis
+ * Computes from our cost map and the combined cost map of all enemies the important hexes.
+ */
 void recruitment::compare_cost_maps_and_update_important_hexes(
 		const pathfind::full_cost_map& my_cost_map,
 		const pathfind::full_cost_map& enemy_cost_map) {
@@ -523,6 +543,10 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 	}
 }
 
+/**
+ * For Map Analysis
+ * Shows the important hexes for debugging purposes on the map. Only if debug is activated.
+ */
 void recruitment::show_important_hexes() const {
 	if (!game_config::debug) {
 		return;
@@ -534,6 +558,10 @@ void recruitment::show_important_hexes() const {
 	}
 }
 
+/**
+ * For Map Analysis
+ * Creates a map where each hex is mapped to the average cost of the terrain for our units.
+ */
 void recruitment::update_average_local_cost() {
 	average_local_cost_.clear();
 	const gamemap& map = *resources::game_map;
@@ -557,6 +585,11 @@ void recruitment::update_average_local_cost() {
 	}
 }
 
+/**
+ * Map Analysis
+ * When this function is called, important_hexes_ is already build.
+ * This function fills the scores according to important_hexes_.
+ */
 void recruitment::do_map_analysis(std::vector<data>* leader_data) {
 	BOOST_FOREACH(data& data, *leader_data) {
 		BOOST_FOREACH(const std::string& recruit, data.recruits) {
@@ -565,6 +598,11 @@ void recruitment::do_map_analysis(std::vector<data>* leader_data) {
 	}
 }
 
+/**
+ * For Map Analysis
+ * Calculates for a given unit the average defense on the map.
+ * (According to important_hexes_ / important_terrain_)
+ */
 double recruitment::get_average_defense(const std::string& u_type) const {
 	const unit_type* const u_info = unit_types.find(u_type);
 	if (!u_info) {
@@ -584,6 +622,10 @@ double recruitment::get_average_defense(const std::string& u_type) const {
 	return average_defense;
 }
 
+/**
+ * Combat Analysis.
+ * Main function.
+ */
 void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 
 	const unit_map& units = *resources::units;
@@ -659,8 +701,12 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 }
 
 /**
+ * For Combat Analysis.
  * Calculates how good unit-type a is against unit type b.
- * If value is bigger then 1, a is better then b.
+ * If the value is bigger then 1, a is better then b.
+ * The value is always bigger then 0.
+ * If the value is 2 then unit-type a is twice as good as unit-type b.
+ * Since this function is called very often it uses a cache.
  */
 double recruitment::compare_unit_types(const std::string& a, const std::string& b) {
 	const unit_type* const type_a = unit_types.find(a);
@@ -712,6 +758,11 @@ double recruitment::compare_unit_types(const std::string& a, const std::string& 
 	return retval;
 }
 
+/**
+ * For Combat Analysis.
+ * Returns the cached combat value for two unit types
+ * or NULL if there is none or terrain defenses are not within range.
+ */
 const double* recruitment::get_cached_combat_value(const std::string& a, const std::string& b,
 		double a_defense, double b_defense) {
 	double best_distance = 999;
@@ -730,6 +781,11 @@ const double* recruitment::get_cached_combat_value(const std::string& a, const s
 	return best_value;
 }
 
+/**
+ * For Combat Analysis.
+ * This struct encapsulates all information for one attack simulation.
+ * One attack simulation is defined by the unit-types, the weapons and the units defenses.
+ */
 struct attack_simulation {
 	const unit_type* attacker_type;
 	const unit_type* defender_type;
@@ -801,6 +857,11 @@ struct attack_simulation {
 	}
 };
 
+/**
+ * For Combat Analysis.
+ * Simulates a attack with a attacker and a defender.
+ * The function will use battle_context::better_combat() to decide which weapon to use.
+ */
 void recruitment::simulate_attack(
 			const unit_type* const attacker, const unit_type* const defender,
 			double attacker_defense, double defender_defense,
