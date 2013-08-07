@@ -297,21 +297,18 @@ void recruitment::execute() {
 		}
 		assert(best_leader_data);
 
-		const std::string* best_recruit = get_best_recruit_from_scores(*best_leader_data);
-		if (!best_recruit) {
-			return;
-		}
+		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data);
 
 		// TODO(flix): find the best hex for recruiting best_recruit.
 		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
 		// "It also means there is a tendency to recruit from the outside in
 		// rather than the default inside out."
-		recruit_result = check_recruit_action(*best_recruit,
+		recruit_result = check_recruit_action(best_recruit,
 				map_location::null_location,
 				best_leader_data->leader->get_location());
 		if (recruit_result->is_ok()) {
 			recruit_result->execute();
-			LOG_AI_FLIX << "Recruited " << *best_recruit << "\n";
+			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
 			++best_leader_data->recruit_count;
 			++total_recruit_count;
 			// TODO(flix): here something is needed to check if something changed in WML
@@ -324,7 +321,7 @@ void recruitment::execute() {
 	} while(recruit_result->is_ok());
 }
 
-const std::string* recruitment::get_best_recruit_from_scores(const data& leader_data) const {
+const std::string recruitment::get_best_recruit_from_scores(const data& leader_data) const {
 	const unit_map &units = *resources::units;
 
 	// Count all own units which are already on the map
@@ -334,12 +331,12 @@ const std::string* recruitment::get_best_recruit_from_scores(const data& leader_
 		if (unit.side() != get_side() || unit.can_recruit()) {
 			continue;
 		}
-		++own_units_count[unit.type_name()];
+		++own_units_count[unit.type_id()];
 		++total_own_units;
 	}
 
 	// find which unit should this leader recruit according to best_leader_data.scores
-	const std::string* best_recruit;
+	std::string best_recruit;
 	double biggest_difference = 0;
 	BOOST_FOREACH(const score_map::value_type& i, leader_data.get_normalized_scores()) {
 		const std::string& unit = i.first;
@@ -350,7 +347,7 @@ const std::string* recruitment::get_best_recruit_from_scores(const data& leader_
 		double difference = desired_ammount - current_ammount;
 		if (difference > biggest_difference) {
 			biggest_difference = difference;
-			best_recruit = &unit;
+			best_recruit = unit;
 		}
 	}
 	return best_recruit;
