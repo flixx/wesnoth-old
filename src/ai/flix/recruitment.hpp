@@ -136,12 +136,15 @@ private:
 	void invalidate();
 	const std::string get_best_recruit_from_scores(const data& leader_data) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
+// Map Analysis
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
 			const pathfind::full_cost_map& enemy_cost_map);
 	void update_average_local_cost();
 	void do_map_analysis(std::vector<data>* leader_data);
 	double get_average_defense(const std::string& unit_type) const;
+
+// Combat Analysis
 	void do_combat_analysis(std::vector<data>* leader_data);
 	double compare_unit_types(const std::string& a, const std::string& b);
 	const double* get_cached_combat_value(const std::string& a, const std::string& b,

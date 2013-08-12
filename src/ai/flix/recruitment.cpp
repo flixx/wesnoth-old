@@ -114,10 +114,10 @@ recruitment::recruitment(rca_context &context, const config &cfg)
 		: candidate_action(context, cfg), optional_cheapest_unit_cost_() { }
 
 double recruitment::evaluate() {
-	const unit_map &units = *resources::units;
+	const unit_map& units = *resources::units;
 	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
-	BOOST_FOREACH(const unit_map::const_iterator &leader, leaders) {
+	BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
 		if (leader == resources::units->end()) {
 			return BAD_SCORE;
 		}
@@ -130,8 +130,8 @@ double recruitment::evaluate() {
 				return BAD_SCORE;
 			}
 		}
-		const map_location &loc = leader->get_location();
 
+		const map_location& loc = leader->get_location();
 		if (resources::game_map->is_keep(loc) &&
 				pathfind::find_vacant_castle(*leader) != map_location::null_location) {
 			return get_score();
@@ -149,31 +149,31 @@ void recruitment::execute() {
 	 *         Also initialize some other stuff.
 	 */
 
-	const unit_map &units = *resources::units;
+	const unit_map& units = *resources::units;
 	const gamemap& map = *resources::game_map;
 	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
-	// this is the central datastructure with all score_tables in it.
+	// This is the central datastructure with all score_tables in it.
 	std::vector<data> leader_data;
 	// a set of all possible recruits
 	std::set<std::string> global_recruits;
 
 	BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
-		const map_location &keep = leader->get_location();
-		if(!resources::game_map->is_keep(keep)) {
+		const map_location& keep = leader->get_location();
+		if (!resources::game_map->is_keep(keep)) {
 			DBG_AI_FLIX << "Leader " << leader->name() << " is not on keep. \n";
 			continue;
 		}
-		if(pathfind::find_vacant_castle(*leader) == map_location::null_location) {
-			DBG_AI_FLIX << "Leader " << leader->name() << "is on keep but no hexes are free \n";
+		if (pathfind::find_vacant_castle(*leader) == map_location::null_location) {
+			DBG_AI_FLIX << "Leader " << leader->name() << " is on keep but no hexes are free \n";
 			continue;
 		}
 
-		// leader can recruit.
+		// Leader can recruit.
 
 		data data(leader);
 
-		// add team recruits
+		// Add team recruits.
 		BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
@@ -185,7 +185,7 @@ void recruitment::execute() {
 			}
 		}
 
-		// add extra recruits
+		// Add extra recruits.
 		BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
@@ -196,7 +196,6 @@ void recruitment::execute() {
 				optional_cheapest_unit_cost_ = info->cost();
 			}
 		}
-
 		leader_data.push_back(data);
 	}
 
@@ -324,10 +323,10 @@ void recruitment::execute() {
 /**
  * A helper function for execute().
  * Counts own units and then decides what unit should be recruited so that the
- * unit distribution approches the given scores.
+ * unit distribution approaches the given scores.
  */
 const std::string recruitment::get_best_recruit_from_scores(const data& leader_data) const {
-	const unit_map &units = *resources::units;
+	const unit_map& units = *resources::units;
 
 	// Count all own units which are already on the map
 	std::map<std::string, int> own_units_count;
@@ -452,7 +451,7 @@ void recruitment::update_important_hexes() {
 }
 
 /**
- * For Map Analysis
+ * For Map Analysis.
  * Creates cost maps for a side. Each hex is map to
  * a) the summed movecost and
  * b) how many units can reach this hex
@@ -544,7 +543,7 @@ void recruitment::compare_cost_maps_and_update_important_hexes(
 }
 
 /**
- * For Map Analysis
+ * For Map Analysis.
  * Shows the important hexes for debugging purposes on the map. Only if debug is activated.
  */
 void recruitment::show_important_hexes() const {
@@ -559,7 +558,7 @@ void recruitment::show_important_hexes() const {
 }
 
 /**
- * For Map Analysis
+ * For Map Analysis.
  * Creates a map where each hex is mapped to the average cost of the terrain for our units.
  */
 void recruitment::update_average_local_cost() {
@@ -586,7 +585,7 @@ void recruitment::update_average_local_cost() {
 }
 
 /**
- * Map Analysis
+ * Map Analysis.
  * When this function is called, important_hexes_ is already build.
  * This function fills the scores according to important_hexes_.
  */
@@ -599,7 +598,7 @@ void recruitment::do_map_analysis(std::vector<data>* leader_data) {
 }
 
 /**
- * For Map Analysis
+ * For Map Analysis.
  * Calculates for a given unit the average defense on the map.
  * (According to important_hexes_ / important_terrain_)
  */
@@ -625,6 +624,8 @@ double recruitment::get_average_defense(const std::string& u_type) const {
 /**
  * Combat Analysis.
  * Main function.
+ * Compares all enemy units with all of our possible recruits and fills
+ * the scores.
  */
 void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 
@@ -644,8 +645,7 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 			std::string best_response;
 			double best_response_score = -99999.;
 			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
-				double score = compare_unit_types(recruit, unit.type_id()) - 1;
-				LOG_AI_FLIX << recruit << " : " << unit.type_id() << " = " << score << "\n";
+				double score = compare_unit_types(recruit, unit.type_id());
 				score *= unit.hitpoints();
 				score = pow(score, COMBAT_SCORE_POWER);
 				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
@@ -747,7 +747,16 @@ double recruitment::compare_unit_types(const std::string& a, const std::string& 
 		retval = 0.5;
 	} else {
 		// Normal case
-		retval = (damage_to_b / (b_max_hp * a_cost)) / (damage_to_a / (a_max_hp * b_cost));
+		double value_of_a = damage_to_b / (b_max_hp * a_cost);
+		double value_of_b = damage_to_a / (a_max_hp * b_cost);
+
+		if (value_of_a > value_of_b) {
+			return value_of_a / value_of_b;
+		} else if (value_of_a < value_of_b) {
+			return -value_of_b / value_of_a;
+		} else {
+			return 0.;
+		}
 	}
 
 	// Insert in cache.
