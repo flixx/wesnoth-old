@@ -136,6 +136,26 @@ private:
 	void invalidate();
 	const std::string get_best_recruit_from_scores(const data& leader_data) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
+	int get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader);
+
+	class recruit_situation_change_observer : public events::observer {
+	public:
+		recruit_situation_change_observer();
+		~recruit_situation_change_observer();
+
+		void handle_generic_event(const std::string& event);
+
+		bool recruit_list_changed();
+		void set_recruit_list_changed(bool changed);
+		int gamestate_changed();
+		void reset_gamestate_changed();
+
+	private:
+		bool recruit_list_changed_;
+		int gamestate_changed_;
+
+	};
+	recruit_situation_change_observer recruit_situation_change_observer_;
 // Map Analysis
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
@@ -157,13 +177,7 @@ private:
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;
 	std::map<map_location, double> average_local_cost_;
-
-	// The CA Object will be persistent over turns.
-	// optional_cheapest_unit_cost_ is updated in execute() and
-	// used in evaluate().
-	// Use boost::optional to check for a uninitialized state.
-	boost::optional<int> optional_cheapest_unit_cost_;
-
+	std::map<size_t, int> cheapest_unit_costs_;
 	cache_table combat_cache;
 };
 

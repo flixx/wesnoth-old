@@ -21,6 +21,7 @@
 
 #include "../actions.hpp"
 #include "../composite/rca.hpp"
+#include "../manager.hpp"
 #include "../../actions/attack.hpp"
 #include "../../attack_prediction.hpp"
 #include "../../game_display.hpp"
@@ -110,10 +111,18 @@ static long timer_fight = 0;
 static long timer_simulation = 0;
 }
 
-recruitment::recruitment(rca_context &context, const config &cfg)
-		: candidate_action(context, cfg), optional_cheapest_unit_cost_() { }
+recruitment::recruitment(rca_context& context, const config& cfg)
+		: candidate_action(context, cfg),
+		  recruit_situation_change_observer_(),
+		  cheapest_unit_costs_() { }
 
 double recruitment::evaluate() {
+	// Check if the recruitment list has changed.
+	// Then cheapest_unit_costs_ is not valid anymore.
+	if (recruit_situation_change_observer_.recruit_list_changed()) {
+		invalidate();
+		recruit_situation_change_observer_.set_recruit_list_changed(false);
+	}
 	const unit_map& units = *resources::units;
 	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
@@ -121,14 +130,10 @@ double recruitment::evaluate() {
 		if (leader == resources::units->end()) {
 			return BAD_SCORE;
 		}
-
-		if (optional_cheapest_unit_cost_) {
-			// Check Gold. But proceed if there is a unit with cost <= 0 (WML can do that)
-			if (current_team().gold() < optional_cheapest_unit_cost_ &&
-					optional_cheapest_unit_cost_ > 0) {
-				// TODO(flix) && recruitment-list wasn't changed.
-				return BAD_SCORE;
-			}
+		// Check Gold. But proceed if there is a unit with cost <= 0 (WML can do that)
+		int cheapest_unit_cost = get_cheapest_unit_cost_for_leader(leader);
+		if (current_team().gold() < cheapest_unit_cost && cheapest_unit_cost > 0) {
+			return BAD_SCORE;
 		}
 
 		const map_location& loc = leader->get_location();
@@ -155,7 +160,7 @@ void recruitment::execute() {
 
 	// This is the central datastructure with all score_tables in it.
 	std::vector<data> leader_data;
-	// a set of all possible recruits
+
 	std::set<std::string> global_recruits;
 
 	BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
@@ -166,6 +171,11 @@ void recruitment::execute() {
 		}
 		if (pathfind::find_vacant_castle(*leader) == map_location::null_location) {
 			DBG_AI_FLIX << "Leader " << leader->name() << " is on keep but no hexes are free \n";
+			continue;
+		}
+		int cheapest_unit_cost = get_cheapest_unit_cost_for_leader(leader);
+		if (current_team().gold() < cheapest_unit_cost && cheapest_unit_cost > 0) {
+			DBG_AI_FLIX << "Leader " << leader->name() << " recruits are to expensive. \n";
 			continue;
 		}
 
@@ -179,10 +189,6 @@ void recruitment::execute() {
 			data.scores[recruit] = 0.0;
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
-			const unit_type* const info = unit_types.find(recruit);
-			if (!optional_cheapest_unit_cost_ || info->cost() < optional_cheapest_unit_cost_) {
-				optional_cheapest_unit_cost_ = info->cost();
-			}
 		}
 
 		// Add extra recruits.
@@ -191,10 +197,6 @@ void recruitment::execute() {
 			data.scores[recruit] = 0.0;
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
-			const unit_type* const info = unit_types.find(recruit);
-			if (!optional_cheapest_unit_cost_ || info->cost() < optional_cheapest_unit_cost_) {
-				optional_cheapest_unit_cost_ = info->cost();
-			}
 		}
 		leader_data.push_back(data);
 	}
@@ -204,18 +206,10 @@ void recruitment::execute() {
 		return;  // This CA is going to be blacklisted for this turn.
 	}
 
-	if (!optional_cheapest_unit_cost_) {
-		// When it is uninitialized it must be that:
+	if (global_recruits.empty()) {
 		DBG_AI_FLIX << "All leaders have empty recruitment lists. \n";
 		return;  // This CA is going to be blacklisted for this turn.
 	}
-
-	if (current_team().gold() < optional_cheapest_unit_cost_ && optional_cheapest_unit_cost_ > 0) {
-		DBG_AI_FLIX << "Not enough gold for recruiting \n";
-		return;  // This CA is going to be blacklisted for this turn.
-	}
-
-
 
 	/**
 	 * Step 1: Find important hexes and calculate other static things.
@@ -306,12 +300,24 @@ void recruitment::execute() {
 				map_location::null_location,
 				best_leader_data->leader->get_location());
 		if (recruit_result->is_ok()) {
+			recruit_situation_change_observer_.reset_gamestate_changed();
 			recruit_result->execute();
 			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
 			++best_leader_data->recruit_count;
 			++total_recruit_count;
-			// TODO(flix): here something is needed to check if something changed in WML
-			// if yes just return. evaluate() and execute() will be called again.
+
+			// Check if something changed in the recruitment list (WML can do that).
+			// If yes, just return. evaluate() and execute() will be called again.
+			if (recruit_situation_change_observer_.recruit_list_changed()) {
+				return;
+			}
+			// Check if the gamestate changed more than once.
+			// (Recruitment will trigger one gamestate change, WML could trigger more changes.)
+			// If yes, just return. evaluate() and execute() will be called again.
+			if (recruit_situation_change_observer_.gamestate_changed() > 1) {
+				return;
+			}
+
 		} else {
 			LOG_AI_FLIX << "Recruit result not ok.\n";
 			// TODO(flix): here something is needed to decide if we may want to recruit a
@@ -362,7 +368,37 @@ recruitment::~recruitment() { }
 // This is going to be called when the recruitment list changes
 // (not implemented yet, just here as a reminder)
 void recruitment::invalidate() {
-	optional_cheapest_unit_cost_ = boost::none;
+	cheapest_unit_costs_.clear();;
+}
+
+/**
+ * Called at the beginning and whenever the recruitment list changes.
+ */
+int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader) {
+	std::map<size_t, int>::const_iterator it = cheapest_unit_costs_.find(leader->underlying_id());
+	if (it != cheapest_unit_costs_.end()) {
+		return it->second;
+	}
+
+	int cheapest_cost = 999999;
+
+	// team recruits
+	BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
+		const unit_type* const info = unit_types.find(recruit);
+		if (info->cost() < cheapest_cost) {
+			cheapest_cost = info->cost();
+		}
+	}
+	// extra recruits
+	BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
+		const unit_type* const info = unit_types.find(recruit);
+		if (info->cost() < cheapest_cost) {
+			cheapest_cost = info->cost();
+		}
+	}
+	LOG_AI_FLIX << "Cheapest unit cost updated to " << cheapest_cost << ".\n";
+	cheapest_unit_costs_[leader->underlying_id()] = cheapest_cost;
+	return cheapest_cost;
 }
 
 /**
@@ -921,16 +957,47 @@ void recruitment::simulate_attack(
 
 	*damage_to_defender += (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender());
 	*damage_to_attacker += (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker());
-	LOG_AI_FLIX << "Attacker: " << attacker->type_name() <<
-			" | best weapon: " << best_att_attack->attacker_stats.weapon->name() <<
-			" | avg-damage: " << (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender()) <<
-			" | attacker cth: " << 100 - defender_defense <<
-			" ||| Defender: " << defender->type_name() <<
-			" | best weapon: " << ((best_att_attack->defender_stats.weapon) ? best_att_attack->defender_stats.weapon->name() : "no weapon") <<
-			" | avg-damage: " << (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker()) <<
-			" | defender cth: " << 100 - attacker_defense <<
-			" \n";  // REMOVE ME
 }
 
+/**
+ * Observer Code
+ */
+recruitment::recruit_situation_change_observer::recruit_situation_change_observer()
+	: recruit_list_changed_(false), gamestate_changed_(0) {
+	manager::add_recruit_list_changed_observer(this);
+	manager::add_gamestate_observer(this);
+}
+
+void recruitment::recruit_situation_change_observer::handle_generic_event(
+		const std::string& event) {
+	if (event == "ai_recruit_list_changed") {
+		LOG_AI_FLIX << "Recruitment List is not valid anymore.\n";
+		set_recruit_list_changed(true);
+	} else {
+		LOG_AI_FLIX << "Event is " << event << ". -> Gamestate changed.\n";
+		++gamestate_changed_;
+	}
+}
+
+recruitment::recruit_situation_change_observer::~recruit_situation_change_observer() {
+	manager::remove_recruit_list_changed_observer(this);
+	manager::remove_gamestate_observer(this);
+}
+
+bool recruitment::recruit_situation_change_observer::recruit_list_changed() {
+	return recruit_list_changed_;
+}
+
+void recruitment::recruit_situation_change_observer::set_recruit_list_changed(bool changed) {
+	recruit_list_changed_ = changed;
+}
+
+int recruitment::recruit_situation_change_observer::gamestate_changed() {
+	return gamestate_changed_;
+}
+
+void recruitment::recruit_situation_change_observer::reset_gamestate_changed() {
+	gamestate_changed_ = 0;
+}
 }  // namespace flix_recruitment
 }  // namespace ai
