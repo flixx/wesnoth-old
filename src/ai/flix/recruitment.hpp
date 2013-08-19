@@ -182,6 +182,9 @@ private:
 	double get_unit_ratio() const;
 	void update_state();
 
+// Diversity
+	void do_diversity_balancing(std::vector<data>* leader_data) const;
+
 
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;

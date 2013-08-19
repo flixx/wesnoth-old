@@ -127,6 +127,9 @@ const static double COMBAT_CACHE_TOLERANCY = 0.5;
 
 const static double MAP_ANALYSIS_WEIGHT = 0.;
 const static double COMABAT_ANALYSIS_WEIGHT = 1.;
+const static double DIVERSITY_WEIGHT = 0.2;
+
+const static double RANDOMNESS_MAXIMUM = 5.;
 
 // Used for time measurements.
 // REMOVE ME
@@ -283,6 +286,7 @@ void recruitment::execute() {
 	LOG_AI_FLIX << "In simulation: " << static_cast<double>(timer_simulation) / 1000 << " seconds.\n";
 	timer_simulation = 0;
 	timer_fight = 0;
+	do_diversity_and_randomness_balancing(&leader_data);
 
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -1141,6 +1145,23 @@ void recruitment::update_state() {
 		LOG_AI_FLIX << "EUG: " << debug.estimated_unit_gain << ", RUG: " << own_units - debug.units << "\n";
 		LOG_AI_FLIX << "EI: " << debug.estimated_income << ", RI: " << current_team().gold() - debug.gold << "\n";
 		LOG_AI_FLIX << "----------------END---------------------\n";
+	}
+}
+
+/**
+ * Will add a offset (DIVERSITY_WEIGHT * 50) to all scores so
+ * overall recruitment will be more diverse.
+ */
+void recruitment::do_diversity_and_randomness_balancing(std::vector<data>* leader_data) const {
+	if (!leader_data) {
+		return;
+	}
+	BOOST_FOREACH(data& data, *leader_data) {
+		BOOST_FOREACH(score_map::value_type& entry, data.scores) {
+			double& score = entry.second;
+			score += DIVERSITY_WEIGHT * 50;
+			score += (static_cast<double>(rand()) / RAND_MAX) * RANDOMNESS_MAXIMUM;
+		}
 	}
 }
 
