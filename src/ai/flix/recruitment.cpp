@@ -32,6 +32,7 @@
 #include "../../pathutils.hpp"
 #include "../../resources.hpp"
 #include "../../team.hpp"
+#include "../../tod_manager.hpp"
 #include "../../unit_map.hpp"
 #include "../../unit_types.hpp"
 #include "../../util.hpp"
@@ -57,6 +58,28 @@ namespace flix_recruitment {
 
 namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
+
+// When a enemy is in this radius around a leader, this leader is tagged as 'in danger'.
+// If money is available, this leader will recruit as much units as possible.
+const static int LEADER_IN_DANGER_RADIUS = 3;
+
+// Save Money Strategies will work as follow:
+// The AI will always keep track of the ratio
+// our_total_unit_costs / enemy_total_unit_costs
+// whereas the costs are the sum of the cost of all units on the map weighted by their HP.
+// When this ratio is bigger then SAVE_MONEY_BEGIN_THRESHOLD, the AI will stop recruiting units
+// until the ratio is less then SAVE_MONEY_END_THRESHOLD.
+const static bool ACTIVATE_SAVE_MONEY_STRATEGIES = true;
+const static double SAVE_MONEY_BEGIN_THRESHOLD = 1.0;
+const static double SAVE_MONEY_END_THRESHOLD = 0.7;
+
+// When we have earned this much gold, the AI will start spending all money to start
+// a big offensive wave.
+const static int SPEND_ALL_MONEY_GOLD_THRESHOLD = 110;
+
+// This is used for a income estimation. We'll calculate the estimated income of this much
+// future turns and decide if we'd gain money if we start to recruit no units anymore.
+const static int SAVE_MONEY_FORECAST_TURNS = 5;
 
 // When a team has less then this much units, consider recruit-list too.
 const static int MAP_UNIT_THRESHOLD = 5;
@@ -113,8 +136,10 @@ static long timer_simulation = 0;
 
 recruitment::recruitment(rca_context& context, const config& cfg)
 		: candidate_action(context, cfg),
-		  recruit_situation_change_observer_(),
-		  cheapest_unit_costs_() { }
+		  own_units_in_combat_counter_(0),
+		  cheapest_unit_costs_(),
+		  state_(NORMAL),
+		  recruit_situation_change_observer_(){ }
 
 double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
@@ -198,6 +223,16 @@ void recruitment::execute() {
 			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 		}
+
+		// Check if leader is in danger.
+		data.in_danger = is_enemy_in_radius(leader->get_location(), LEADER_IN_DANGER_RADIUS);
+		// If yes, set ratio_score very high, so this leader will get priority while recruiting.
+		if (data.in_danger) {
+			data.ratio_score = 50;
+			state_ = LEADER_IN_DANGER;
+			LOG_AI_FLIX << "Leader " << leader->name() << " is in danger.\n";
+		}
+
 		leader_data.push_back(data);
 	}
 
@@ -275,6 +310,11 @@ void recruitment::execute() {
 	int total_recruit_count = 0;
 	recruit_result_ptr recruit_result;
 	do {
+		update_state();
+		if (state_ == SAVE_MONEY && ACTIVATE_SAVE_MONEY_STRATEGIES) {
+			return;
+		}
+
 		// find which leader should recruit according to ratio_scores
 		data* best_leader_data = NULL;
 		double biggest_difference = -100;
@@ -324,6 +364,13 @@ void recruitment::execute() {
 			// cheaper unit, when recruitment failed because of unit costs.
 		}
 	} while(recruit_result->is_ok());
+
+	if (state_ == LEADER_IN_DANGER) {
+		state_ = NORMAL;
+	}
+	if (state_ == SPEND_ALL_MONEY && recruit_result->get_status() == recruit_result::E_NO_GOLD) {
+		state_ = SAVE_MONEY;
+	}
 }
 
 /**
@@ -402,12 +449,38 @@ int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterato
 }
 
 /**
+ * Helper function.
+ * Returns true if there is a enemy within the radius.
+ */
+bool recruitment::is_enemy_in_radius(const map_location& loc, int radius) const {
+	const unit_map& units = *resources::units;
+	std::vector<map_location> surrounding;
+	get_tiles_in_radius(loc, radius, surrounding);
+	if (surrounding.empty()) {
+		return false;
+	}
+	BOOST_FOREACH(const map_location& loc, surrounding) {
+		const unit_map::const_iterator& enemy_it = units.find(loc);
+		if(enemy_it == units.end()) {
+			continue;
+		}
+		if (!current_team().is_enemy(enemy_it->side())) {
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+
+/**
  * For Map Analysis.
  * Creates a std::set of hexes where a fight will occur with high probability.
  */
 void recruitment::update_important_hexes() {
 	important_hexes_.clear();
 	important_terrain_.clear();
+	own_units_in_combat_counter_ = 0;
+
 	update_average_local_cost();
 	const gamemap& map = *resources::game_map;
 	const unit_map& units = *resources::units;
@@ -422,24 +495,15 @@ void recruitment::update_important_hexes() {
 		if (unit.side() != get_side()) {
 			continue;
 		}
-		std::vector<map_location> surrounding;
-		get_tiles_in_radius(unit.get_location(), MAP_VILLAGE_SURROUNDING, surrounding);
-		if (surrounding.empty()) {
-			continue;
-		}
-		BOOST_FOREACH(const map_location& loc, surrounding) {
-			const unit_map::const_iterator& enemy_it = units.find(loc);
-			if(enemy_it == units.end()) {
-				continue;
-			}
-			if (!current_team().is_enemy(enemy_it->side())) {
-				continue;
-			}
+		if (is_enemy_in_radius(unit.get_location(), 1)) {
 			// We found a enemy next to us. Mark our unit and all adjacent
 			// hexes as important.
+			std::vector<map_location> surrounding;
+			get_tiles_in_radius(unit.get_location(), 1, surrounding);
 			important_hexes_.insert(unit.get_location());
 			std::copy(surrounding.begin(), surrounding.end(),
 					std::inserter(important_hexes_, important_hexes_.begin()));
+			++own_units_in_combat_counter_;
 		}
 	}
 
@@ -960,6 +1024,127 @@ void recruitment::simulate_attack(
 }
 
 /**
+ * For Money Saving Strategies.
+ * Guess the income over the next turns.
+ * This doesn't need to be exact. In the end we are just interested if this value is
+ * positive or negative.
+ */
+double recruitment::get_estimated_income(int turns) const {
+	const team& team = (*resources::teams)[get_side() - 1];
+	const size_t own_villages = team.villages().size();
+	const double village_gain = get_estimated_village_gain();
+	const double unit_gain = get_estimated_unit_gain();
+
+	double total_income = 0;
+	for (int i = 1; i <= turns; ++i) {
+		double income = (own_villages + village_gain * i) * game_config::village_income;
+		double upkeep = side_upkeep(get_side()) + unit_gain * i -
+				(own_villages + village_gain * i) * game_config::village_support;
+		double resulting_income = game_config::base_income + income - std::max(0., upkeep);
+		total_income += resulting_income;
+	}
+	return total_income;
+}
+
+/**
+ * For Money Saving Strategies.
+ * Guess how many units we will gain / loose over the next turns per turn.
+ */
+double recruitment::get_estimated_unit_gain() const {
+	return - own_units_in_combat_counter_ / 3.;
+}
+
+/**
+ * For Money Saving Strategies.
+ * Guess how many villages we will gain over the next turns per turn.
+ */
+double recruitment::get_estimated_village_gain() const {
+	const gamemap& map = *resources::game_map;
+	int neutral_villages = 0;
+	BOOST_FOREACH(const map_location& village, map.villages()) {
+		if (village_owner(village) == -1) {
+			++neutral_villages;
+		}
+	}
+	return (neutral_villages / resources::teams->size()) / 4.;
+}
+
+/**
+ * For Money Saving Strategies.
+ * Returns our_total_unit_costs / enemy_total_unit_costs.
+ */
+double recruitment::get_unit_ratio() const {
+	const unit_map& units = *resources::units;
+		double own_total_value;
+		double enemy_total_value;
+		BOOST_FOREACH(const unit& unit, units) {
+			double value = unit.cost() * unit.hitpoints() / unit.max_hitpoints();
+			if (current_team().is_enemy(unit.side())) {
+				enemy_total_value += value;
+			} else {
+				own_total_value += value;
+			}
+		}
+	return own_total_value / enemy_total_value;
+}
+
+/**
+ * Money Saving Strategies. Main method.
+ */
+void recruitment::update_state() {
+	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_MONEY) {
+		return;
+	}
+	if (current_team().gold() >= SPEND_ALL_MONEY_GOLD_THRESHOLD) {
+		state_ = SPEND_ALL_MONEY;
+		LOG_AI_FLIX << "Changed state_ to SPEND_ALL_MONEY. \n";
+		return;
+	}
+	double ratio = get_unit_ratio();
+	double income_estimation = get_estimated_income(SAVE_MONEY_FORECAST_TURNS);
+	LOG_AI_FLIX << "Ratio is " << ratio << "\n";
+	LOG_AI_FLIX << "Estimated income is " << income_estimation << "\n";
+	if (state_ == NORMAL && ratio > SAVE_MONEY_BEGIN_THRESHOLD && income_estimation > 0) {
+		state_ = SAVE_MONEY;
+		LOG_AI_FLIX << "Changed state to SAVE_MONEY.\n";
+
+		// Create a debug object. // REMOVE ME
+		debug.estimated_income = get_estimated_income(SAVE_MONEY_FORECAST_TURNS);
+		debug.estimated_unit_gain = get_estimated_unit_gain();
+		debug.estimated_village_gain = get_estimated_village_gain();
+		debug.turn_start =  resources::tod_manager->turn();
+		const unit_map& units = *resources::units;
+		int own_units = 0;
+		BOOST_FOREACH(const unit& unit, units) {
+			if (get_side() == unit.side()) {
+				++own_units;
+			}
+		}
+		debug.units = own_units;
+		debug.villages = (*resources::teams)[get_side() - 1].villages().size();
+		debug.gold = current_team().gold();
+	} else if (state_ == SAVE_MONEY && ratio < SAVE_MONEY_END_THRESHOLD) {
+		state_ = NORMAL;
+		LOG_AI_FLIX << "Changed state to NORMAL.\n";
+
+		// Use the debug object to create a output. // REMOVE ME
+		LOG_AI_FLIX << "-------EVALUATE ESTIMATIONS-----------\n";
+		LOG_AI_FLIX << "Turns: " << resources::tod_manager->turn() - debug.turn_start << "\n";
+		LOG_AI_FLIX << "EVG: " << debug.estimated_village_gain << ", RVG: " << (*resources::teams)[get_side() - 1].villages().size() - debug.villages << "\n";
+		const unit_map& units = *resources::units;
+		int own_units = 0;
+		BOOST_FOREACH(const unit& unit, units) {
+			if (get_side() == unit.side()) {
+				++own_units;
+			}
+		}
+		LOG_AI_FLIX << "EUG: " << debug.estimated_unit_gain << ", RUG: " << own_units - debug.units << "\n";
+		LOG_AI_FLIX << "EI: " << debug.estimated_income << ", RI: " << current_team().gold() - debug.gold << "\n";
+		LOG_AI_FLIX << "----------------END---------------------\n";
+	}
+}
+
+/**
  * Observer Code
  */
 recruitment::recruit_situation_change_observer::recruit_situation_change_observer()
@@ -974,7 +1159,6 @@ void recruitment::recruit_situation_change_observer::handle_generic_event(
 		LOG_AI_FLIX << "Recruitment List is not valid anymore.\n";
 		set_recruit_list_changed(true);
 	} else {
-		LOG_AI_FLIX << "Event is " << event << ". -> Gamestate changed.\n";
 		++gamestate_changed_;
 	}
 }

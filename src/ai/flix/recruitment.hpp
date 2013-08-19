@@ -68,9 +68,10 @@ struct data {
 	double ratio_score;
 
 	int recruit_count;
+	bool in_danger;
 
 	explicit data(const unit_map::const_iterator leader)
-		: leader(leader), ratio_score(1.0), recruit_count(0) { }
+		: leader(leader), ratio_score(1.0), recruit_count(0), in_danger(false) { }
 	double get_score_sum() const {
 		double sum = 0.0;
 		BOOST_FOREACH(const score_map::value_type& entry, scores) {
@@ -133,10 +134,11 @@ public:
 	//Debug only
 	void show_important_hexes() const;
 private:
-	void invalidate();
 	const std::string get_best_recruit_from_scores(const data& leader_data) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
 	int get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader);
+	void invalidate();
+	bool is_enemy_in_radius(const map_location& loc, int radius) const;
 
 	class recruit_situation_change_observer : public events::observer {
 	public:
@@ -155,7 +157,6 @@ private:
 		int gamestate_changed_;
 
 	};
-	recruit_situation_change_observer recruit_situation_change_observer_;
 // Map Analysis
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
@@ -174,11 +175,34 @@ private:
 			double attacker_defense, double defender_defense,
 			double* damage_to_attacker, double* damage_to_defender) const;
 
+// Counter Recruitment and Saving Strategies
+	double get_estimated_income(int turns) const;
+	double get_estimated_unit_gain() const;
+	double get_estimated_village_gain() const;
+	double get_unit_ratio() const;
+	void update_state();
+
+
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;
+	int own_units_in_combat_counter_;
 	std::map<map_location, double> average_local_cost_;
 	std::map<size_t, int> cheapest_unit_costs_;
 	cache_table combat_cache;
+	enum states {NORMAL, SAVE_MONEY, SPEND_ALL_MONEY, LEADER_IN_DANGER};
+	states state_;
+	recruit_situation_change_observer recruit_situation_change_observer_;
+
+	// Struct for debugging Money Saving Strategies.  REMOVE ME
+	struct debug {
+		int turn_start;
+		double estimated_village_gain;
+		int villages;
+		double estimated_unit_gain;
+		int units;
+		double estimated_income;
+		int gold;
+	} debug;
 };
 
 }  // of namespace flix_recruitment
