@@ -298,43 +298,14 @@ void recruitment::execute() {
 	 * the preferred mix of all units. So already existing units are considered.
 	 */
 
-
-	// the ratio_scores are there to decide which leader should recruit
-	// normalize them.
-	double ratio_score_sum = 0.0;
-	BOOST_FOREACH(const data& data, leader_data) {
-		ratio_score_sum += data.ratio_score;
-	}
-	assert(ratio_score_sum > 0.0);
-
-	BOOST_FOREACH(data& data, leader_data) {
-		data.ratio_score /= ratio_score_sum;
-	}
-
-	int total_recruit_count = 0;
 	recruit_result_ptr recruit_result;
 	do {
 		update_state();
 		if (state_ == SAVE_MONEY && ACTIVATE_SAVE_MONEY_STRATEGIES) {
 			return;
 		}
-
-		// find which leader should recruit according to ratio_scores
-		data* best_leader_data = NULL;
-		double biggest_difference = -100;
-		BOOST_FOREACH(data& data, leader_data) {
-			double desired_percentage = data.ratio_score * 100;
-			double current_percentage = (total_recruit_count == 0) ? 0 :
-					(static_cast<double>(data.recruit_count) / total_recruit_count) * 100;
-			double difference = desired_percentage - current_percentage;
-			if (difference > biggest_difference) {
-				biggest_difference = difference;
-				best_leader_data = &data;
-			}
-		}
-		assert(best_leader_data);
-
-		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data);
+		data& best_leader_data = get_best_leader_from_ratio_scores(leader_data);
+		const std::string best_recruit = get_best_recruit_from_scores(best_leader_data);
 
 		// TODO(flix): find the best hex for recruiting best_recruit.
 		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
@@ -342,13 +313,12 @@ void recruitment::execute() {
 		// rather than the default inside out."
 		recruit_result = check_recruit_action(best_recruit,
 				map_location::null_location,
-				best_leader_data->leader->get_location());
+				best_leader_data.leader->get_location());
 		if (recruit_result->is_ok()) {
 			recruit_situation_change_observer_.reset_gamestate_changed();
 			recruit_result->execute();
 			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
-			++best_leader_data->recruit_count;
-			++total_recruit_count;
+			++best_leader_data.recruit_count;
 
 			// Check if something changed in the recruitment list (WML can do that).
 			// If yes, just return. evaluate() and execute() will be called again.
@@ -375,6 +345,39 @@ void recruitment::execute() {
 	if (state_ == SPEND_ALL_MONEY && recruit_result->get_status() == recruit_result::E_NO_GOLD) {
 		state_ = SAVE_MONEY;
 	}
+}
+
+/**
+ * A helper function for execute().
+ * Decides according to the leaders ratio scores which leader should recruit.
+ */
+data& recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_data) const {
+	// Find things for normalization.
+	int total_recruit_count = 0;
+	double ratio_score_sum = 0.0;
+	BOOST_FOREACH(const data& data, leader_data) {
+		ratio_score_sum += data.ratio_score;
+		total_recruit_count += data.recruit_count;
+	}
+	assert(ratio_score_sum > 0.0);
+
+	// Shuffle leader_data to break ties randomly.
+	std::random_shuffle(leader_data.begin(), leader_data.end());
+
+	// Find which leader should recruit according to ratio_scores.
+	data* best_leader_data = NULL;
+	double biggest_difference = 0;
+	BOOST_FOREACH(data& data, leader_data) {
+		double desired_ammount = data.ratio_score / ratio_score_sum * (total_recruit_count + 1);
+		double current_ammount = data.recruit_count;
+		double difference = desired_ammount - current_ammount;
+		if (difference > biggest_difference) {
+			biggest_difference = difference;
+			best_leader_data = &data;
+		}
+	}
+	assert(best_leader_data);
+	return *best_leader_data;
 }
 
 /**
