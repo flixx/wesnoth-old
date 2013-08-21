@@ -134,6 +134,7 @@ public:
 	//Debug only
 	void show_important_hexes() const;
 private:
+	action_result_ptr execute_recruit(const std::string& type, data& leader_data);
 	data& get_best_leader_from_ratio_scores(std::vector<data>& leader_data) const;
 	const std::string get_best_recruit_from_scores(const data& leader_data) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;

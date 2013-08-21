@@ -298,8 +298,9 @@ void recruitment::execute() {
 	 * the preferred mix of all units. So already existing units are considered.
 	 */
 
-	recruit_result_ptr recruit_result;
+	action_result_ptr action_result;
 	do {
+		recruit_situation_change_observer_.reset_gamestate_changed();
 		update_state();
 		if (state_ == SAVE_MONEY && ACTIVATE_SAVE_MONEY_STRATEGIES) {
 			return;
@@ -311,15 +312,10 @@ void recruitment::execute() {
 		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
 		// "It also means there is a tendency to recruit from the outside in
 		// rather than the default inside out."
-		recruit_result = check_recruit_action(best_recruit,
-				map_location::null_location,
-				best_leader_data.leader->get_location());
-		if (recruit_result->is_ok()) {
-			recruit_situation_change_observer_.reset_gamestate_changed();
-			recruit_result->execute();
-			LOG_AI_FLIX << "Recruited " << best_recruit << "\n";
-			++best_leader_data.recruit_count;
 
+		action_result = execute_recruit(best_recruit, best_leader_data);
+
+		if (action_result->is_ok()) {
 			// Check if something changed in the recruitment list (WML can do that).
 			// If yes, just return. evaluate() and execute() will be called again.
 			if (recruit_situation_change_observer_.recruit_list_changed()) {
@@ -337,14 +333,29 @@ void recruitment::execute() {
 			// TODO(flix): here something is needed to decide if we may want to recruit a
 			// cheaper unit, when recruitment failed because of unit costs.
 		}
-	} while(recruit_result->is_ok());
+	} while(action_result->is_ok());
 
 	if (state_ == LEADER_IN_DANGER) {
 		state_ = NORMAL;
 	}
-	if (state_ == SPEND_ALL_MONEY && recruit_result->get_status() == recruit_result::E_NO_GOLD) {
+	if (state_ == SPEND_ALL_MONEY && action_result->get_status() == recruit_result::E_NO_GOLD) {
 		state_ = SAVE_MONEY;
 	}
+}
+
+/**
+ * A helper function for execute().
+ */
+action_result_ptr recruitment::execute_recruit(const std::string& type, data& leader_data) {
+	recruit_result_ptr recruit_result;
+	recruit_result = check_recruit_action(type, map_location::null_location, leader_data.leader->get_location());
+
+	if (recruit_result->is_ok()) {
+		recruit_result->execute();
+		LOG_AI_FLIX << "Recruited " << type << "\n";
+		++leader_data.recruit_count;
+	}
+	return recruit_result;
 }
 
 /**
