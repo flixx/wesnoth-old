@@ -90,7 +90,7 @@ struct battle_context_unit_stats
 		   const attack_type* att_weapon, bool attacking,
 		   const unit_type* opp_type, const attack_type* opp_weapon,
 		   unsigned int opp_terrain_defense,
-		   int tod_modifier = 0);
+		   int lawful_bonus = 0);
 
 	~battle_context_unit_stats()
 	{}
@@ -231,6 +231,12 @@ map_location under_leadership(const unit_map& units, const map_location& loc,
 int combat_modifier(const map_location &loc, unit_type::ALIGNMENT alignment,
                     bool is_fearless);
 
+/**
+ * Returns the amount that a unit's damage should be multiplied by
+ * due to a given lawful_bonus.
+ */
+int generic_combat_modifier(int lawful_bonus, unit_type::ALIGNMENT alignment,
+                            bool is_fearless);
 /**
  * Function to check if an attack will satisfy the requirements for backstab.
  * Input:

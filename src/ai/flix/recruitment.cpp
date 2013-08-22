@@ -143,7 +143,8 @@ recruitment::recruitment(rca_context& context, const config& cfg)
 		  own_units_in_combat_counter_(0),
 		  cheapest_unit_costs_(),
 		  state_(NORMAL),
-		  recruit_situation_change_observer_(){ }
+		  recruit_situation_change_observer_(),
+		  average_lawful_bonus_(0.0){ }
 
 double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
@@ -279,6 +280,8 @@ void recruitment::execute() {
 	BOOST_FOREACH(const map_location& hex, important_hexes_) {
 		++important_terrain_[map[hex]];
 	}
+
+	update_average_lawful_bonus();
 
 	/**
 	 * Step 2: Filter own_recruits according to configurations
@@ -831,6 +834,22 @@ double recruitment::get_average_defense(const std::string& u_type) const {
 }
 
 /**
+ * Calculates a average lawful bonus, so Combat Analysis will work
+ * better in caves and custom time of day cycles.
+ */
+void recruitment::update_average_lawful_bonus() {
+	int sum = 0;
+	int counter = 0;
+	BOOST_FOREACH(const time_of_day& time, resources::tod_manager->times()) {
+		sum += time.lawful_bonus;
+		++counter;
+	}
+	if (counter > 0) {
+		average_lawful_bonus_ = round_double(static_cast<double>(sum) / counter);
+	}
+}
+
+/**
  * Combat Analysis.
  * Main function.
  * Compares all enemy units with all of our possible recruits and fills
@@ -1014,13 +1033,14 @@ struct attack_simulation {
 
 	attack_simulation(const unit_type* attacker, const unit_type* defender,
 			double attacker_defense, double defender_defense,
-			const attack_type* att_weapon, const attack_type* def_weapon) :
+			const attack_type* att_weapon, const attack_type* def_weapon,
+			int average_lawful_bonus) :
 			attacker_type(attacker),
 			defender_type(defender),
 			attacker_stats(attacker, att_weapon, true, defender, def_weapon,
-					round_double(defender_defense), 0),
+					round_double(defender_defense), average_lawful_bonus),
 			defender_stats(defender, def_weapon, false, attacker, att_weapon,
-					round_double(attacker_defense), 0),
+					round_double(attacker_defense), average_lawful_bonus),
 			attacker_combatant(attacker_stats),
 			defender_combatant(defender_stats)
 	{
@@ -1105,7 +1125,7 @@ void recruitment::simulate_attack(
 			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
 					attacker, defender,
 					attacker_defense, defender_defense,
-					&att_weapon, &def_weapon));
+					&att_weapon, &def_weapon, average_lawful_bonus_));
 			timer_simulation += SDL_GetTicks() - start;  // REMOVE ME
 			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
 				best_def_response = simulation;
@@ -1117,7 +1137,7 @@ void recruitment::simulate_attack(
 			best_def_response.reset(new attack_simulation(
 					attacker, defender,
 					attacker_defense, defender_defense,
-					&att_weapon, NULL));
+					&att_weapon, NULL, average_lawful_bonus_));
 		}
 		if (!best_att_attack || best_def_response->better_result(best_att_attack.get(), false)) {
 			best_att_attack = best_def_response;

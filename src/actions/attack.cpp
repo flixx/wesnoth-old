@@ -190,7 +190,7 @@ battle_context_unit_stats::battle_context_unit_stats(const unit_type* u_type,
 	   const unit_type* opp_type,
 	   const attack_type* opp_weapon,
 	   unsigned int opp_terrain_defense,
-	   int tod_modifier) :
+	   int lawful_bonus) :
 	weapon(att_weapon),
 	attack_num(-2),  // This is and stays invalid. Always use weapon, when using this constructor.
 	is_attacker(attacking),
@@ -270,7 +270,8 @@ battle_context_unit_stats::battle_context_unit_stats(const unit_type* u_type,
 
 		int base_damage = weapon->modified_damage(backstab_pos);
 		int damage_multiplier = 100;
-		damage_multiplier += tod_modifier;
+		damage_multiplier += generic_combat_modifier(lawful_bonus, u_type->alignment(),
+				u_type->musthave_status("fearless"));
 		damage_multiplier *= opp_type->resistance_against(weapon->type(), !attacking);
 
 		damage = round_damage(base_damage, damage_multiplier, 10000);
@@ -1417,20 +1418,25 @@ int combat_modifier(const map_location &loc, unit_type::ALIGNMENT alignment,
                     bool is_fearless)
 {
 	const tod_manager & tod_m = *resources::tod_manager;
+	int lawful_bonus = tod_m.get_illuminated_time_of_day(loc).lawful_bonus;
+	return generic_combat_modifier(lawful_bonus, alignment, is_fearless);
+}
 
+int generic_combat_modifier(int lawful_bonus, unit_type::ALIGNMENT alignment,
+                            bool is_fearless) {
 	int bonus;
 	switch(alignment) {
 		case unit_type::LAWFUL:
-			bonus = tod_m.get_illuminated_time_of_day(loc).lawful_bonus;
+			bonus = lawful_bonus;
 			break;
 		case unit_type::NEUTRAL:
 			bonus = 0;
 			break;
 		case unit_type::CHAOTIC:
-			bonus = -tod_m.get_illuminated_time_of_day(loc).lawful_bonus;
+			bonus = -lawful_bonus;
 			break;
 		case unit_type::LIMINAL:
-			bonus = -abs(tod_m.get_illuminated_time_of_day(loc).lawful_bonus);
+			bonus = -abs(lawful_bonus);
 			break;
 		default:
 			bonus = 0;
@@ -1441,7 +1447,6 @@ int combat_modifier(const map_location &loc, unit_type::ALIGNMENT alignment,
 
 	return bonus;
 }
-
 
 bool backstab_check(const map_location& attacker_loc,
                     const map_location& defender_loc,

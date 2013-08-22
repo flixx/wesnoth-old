@@ -169,6 +169,7 @@ private:
 	void update_average_local_cost();
 	void do_map_analysis(std::vector<data>* leader_data);
 	double get_average_defense(const std::string& unit_type) const;
+	void update_average_lawful_bonus();
 
 // Combat Analysis
 	void do_combat_analysis(std::vector<data>* leader_data);
@@ -199,6 +200,7 @@ private:
 	enum states {NORMAL, SAVE_GOLD, SPEND_ALL_GOLD, LEADER_IN_DANGER};
 	states state_;
 	recruit_situation_change_observer recruit_situation_change_observer_;
+	int average_lawful_bonus_;
 
 	// Struct for debugging Gold Saving Strategies.  REMOVE ME
 	struct debug {
