@@ -36,6 +36,7 @@
 #include "../../unit_map.hpp"
 #include "../../unit_types.hpp"
 #include "../../util.hpp"
+#include "../../variable.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -227,6 +228,21 @@ void recruitment::execute() {
 			global_recruits.insert(recruit);
 		}
 
+		// Add recalls.
+		// Recalls are treated as recruits. While recruiting
+		// we'll check if we can do a recall instead of a recruitment.
+		BOOST_FOREACH(const unit& recall, current_team().recall_list()) {
+			// Check if this leader is allowed to recall this unit.
+			vconfig filter = vconfig(leader->recall_filter());
+			if (!recall.matches_filter(filter, map_location::null_location)) {
+				continue;
+			}
+			data.recruits.insert(recall.type_id());
+			data.scores[recall.type_id()] = 0.0;
+			data.limits[recall.type_id()] = 99999;
+			global_recruits.insert(recall.type_id());
+		}
+
 		// Check if leader is in danger.
 		data.in_danger = is_enemy_in_radius(leader->get_location(), LEADER_IN_DANGER_RADIUS);
 		// If yes, set ratio_score very high, so this leader will get priority while recruiting.
@@ -313,7 +329,14 @@ void recruitment::execute() {
 		// "It also means there is a tendency to recruit from the outside in
 		// rather than the default inside out."
 
-		action_result = execute_recruit(best_recruit, best_leader_data);
+		LOG_AI_FLIX << "Best recruit is: " << best_recruit << "\n";
+		const std::string* recall_id = get_appropriate_recall(best_recruit, best_leader_data);
+		if (recall_id) {
+			LOG_AI_FLIX << "Found appropriate recall with id: " << *recall_id << "\n";
+			action_result = execute_recall(*recall_id, best_leader_data);
+		} else {
+			action_result = execute_recruit(best_recruit, best_leader_data);
+		}
 
 		if (action_result->is_ok()) {
 			// Check if something changed in the recruitment list (WML can do that).
@@ -338,7 +361,9 @@ void recruitment::execute() {
 	if (state_ == LEADER_IN_DANGER) {
 		state_ = NORMAL;
 	}
-	if (state_ == SPEND_ALL_MONEY && action_result->get_status() == recruit_result::E_NO_GOLD) {
+	int status = action_result->get_status();
+	bool no_gold = (status == recruit_result::E_NO_GOLD || status == recall_result::E_NO_GOLD);
+	if (state_ == SPEND_ALL_MONEY && no_gold) {
 		state_ = SAVE_MONEY;
 	}
 }
@@ -346,9 +371,24 @@ void recruitment::execute() {
 /**
  * A helper function for execute().
  */
+action_result_ptr recruitment::execute_recall(const std::string& id, data& leader_data) {
+	recall_result_ptr recall_result;
+	recall_result = check_recall_action(id, map_location::null_location,
+			leader_data.leader->get_location());
+	if (recall_result->is_ok()) {
+		recall_result->execute();
+		++leader_data.recruit_count;
+	}
+	return recall_result;
+}
+
+/**
+ * A helper function for execute().
+ */
 action_result_ptr recruitment::execute_recruit(const std::string& type, data& leader_data) {
 	recruit_result_ptr recruit_result;
-	recruit_result = check_recruit_action(type, map_location::null_location, leader_data.leader->get_location());
+	recruit_result = check_recruit_action(type, map_location::null_location,
+			leader_data.leader->get_location());
 
 	if (recruit_result->is_ok()) {
 		recruit_result->execute();
@@ -356,6 +396,57 @@ action_result_ptr recruitment::execute_recruit(const std::string& type, data& le
 		++leader_data.recruit_count;
 	}
 	return recruit_result;
+}
+
+/**
+ * A helper function for execute().
+ * Checks if this unit type can be recalled.
+ * If yes, we calculate a estimated value in gold of the recall unit.
+ * If this value is less then the recall cost, we dismiss the unit.
+ * The unit with the highest value will be returned.
+ */
+const std::string* recruitment::get_appropriate_recall(const std::string& type,
+		const data& leader_data) const {
+	const std::string* best_recall_id = NULL;
+	double best_recall_value = -1;
+	BOOST_FOREACH(const unit& recall_unit, current_team().recall_list()) {
+		if (type != recall_unit.type_id()) {
+			continue;
+		}
+		// Check if this leader is allowed to recall this unit.
+		vconfig filter = vconfig(leader_data.leader->recall_filter());
+		if (!recall_unit.matches_filter(filter, map_location::null_location)) {
+			LOG_AI_FLIX << "Refused recall because filter: " << recall_unit.id() << "\n";
+			continue;
+		}
+		double average_cost_of_advanced_unit = 0;
+		int counter = 0;
+		BOOST_FOREACH(const std::string& advancement, recall_unit.advances_to()) {
+			const unit_type* advancement_type = unit_types.find(advancement);
+			if (!advancement_type) {
+				continue;
+			}
+			average_cost_of_advanced_unit += advancement_type->cost();
+			++counter;
+		}
+		if (counter > 0) {
+			average_cost_of_advanced_unit /= counter;
+		} else {
+			// Unit don't have advancements. Use cost of unit itself.
+			average_cost_of_advanced_unit = recall_unit.cost();
+		}
+		double xp_quantity = static_cast<double>(recall_unit.experience()) /
+				recall_unit.max_experience();
+		double recall_value = recall_unit.cost() + xp_quantity * average_cost_of_advanced_unit;
+		if (recall_value < current_team().recall_cost()) {
+			continue;  // Unit is not worth to get recalled.
+		}
+		if (recall_value > best_recall_value) {
+			best_recall_id = &recall_unit.id();
+			best_recall_value = recall_value;
+		}
+	}
+	return best_recall_id;
 }
 
 /**
