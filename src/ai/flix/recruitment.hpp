@@ -196,11 +196,11 @@ private:
 	std::map<map_location, double> average_local_cost_;
 	std::map<size_t, int> cheapest_unit_costs_;
 	cache_table combat_cache;
-	enum states {NORMAL, SAVE_MONEY, SPEND_ALL_MONEY, LEADER_IN_DANGER};
+	enum states {NORMAL, SAVE_GOLD, SPEND_ALL_GOLD, LEADER_IN_DANGER};
 	states state_;
 	recruit_situation_change_observer recruit_situation_change_observer_;
 
-	// Struct for debugging Money Saving Strategies.  REMOVE ME
+	// Struct for debugging Gold Saving Strategies.  REMOVE ME
 	struct debug {
 		int turn_start;
 		double estimated_village_gain;

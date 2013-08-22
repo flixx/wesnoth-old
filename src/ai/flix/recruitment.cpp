@@ -61,26 +61,26 @@ namespace {
 // define some tweakable things here which _could_ be extracted as a aspect
 
 // When a enemy is in this radius around a leader, this leader is tagged as 'in danger'.
-// If money is available, this leader will recruit as much units as possible.
+// If gold is available, this leader will recruit as much units as possible.
 const static int LEADER_IN_DANGER_RADIUS = 3;
 
-// Save Money Strategies will work as follow:
+// Save Gold Strategies will work as follow:
 // The AI will always keep track of the ratio
 // our_total_unit_costs / enemy_total_unit_costs
 // whereas the costs are the sum of the cost of all units on the map weighted by their HP.
-// When this ratio is bigger then SAVE_MONEY_BEGIN_THRESHOLD, the AI will stop recruiting units
-// until the ratio is less then SAVE_MONEY_END_THRESHOLD.
-const static bool ACTIVATE_SAVE_MONEY_STRATEGIES = true;
-const static double SAVE_MONEY_BEGIN_THRESHOLD = 1.0;
-const static double SAVE_MONEY_END_THRESHOLD = 0.7;
+// When this ratio is bigger then SAVE_GOLD_BEGIN_THRESHOLD, the AI will stop recruiting units
+// until the ratio is less then SAVE_GOLD_END_THRESHOLD.
+const static bool ACTIVATE_SAVE_GOLD_STRATEGIES = true;
+const static double SAVE_GOLD_BEGIN_THRESHOLD = 1.0;
+const static double SAVE_GOLD_END_THRESHOLD = 0.7;
 
-// When we have earned this much gold, the AI will start spending all money to start
+// When we have earned this much gold, the AI will start spending all gold to start
 // a big offensive wave.
-const static int SPEND_ALL_MONEY_GOLD_THRESHOLD = 110;
+const static int SPEND_ALL_GOLD_GOLD_THRESHOLD = 110;
 
 // This is used for a income estimation. We'll calculate the estimated income of this much
-// future turns and decide if we'd gain money if we start to recruit no units anymore.
-const static int SAVE_MONEY_FORECAST_TURNS = 5;
+// future turns and decide if we'd gain gold if we start to recruit no units anymore.
+const static int SAVE_GOLD_FORECAST_TURNS = 5;
 
 // When a team has less then this much units, consider recruit-list too.
 const static int MAP_UNIT_THRESHOLD = 5;
@@ -318,7 +318,7 @@ void recruitment::execute() {
 	do {
 		recruit_situation_change_observer_.reset_gamestate_changed();
 		update_state();
-		if (state_ == SAVE_MONEY && ACTIVATE_SAVE_MONEY_STRATEGIES) {
+		if (state_ == SAVE_GOLD && ACTIVATE_SAVE_GOLD_STRATEGIES) {
 			return;
 		}
 		data& best_leader_data = get_best_leader_from_ratio_scores(leader_data);
@@ -363,8 +363,8 @@ void recruitment::execute() {
 	}
 	int status = action_result->get_status();
 	bool no_gold = (status == recruit_result::E_NO_GOLD || status == recall_result::E_NO_GOLD);
-	if (state_ == SPEND_ALL_MONEY && no_gold) {
-		state_ = SAVE_MONEY;
+	if (state_ == SPEND_ALL_GOLD && no_gold) {
+		state_ = SAVE_GOLD;
 	}
 }
 
@@ -1133,7 +1133,7 @@ void recruitment::simulate_attack(
 }
 
 /**
- * For Money Saving Strategies.
+ * For Gold Saving Strategies.
  * Guess the income over the next turns.
  * This doesn't need to be exact. In the end we are just interested if this value is
  * positive or negative.
@@ -1156,7 +1156,7 @@ double recruitment::get_estimated_income(int turns) const {
 }
 
 /**
- * For Money Saving Strategies.
+ * For Gold Saving Strategies.
  * Guess how many units we will gain / loose over the next turns per turn.
  */
 double recruitment::get_estimated_unit_gain() const {
@@ -1164,7 +1164,7 @@ double recruitment::get_estimated_unit_gain() const {
 }
 
 /**
- * For Money Saving Strategies.
+ * For Gold Saving Strategies.
  * Guess how many villages we will gain over the next turns per turn.
  */
 double recruitment::get_estimated_village_gain() const {
@@ -1179,7 +1179,7 @@ double recruitment::get_estimated_village_gain() const {
 }
 
 /**
- * For Money Saving Strategies.
+ * For Gold Saving Strategies.
  * Returns our_total_unit_costs / enemy_total_unit_costs.
  */
 double recruitment::get_unit_ratio() const {
@@ -1198,27 +1198,27 @@ double recruitment::get_unit_ratio() const {
 }
 
 /**
- * Money Saving Strategies. Main method.
+ * Gold Saving Strategies. Main method.
  */
 void recruitment::update_state() {
-	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_MONEY) {
+	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_GOLD) {
 		return;
 	}
-	if (current_team().gold() >= SPEND_ALL_MONEY_GOLD_THRESHOLD) {
-		state_ = SPEND_ALL_MONEY;
-		LOG_AI_FLIX << "Changed state_ to SPEND_ALL_MONEY. \n";
+	if (current_team().gold() >= SPEND_ALL_GOLD_GOLD_THRESHOLD) {
+		state_ = SPEND_ALL_GOLD;
+		LOG_AI_FLIX << "Changed state_ to SPEND_ALL_GOLD. \n";
 		return;
 	}
 	double ratio = get_unit_ratio();
-	double income_estimation = get_estimated_income(SAVE_MONEY_FORECAST_TURNS);
+	double income_estimation = get_estimated_income(SAVE_GOLD_FORECAST_TURNS);
 	LOG_AI_FLIX << "Ratio is " << ratio << "\n";
 	LOG_AI_FLIX << "Estimated income is " << income_estimation << "\n";
-	if (state_ == NORMAL && ratio > SAVE_MONEY_BEGIN_THRESHOLD && income_estimation > 0) {
-		state_ = SAVE_MONEY;
-		LOG_AI_FLIX << "Changed state to SAVE_MONEY.\n";
+	if (state_ == NORMAL && ratio > SAVE_GOLD_BEGIN_THRESHOLD && income_estimation > 0) {
+		state_ = SAVE_GOLD;
+		LOG_AI_FLIX << "Changed state to SAVE_GOLD.\n";
 
 		// Create a debug object. // REMOVE ME
-		debug.estimated_income = get_estimated_income(SAVE_MONEY_FORECAST_TURNS);
+		debug.estimated_income = get_estimated_income(SAVE_GOLD_FORECAST_TURNS);
 		debug.estimated_unit_gain = get_estimated_unit_gain();
 		debug.estimated_village_gain = get_estimated_village_gain();
 		debug.turn_start =  resources::tod_manager->turn();
@@ -1232,7 +1232,7 @@ void recruitment::update_state() {
 		debug.units = own_units;
 		debug.villages = (*resources::teams)[get_side() - 1].villages().size();
 		debug.gold = current_team().gold();
-	} else if (state_ == SAVE_MONEY && ratio < SAVE_MONEY_END_THRESHOLD) {
+	} else if (state_ == SAVE_GOLD && ratio < SAVE_GOLD_END_THRESHOLD) {
 		state_ = NORMAL;
 		LOG_AI_FLIX << "Changed state to NORMAL.\n";
 
