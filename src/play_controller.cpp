@@ -24,7 +24,9 @@
 #include "actions/undo.hpp"
 #include "actions/vision.hpp"
 #include "dialogs.hpp"
-#include "game_events.hpp"
+#include "game_events/conditional_wml.hpp"
+#include "game_events/handlers.hpp"
+#include "game_events/pump.hpp"
 #include "gettext.hpp"
 #include "halo.hpp"
 #include "loadscreen.hpp"
@@ -1427,3 +1429,19 @@ void play_controller::update_gui_to_player(const int team_index, const bool obse
 	gui_->draw(true,true);
 }
 
+void play_controller::toggle_accelerated_speed()
+{
+	preferences::set_turbo(!preferences::turbo());
+	
+	if (preferences::turbo())
+	{
+		utils::string_map symbols;
+		symbols["hk"] = hotkey::get_names(hotkey::HOTKEY_ACCELERATED);
+		gui_->announce(_("Accelerated speed enabled!"), font::NORMAL_COLOR);
+		gui_->announce("\n" + vgettext("(press $hk to disable)", symbols), font::NORMAL_COLOR);
+	}
+	else
+	{
+		gui_->announce(_("Accelerated speed disabled!"), font::NORMAL_COLOR);
+	}
+}

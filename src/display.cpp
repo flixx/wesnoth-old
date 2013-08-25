@@ -76,6 +76,22 @@ namespace {
 
 int display::last_zoom_ = SmallZoom;
 
+void display::parse_team_overlays()
+{
+	const team& curr_team = (*teams_)[playing_team()];
+	const team& prev_team = (*teams_)[playing_team()-1 < teams_->size() ? playing_team()-1 : teams_->size()-1];
+	BOOST_FOREACH(const game_display::overlay_map::value_type i, overlays_) {
+		const overlay& ov = i.second;
+		if (!ov.team_name.empty() &&
+			((ov.team_name.find(curr_team.team_name()) + 1) != 0) !=
+			((ov.team_name.find(prev_team.team_name()) + 1) != 0))
+		{
+			invalidate(i.first);
+		}
+	}
+}
+
+
 void display::add_overlay(const map_location& loc, const std::string& img, const std::string& halo,const std::string& team_name, bool visible_under_fog)
 {
 	const int halo_handle = halo::add(get_location_x(loc) + hex_size() / 2,
@@ -1413,7 +1429,7 @@ static void draw_label(CVideo& video, surface target, const theme::label& label)
 
 void display::draw_all_panels()
 {
-	surface const screen(screen_.getSurface());
+	const surface& screen(screen_.getSurface());
 
 	const std::vector<theme::panel>& panels = theme_.panels();
 	for(std::vector<theme::panel>::const_iterator p = panels.begin(); p != panels.end(); ++p) {
@@ -1793,7 +1809,7 @@ void display::draw_minimap()
 		}
 	}
 
-	const surface screen(screen_.getSurface());
+	const surface& screen(screen_.getSurface());
 	clip_rect_setter clip_setter(screen, &area);
 
 	SDL_Color back_color = {31,31,23,255};

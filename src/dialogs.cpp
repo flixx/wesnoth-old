@@ -22,7 +22,6 @@
 #include "actions/attack.hpp"
 #include "actions/undo.hpp"
 #include "dialogs.hpp"
-#include "game_events.hpp"
 #include "game_display.hpp"
 #include "game_preferences.hpp"
 #include "gui/dialogs/game_delete.hpp"
@@ -1491,7 +1490,7 @@ static network::connection network_data_dialog(display& disp, const std::string&
 			old_stats = stats;
 			progress.set_progress_percent((stats.current*100)/stats.current_max);
 			std::ostringstream stream;
-			stream << stats.current/1024 << "/" << stats.current_max/1024 << _("KB");
+			stream << utils::si_string(stats.current, true, _("unit_byte^B")) << "/" << utils::si_string(stats.current_max, true, _("unit_byte^B"));
 			progress.set_text(stream.str());
 		}
 

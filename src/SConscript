@@ -22,6 +22,7 @@ libwesnoth_core_sources = Split("""
     map.cpp
     map_location.cpp
     md5.cpp
+    network.cpp
     thread.cpp
     tstring.cpp
     util.cpp
@@ -37,15 +38,6 @@ libwesnoth_core_sources = Split("""
     """)
 
 libwesnoth_core_sources.extend(env.Object("network_worker.cpp", EXTRA_DEFINE = env['raw_sockets'] and "NETWORK_USE_RAW_SOCKETS" or None))
-
-if env["use_network_ana"]:
-    client_env.Append(CPPPATH = ["#/src/ana/api"])
-    libwesnoth_core_sources.append("network_ana.cpp")
-    libwesnoth_core_sources.append("network_manager_ana.cpp")
-    ana = SConscript("ana/src/SConscript", exports = {"env" : client_env})
-else:
-    libwesnoth_core_sources.append("network.cpp")
-    ana = []
 
 game_config_env = env.Clone()
 filesystem_env = env.Clone()
@@ -73,13 +65,12 @@ libwesnoth_core_sources.extend([
     filesystem_env.Object("filesystem.cpp")
     ])
 
-libwesnoth_core = [env.Library("wesnoth_core", libwesnoth_core_sources), ana]
+libwesnoth_core = [env.Library("wesnoth_core", libwesnoth_core_sources)]
 
 libwesnoth_sources = Split("""
     arrow.cpp
     pathfind/astarsearch.cpp
     builder.cpp
-    cavegen.cpp
     clipboard.cpp
     construct_dialog.cpp
     cursor.cpp
@@ -91,13 +82,18 @@ libwesnoth_sources = Split("""
     image_modifications.cpp
     joystick.cpp
     game_end_exceptions.cpp
+    generators/cavegen.cpp
+    generators/map_create.cpp
+    generators/mapgen.cpp
+    generators/mapgen_dialog.cpp
+    generators/yamg/ya_mapgen.cpp
+    generators/yamg/yamg_hex.cpp
+    generators/yamg/yamg_hexheap.cpp
+    generators/yamg/yamg_params.cpp
     key.cpp
     language.cpp
     loadscreen.cpp
-    map_create.cpp
     map_label.cpp
-    mapgen.cpp
-    mapgen_dialog.cpp
     marked-up_text.cpp
     minimap.cpp
     pathutils.cpp
@@ -263,7 +259,11 @@ wesnoth_sources = Split("""
     game_controller.cpp
     game_display.cpp
     game_errors.cpp
-    game_events.cpp
+    game_events/action_wml.cpp
+    game_events/conditional_wml.cpp
+    game_events/entity_location.cpp
+    game_events/handlers.cpp
+    game_events/pump.cpp
     game_instance.cpp
     game_preferences.cpp
     gamestatus.cpp

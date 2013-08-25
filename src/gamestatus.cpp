@@ -24,6 +24,7 @@
 
 #include "actions/create.hpp"
 #include "filesystem.hpp"
+#include "game_events/handlers.hpp"
 #include "gettext.hpp"
 #include "log.hpp"
 #include "game_preferences.hpp"
@@ -43,7 +44,6 @@
 #include "whiteboard/side_actions.hpp"
 #include "sound.hpp"
 #include "soundsource.hpp"
-#include "game_events.hpp"
 #include "map_label.hpp"
 
 #include <boost/bind.hpp>
@@ -260,7 +260,7 @@ const std::string carryover::to_string(){
 	std::string side = "";
 	side.append("Side " + save_id_ + ": gold " + str_cast<int>(gold_) + " recruits " + get_recruits(false) + " units ");
 	BOOST_FOREACH(const config & u_cfg, recall_list_) {
-		side.append(u_cfg["name"] + ", ");
+		side.append(u_cfg["name"].str() + ", ");
 	}
 	return side;
 }

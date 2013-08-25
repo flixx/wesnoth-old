@@ -2,12 +2,36 @@ This is meant to be a concise list of player-visible changes (very minor
 changes may be omitted). For a complete list of changes, see the main
 changelog: https://github.com/wesnoth/wesnoth-old/blob/master/changelog
 
-Version 1.11.5+dev:
+Version 1.11.6+dev:
+ * Add-ons client:
+   * Report errors caused by faulty local .pbl files properly instead of presenting
+     them as network errors.
+
+ * Language and i18n:
+   * Updated translations: German, Lithuanian, Vietnamese.
+
+
+Version 1.11.6:
  * Add-ons client:
    * The Description popup displays the selected add-on's dependencies now,
      using color-keyed statuses.
+
+ * Campaigns:
+   * An Orcish Incursion:
+     * New world map.
+   * Descent Into Darkness:
+     * New world map.
+   * The South Guard:
+     * Fixed double "lich found" event in Choice in the Fog.
+
  * Language and i18n:
-   * Updated translations:
+   * Updated translations: Galician, Japanese, Lithuanian, Russian, Scottish Gaelic.
+
+ * Units:
+   * Added description for the Wose race.
+
+ * User interface:
+   * Unit ellipses are now automatically updated if a unit gains or loses its ZoC.
 
 
 Version 1.11.5:
@@ -15,17 +39,19 @@ Version 1.11.5:
    * Heir to the Throne:
      * Updated Li'sar's movetype and resistances to match her armor.
    * Legend of Wesmere:
-     * Scenario 05: Elvish Horse Archers can now carry the treasure
+     * Scenario 05: Elvish Horse Archers can now carry the treasure.
      * Scenario 09: the player's loyal units stay in the recall list, instead of
-       being stored and then unstored in scenario 14
+       being stored and then unstored in scenario 14.
+
  * Language and i18n:
    * Updated translations: French, Galician, Latin, Lithuanian, Old English,
      Portuguese, Portuguese (Brazil).
+
  * User interface:
-   * Added notification support for Windows
+   * Added notification support for Windows.
    * Made it so that the "Back to Turn X" and "Back to Start" menu items work
-     with .bz2 saves
-   * Removed Dfool and Experimental themes
+     with .bz2 saves.
+   * Removed Dfool and Experimental themes.
 
 
 Version 1.11.4:

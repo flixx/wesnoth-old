@@ -9,6 +9,29 @@ return {
         local AH = wesnoth.require "ai/lua/ai_helper.lua"
         local LS = wesnoth.require "lua/location_set.lua"
 
+        function engine:next_waypoint(messenger, cfg)
+            -- Variable to store which waypoint to go to next (persistent)
+            if (not self.data.next_waypoint) then self.data.next_waypoint = 1 end
+
+            local waypoint_x = AH.split(cfg.waypoint_x, ",")
+            local waypoint_y = AH.split(cfg.waypoint_y, ",")
+            for i,w in ipairs(waypoint_x) do
+                waypoint_x[i] = tonumber(waypoint_x[i])
+                waypoint_y[i] = tonumber(waypoint_y[i])
+            end
+
+            -- If we're within 3 hexes of the next waypoint, we go on to the one after that
+            -- except if that one's the last one already
+            local dist_wp = H.distance_between(messenger.x, messenger.y,
+                waypoint_x[self.data.next_waypoint], waypoint_y[self.data.next_waypoint]
+            )
+            if (dist_wp <= 3) and (self.data.next_waypoint < #waypoint_x) then
+                self.data.next_waypoint = self.data.next_waypoint + 1
+            end
+
+            return waypoint_x[self.data.next_waypoint], waypoint_y[self.data.next_waypoint]
+        end
+
         function engine:mai_messenger_find_enemies_in_way(unit, goal_x, goal_y)
             -- Returns the first unit on or next to the path of the messenger
             -- unit: proxy table for the messenger unit
@@ -22,6 +45,7 @@ return {
 
             -- Exclude the hex the unit is currently on
             table.remove(path, 1)
+            if (not path[1]) then return end
 
             -- Is there an enemy unit on the first path hex itself?
             -- This would be caught by the adjacent hex check later, but not in the right order
@@ -135,34 +159,14 @@ return {
             local messenger = wesnoth.get_units{ side = wesnoth.current.side, id = cfg.id }[1]
             if (not messenger) then return 0 end
 
-            -- Set up the waypoints
-            cfg.waypoint_x = AH.split(cfg.waypoint_x, ",")
-            cfg.waypoint_y = AH.split(cfg.waypoint_y, ",")
-            local waypoints = {}
-            for i = 1,#cfg.waypoint_x do
-                waypoints[i] = { tonumber(cfg.waypoint_x[i]), tonumber(cfg.waypoint_y[i]) }
-            end
-
-            -- Variable to store which waypoint to go to next (persistent)
-            if (not self.data.next_waypoint) then self.data.next_waypoint = 1 end
-
-            -- If we're within 3 hexes of the next waypoint, we go on to the one after that
-            -- except if that one's the last one already
-            local dist_wp = H.distance_between(messenger.x, messenger.y,
-                waypoints[self.data.next_waypoint][1], waypoints[self.data.next_waypoint][2]
-            )
-            if (dist_wp <= 3) and (self.data.next_waypoint < #waypoints) then
-                self.data.next_waypoint = self.data.next_waypoint + 1
-            end
+            local x, y = self:next_waypoint(messenger, cfg)
 
             -- See if there's an enemy in the way that should be attacked
-            local attack = self:mai_messenger_find_clearing_attack(messenger,
-                waypoints[self.data.next_waypoint][1], waypoints[self.data.next_waypoint][2]
-            )
+            local attack = self:mai_messenger_find_clearing_attack(messenger, x, y)
 
             if attack then
                 self.data.best_attack = attack
-                return 300000
+                return cfg.ca_score
             end
 
             return 0
@@ -185,37 +189,19 @@ return {
 
             local messenger = wesnoth.get_units{ id = cfg.id, formula = '$this_unit.moves > 0' }[1]
 
-            if messenger then return 290000 end
+            if messenger then
+                return cfg.ca_score
+            end
             return 0
         end
 
         function engine:mai_messenger_move_exec(cfg)
             local messenger = wesnoth.get_units{ id = cfg.id, formula = '$this_unit.moves > 0' }[1]
 
-            -- Set up the waypoints
-            cfg.waypoint_x = AH.split(cfg.waypoint_x, ",")
-            cfg.waypoint_y = AH.split(cfg.waypoint_y, ",")
-            local waypoints = {}
-            for i = 1,#cfg.waypoint_x do
-                waypoints[i] = { tonumber(cfg.waypoint_x[i]), tonumber(cfg.waypoint_y[i]) }
+            local x, y = self:next_waypoint(messenger, cfg)
+            if (messenger.x ~= x) or (messenger.y ~= y) then
+                x, y = wesnoth.find_vacant_tile( x, y, messenger)
             end
-
-            -- Variable to store which waypoint to go to next (persistent)
-            if (not self.data.next_waypoint) then self.data.next_waypoint = 1 end
-
-            -- If we're within 3 hexes of the next waypoint, we go on to the one after that
-            -- except if that one's the last one already
-            local dist_wp = H.distance_between(messenger.x, messenger.y,
-                waypoints[self.data.next_waypoint][1], waypoints[self.data.next_waypoint][2]
-            )
-            if (dist_wp <= 3) and (self.data.next_waypoint < #waypoints) then
-                self.data.next_waypoint = self.data.next_waypoint + 1
-            end
-
-            -- In case an enemy is on the waypoint hex:
-            local x, y = wesnoth.find_vacant_tile(
-                waypoints[self.data.next_waypoint][1], waypoints[self.data.next_waypoint][2], messenger
-            )
             local next_hop = AH.next_hop(messenger, x, y)
 
             -- Compare this to the "ideal path"
@@ -316,7 +302,9 @@ return {
 
             local my_units = wesnoth.get_units{ side = wesnoth.current.side, formula = '$this_unit.moves > 0' }
 
-            if my_units[1] then return 280000 end
+            if my_units[1] then
+                return cfg.ca_score
+            end
             return 0
         end
 

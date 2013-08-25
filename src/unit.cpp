@@ -23,6 +23,7 @@
 #include "callable_objects.hpp"
 #include "formula.hpp"
 #include "game_display.hpp"
+#include "game_events/handlers.hpp"
 #include "game_preferences.hpp"
 #include "gamestatus.hpp"
 #include "gettext.hpp"
@@ -659,7 +660,7 @@ void unit::generate_name(rand_rng::simple_rng* rng)
  * Note that random numbers used in config files don't work in multiplayer,
  * so that leaders should be barred from all random traits until that
  * is fixed. Later the restrictions will be based on play balance.
- * @musthaveonly is true when you don't want to generate random traits or
+ * @a musthaveonly is true when you don't want to generate random traits or
  * you don't want to give any optional traits to a unit.
  */
 void unit::generate_traits(bool musthaveonly)
@@ -1947,6 +1948,8 @@ void unit::redraw_unit()
 			ellipse="misc/ellipse";
 		}
 
+		// check if the unit has a ZoC or can recruit
+		const char* const nozoc = emit_zoc_ ? "" : "nozoc-";
 		const char* const leader = can_recruit() ? "leader-" : "";
 		const char* const selected = disp.selected_hex() == loc_ ? "selected-" : "";
 
@@ -1954,9 +1957,9 @@ void unit::redraw_unit()
 		char buf[100];
 		std::string tc=team::get_side_color_index(side_);
 
-		snprintf(buf,sizeof(buf),"%s-%s%stop.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,selected,tc.c_str());
+		snprintf(buf,sizeof(buf),"%s-%s%s%stop.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,nozoc,selected,tc.c_str());
 		ellipse_back.assign(image::get_image(image::locator(buf), image::SCALED_TO_ZOOM));
-		snprintf(buf,sizeof(buf),"%s-%s%sbottom.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,selected,tc.c_str());
+		snprintf(buf,sizeof(buf),"%s-%s%s%sbottom.png~RC(ellipse_red>%s)",ellipse.c_str(),leader,nozoc,selected,tc.c_str());
 		ellipse_front.assign(image::get_image(image::locator(buf), image::SCALED_TO_ZOOM));
 	}
 

@@ -128,9 +128,10 @@ function wml_actions.fire_event(cfg)
 end
 
 function wml_actions.allow_recruit(cfg)
+	local unit_types = cfg.type or helper.wml_error("[allow_recruit] missing required type= attribute")
 	for index, team in ipairs(wesnoth.get_sides(cfg)) do
 		local v = team.recruit
-		for type in string.gmatch(cfg.type, "[^%s,][^,]*") do
+		for type in string.gmatch(unit_types, "[^%s,][^,]*") do
 			table.insert(v, type)
 			wesnoth.add_known_unit(type)
 		end
@@ -151,9 +152,10 @@ function wml_actions.allow_extra_recruit(cfg)
 end
 
 function wml_actions.disallow_recruit(cfg)
+	local unit_types = cfg.type or helper.wml_error("[disallow_recruit] missing required type= attribute")
 	for index, team in ipairs(wesnoth.get_sides(cfg)) do
 		local v = team.recruit
-		for w in string.gmatch(cfg.type, "[^%s,][^,]*") do
+		for w in string.gmatch(unit_types, "[^%s,][^,]*") do
 			for i, r in ipairs(v) do
 				if r == w then
 					table.remove(v, i)
@@ -652,6 +654,7 @@ function wml_actions.move_unit(cfg)
 	local to_x = tostring(cfg.to_x) or helper.wml_error(coordinate_error)
 	local to_y = tostring(cfg.to_y) or helper.wml_error(coordinate_error)
 	local fire_event = cfg.fire_event
+	local muf_force_scroll = cfg.force_scroll
 	local check_passability = cfg.check_passability; if check_passability == nil then check_passability = true end
 	cfg = helper.literal(cfg)
 	cfg.to_x, cfg.to_y, cfg.fire_event = nil, nil, nil
@@ -692,7 +695,8 @@ function wml_actions.move_unit(cfg)
 				image_mods = current_unit.image_mods,
 				side = current_unit_cfg.side,
 				x = move_string_x,
-				y = move_string_y
+				y = move_string_y,
+				force_scroll = muf_force_scroll
 			}
 			local x2, y2 = current_unit.x, current_unit.y
 			current_unit.x, current_unit.y = x, y
@@ -1008,6 +1012,7 @@ function wml_actions.store_side(cfg)
 				user_team_name = t.user_team_name,
 				color = t.color,
 				gold = t.gold,
+				scroll_to_leader = t.scroll_to_leader,
 				side = side_number
 			}
 		wesnoth.set_variable(string.format("%s[%u]", variable, index), container)

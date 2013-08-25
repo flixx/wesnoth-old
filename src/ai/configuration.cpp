@@ -75,10 +75,6 @@ void configuration::init(const config &game_config)
 	well_known_aspects.push_back(well_known_aspect("number_of_possible_recruits_to_force_recruit"));
 	well_known_aspects.push_back(well_known_aspect("passive_leader"));
 	well_known_aspects.push_back(well_known_aspect("passive_leader_shares_keep"));
-	//well_known_aspects.push_back(well_known_aspect("protect_leader"));
-	//well_known_aspects.push_back(well_known_aspect("protect_leader_radius"));
-	//well_known_aspects.push_back(well_known_aspect("protect_location",false));
-	//well_known_aspects.push_back(well_known_aspect("protect_unit",false));
 	well_known_aspects.push_back(well_known_aspect("recruitment"));
 	well_known_aspects.push_back(well_known_aspect("recruitment_ignore_bad_combat"));
 	well_known_aspects.push_back(well_known_aspect("recruitment_ignore_bad_movement"));
@@ -220,7 +216,7 @@ const config& configuration::get_default_ai_parameters()
 }
 
 
-bool configuration::upgrade_aspect_config_from_1_07_02_to_1_07_03(side_number /*side*/, const config& cfg, config& parsed_cfg, const std::string &id, bool aspect_was_attribute)
+bool configuration::upgrade_aspect_config_from_1_07_02_to_1_07_03(side_number side, const config& cfg, config& parsed_cfg, const std::string &id, bool aspect_was_attribute)
 {
 	config aspect_config;
 	aspect_config["id"] = id;
@@ -259,6 +255,7 @@ bool configuration::upgrade_aspect_config_from_1_07_02_to_1_07_03(side_number /*
 
 		aspect_config.add_child("facet",facet_config);
 	}
+	DBG_AI_CONFIGURATION << "side "<< side << " aspect[" << id << "] config :\n"<< cfg << "\n";
 
 	parsed_cfg.add_child("aspect",aspect_config);
 	return true;
@@ -452,7 +449,14 @@ bool configuration::upgrade_side_config_from_1_07_02_to_1_07_03(side_number side
 
 		if (!aiparam.has_attribute("turns") && !aiparam.has_attribute("time_of_day")) {
 			fallback_stage_cfg_ai.append(aiparam);
-		}
+		} else {
+			// Move [goal]s to root of the config, adding turns and time_of_day.
+			BOOST_FOREACH(const config &aigoal, aiparam.child_range("goal")) {
+				config updated_goal_config = aigoal;
+				transfer_turns_and_time_of_day_data(aiparam, updated_goal_config);
+				parsed_cfg.add_child("goal", updated_goal_config);
+			}
+                }
 	}
 	fallback_stage_cfg_ai.clear_children("aspect");
 
