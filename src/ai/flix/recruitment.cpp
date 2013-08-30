@@ -70,7 +70,7 @@ const static int LEADER_IN_DANGER_RADIUS = 3;
 // whereas the costs are the sum of the cost of all units on the map weighted by their HP.
 // When this ratio is bigger then SAVE_GOLD_BEGIN_THRESHOLD, the AI will stop recruiting units
 // until the ratio is less then SAVE_GOLD_END_THRESHOLD.
-const static bool ACTIVATE_SAVE_GOLD_STRATEGIES = true;
+const static bool ACTIVATE_SAVE_GOLD_STRATEGIES = false;
 const static double SAVE_GOLD_BEGIN_THRESHOLD = 1.0;
 const static double SAVE_GOLD_END_THRESHOLD = 0.7;
 
@@ -144,7 +144,11 @@ recruitment::recruitment(rca_context& context, const config& cfg)
 		  cheapest_unit_costs_(),
 		  state_(NORMAL),
 		  recruit_situation_change_observer_(),
-		  average_lawful_bonus_(0.0){ }
+		  average_lawful_bonus_(0.0),
+		  recruitment_instructions_(),
+		  recruitment_instructions_turn_(-1),
+		  own_units_count_(),
+		  total_own_units_(0) { }
 
 double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
@@ -153,6 +157,21 @@ double recruitment::evaluate() {
 		invalidate();
 		recruit_situation_change_observer_.set_recruit_list_changed(false);
 	}
+
+	// When evaluate() is called the first time this turn,
+	// we'll retrieve the recruitment-instruction aspect.
+	if (resources::tod_manager->turn() != recruitment_instructions_turn_) {
+		recruitment_instructions_ = get_recruitment_instructions();
+		recruitment_instructions_turn_ = resources::tod_manager->turn();
+		LOG_AI_FLIX << "Recruitment-instructions updated:\n" << recruitment_instructions_ << "\n";
+	}
+
+	// Check if we have something to do.
+	const config* job = get_most_important_job();
+	if (!job) {
+		return BAD_SCORE;
+	}
+
 	const unit_map& units = *resources::units;
 	const std::vector<unit_map::const_iterator> leaders = units.find_leaders(get_side());
 
@@ -163,7 +182,7 @@ double recruitment::evaluate() {
 		// Check Gold. But proceed if there is a unit with cost <= 0 (WML can do that)
 		int cheapest_unit_cost = get_cheapest_unit_cost_for_leader(leader);
 		if (current_team().gold() < cheapest_unit_cost && cheapest_unit_cost > 0) {
-			return BAD_SCORE;
+			continue;
 		}
 
 		const map_location& loc = leader->get_location();
@@ -177,7 +196,9 @@ double recruitment::evaluate() {
 }
 
 void recruitment::execute() {
-	LOG_AI_FLIX<< "Flix recruitment begin! \n";
+	LOG_AI_FLIX << "\n\n\n------------FLIX RECRUITMENT BEGIN ------------\n\n";
+	LOG_AI_FLIX << "TURN: " << resources::tod_manager->turn() <<
+			" SIDE: " << current_team().side() << "\n";
 
 	/*
 	 * Step 0: Check which leaders can recruit and collect them in leader_data.
@@ -282,12 +303,14 @@ void recruitment::execute() {
 	}
 
 	update_average_lawful_bonus();
+	update_own_units_count();
 
 	/**
 	 * Step 2: Filter own_recruits according to configurations
 	 * (TODO)
 	 */
 
+	LOG_AI_FLIX << "RECRUITMENT INSTRUCTIONS:\n" << recruitment_instructions_ << "\n";
 
 	/**
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
@@ -318,14 +341,38 @@ void recruitment::execute() {
 	 */
 
 	action_result_ptr action_result;
+	config* job = NULL;
 	do {
 		recruit_situation_change_observer_.reset_gamestate_changed();
 		update_state();
 		if (state_ == SAVE_GOLD && ACTIVATE_SAVE_GOLD_STRATEGIES) {
-			return;
+			break;
 		}
-		data& best_leader_data = get_best_leader_from_ratio_scores(leader_data);
-		const std::string best_recruit = get_best_recruit_from_scores(best_leader_data);
+		job = get_most_important_job();
+		if (!job) {
+			LOG_AI_FLIX << "All recruitment jobs (recruitment_instructions) done.\n";
+			break;
+		}
+		LOG_AI_FLIX << "Executing this job:\n" << *job << "\n";
+
+		data* best_leader_data = get_best_leader_from_ratio_scores(leader_data, job);
+		if (!best_leader_data) {
+			LOG_AI_FLIX << "Leader with job (recruitment_instruction) is not on keep.\n";
+			if (remove_job_if_no_blocker(job)) {
+				continue;
+			} else {
+				break;
+			}
+		}
+		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data, job);
+		if (best_recruit.empty()) {
+			LOG_AI_FLIX << "Cannot fullfil recruitment-instruction.\n";
+			if (remove_job_if_no_blocker(job)) {
+				continue;
+			} else {
+				break;
+			}
+		}
 
 		// TODO(flix): find the best hex for recruiting best_recruit.
 		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
@@ -333,41 +380,61 @@ void recruitment::execute() {
 		// rather than the default inside out."
 
 		LOG_AI_FLIX << "Best recruit is: " << best_recruit << "\n";
-		const std::string* recall_id = get_appropriate_recall(best_recruit, best_leader_data);
+		const std::string* recall_id = get_appropriate_recall(best_recruit, *best_leader_data);
 		if (recall_id) {
 			LOG_AI_FLIX << "Found appropriate recall with id: " << *recall_id << "\n";
-			action_result = execute_recall(*recall_id, best_leader_data);
+			action_result = execute_recall(*recall_id, *best_leader_data);
 		} else {
-			action_result = execute_recruit(best_recruit, best_leader_data);
+			action_result = execute_recruit(best_recruit, *best_leader_data);
 		}
 
 		if (action_result->is_ok()) {
+			++own_units_count_[best_recruit];
+			++total_own_units_;
+
+			// Update the current job.
+			if (!job->operator[]("total").to_bool()) {
+				job->operator[]("number") = job->operator[]("number").to_int(99999) - 1;
+			}
+
 			// Check if something changed in the recruitment list (WML can do that).
-			// If yes, just return. evaluate() and execute() will be called again.
+			// If yes, just return/break. evaluate() and execute() will be called again.
 			if (recruit_situation_change_observer_.recruit_list_changed()) {
-				return;
+				break;
 			}
 			// Check if the gamestate changed more than once.
 			// (Recruitment will trigger one gamestate change, WML could trigger more changes.)
-			// If yes, just return. evaluate() and execute() will be called again.
+			// If yes, just return/break. evaluate() and execute() will be called again.
 			if (recruit_situation_change_observer_.gamestate_changed() > 1) {
-				return;
+				break;
 			}
 
 		} else {
 			LOG_AI_FLIX << "Recruit result not ok.\n";
+			// We'll end up here when
+			// 1. We haven't enough gold,
+			// 2. There aren't any free hexes around leaders,
+			// 3. This leader can not recruit this type (this can happen after a recall)
+
 			// TODO(flix): here something is needed to decide if we may want to recruit a
 			// cheaper unit, when recruitment failed because of unit costs.
 		}
 	} while(action_result->is_ok());
 
+	// Recruiting is done now.
+	// Update state_ for next execution().
+
 	if (state_ == LEADER_IN_DANGER) {
 		state_ = NORMAL;
 	}
-	int status = action_result->get_status();
+
+	int status = (action_result) ? action_result->get_status() : -1;
 	bool no_gold = (status == recruit_result::E_NO_GOLD || status == recall_result::E_NO_GOLD);
 	if (state_ == SPEND_ALL_GOLD && no_gold) {
 		state_ = SAVE_GOLD;
+	}
+	if (job && no_gold) {
+		remove_job_if_no_blocker(job);
 	}
 }
 
@@ -456,7 +523,9 @@ const std::string* recruitment::get_appropriate_recall(const std::string& type,
  * A helper function for execute().
  * Decides according to the leaders ratio scores which leader should recruit.
  */
-data& recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_data) const {
+data* recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_data,
+		const config* job) const {
+	assert(job);
 	// Find things for normalization.
 	int total_recruit_count = 0;
 	double ratio_score_sum = 0.0;
@@ -471,8 +540,11 @@ data& recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_d
 
 	// Find which leader should recruit according to ratio_scores.
 	data* best_leader_data = NULL;
-	double biggest_difference = 0;
+	double biggest_difference = -99999.;
 	BOOST_FOREACH(data& data, leader_data) {
+		if (!leader_matches_job(data, job)) {
+			continue;
+		}
 		double desired_ammount = data.ratio_score / ratio_score_sum * (total_recruit_count + 1);
 		double current_ammount = data.recruit_count;
 		double difference = desired_ammount - current_ammount;
@@ -481,8 +553,7 @@ data& recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_d
 			best_leader_data = &data;
 		}
 	}
-	assert(best_leader_data);
-	return *best_leader_data;
+	return best_leader_data;
 }
 
 /**
@@ -490,29 +561,35 @@ data& recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_d
  * Counts own units and then decides what unit should be recruited so that the
  * unit distribution approaches the given scores.
  */
-const std::string recruitment::get_best_recruit_from_scores(const data& leader_data) const {
-	const unit_map& units = *resources::units;
-
-	// Count all own units which are already on the map
-	std::map<std::string, int> own_units_count;
-	int total_own_units = 0;
-	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side() || unit.can_recruit()) {
-			continue;
+const std::string recruitment::get_best_recruit_from_scores(const data& leader_data,
+		const config* job) {
+	assert(job);
+	std::string pattern_type;
+	if (job->operator[]("pattern").to_bool(false)) {
+		std::vector<std::string> job_types = utils::split(job->operator[]("type"));
+		if (!job_types.empty()) {
+			pattern_type = job_types[rand() % job_types.size()];
 		}
-		++own_units_count[unit.type_id()];
-		++total_own_units;
 	}
 
-	// find which unit should this leader recruit according to best_leader_data.scores
-	std::string best_recruit;
-	double biggest_difference = 0;
+	std::string best_recruit = "";
+	double biggest_difference = -99999.;
 	BOOST_FOREACH(const score_map::value_type& i, leader_data.get_normalized_scores()) {
 		const std::string& unit = i.first;
 		const double score = i.second;
 
-		double desired_ammount = score * (total_own_units + 1);
-		double current_ammount = own_units_count[unit];
+		if (!pattern_type.empty()) {
+			if (!recruit_matches_type(unit, pattern_type)) {
+				continue;
+			}
+		} else {
+			if (!recruit_matches_job(unit, job)) {
+				continue;
+			}
+		}
+
+		double desired_ammount = score * (total_own_units_ + 1);
+		double current_ammount = own_units_count_[unit];
 		double difference = desired_ammount - current_ammount;
 		if (difference > biggest_difference) {
 			biggest_difference = difference;
@@ -582,6 +659,149 @@ bool recruitment::is_enemy_in_radius(const map_location& loc, int radius) const 
 		return true;
 	}
 	return false;
+}
+
+/*
+ * Helper Function.
+ * Counts own units on the map and saves the result
+ * in member own_units_count_
+ */
+void recruitment::update_own_units_count() {
+	own_units_count_.clear();
+	total_own_units_ = 0;
+	const unit_map& units = *resources::units;
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side() || unit.can_recruit()) {
+			continue;
+		}
+		++own_units_count_[unit.type_id()];
+		++total_own_units_;
+	}
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * We call a [recruit] tag a "job".
+ */
+config* recruitment::get_most_important_job() {
+	config* most_important_job = NULL;
+	int most_important_importance = -1;
+	int biggest_number = -1;
+	BOOST_FOREACH(config& job, recruitment_instructions_.child_range("recruit")) {
+		if (job.empty()) {
+			continue;
+		}
+		int importance = job["importance"].to_int(1);
+		int number = job["number"].to_int(99999);
+		bool total = job["total"].to_bool(false);
+		if (total) {
+			// If the total flag is set we have to subtract
+			// all existing units which matches the type.
+			update_own_units_count();
+			BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
+				const std::string& unit_type = entry.first;
+				const int count = entry.second;
+				if (recruit_matches_job(unit_type, &job)) {
+					number = number - count;
+				}
+			}
+		}
+		if (number <= 0) {
+			continue;
+		}
+		if (importance > most_important_importance ||
+				(importance == most_important_importance && biggest_number > number)) {
+			most_important_job = &job;
+			most_important_importance = importance;
+			biggest_number = number;
+		}
+	}
+	return most_important_job;
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * Checks if a given leader is specified in the "leader_id" attribute.
+ */
+bool recruitment::leader_matches_job(const data& leader_data, const config* job) const {
+	assert(job);
+	// First we make sure that this leader can recruit
+	// at least one unit-type specified in the job.
+	bool is_ok = false;
+	BOOST_FOREACH(const std::string& recruit, leader_data.recruits) {
+		if (recruit_matches_job(recruit, job)) {
+			is_ok = true;
+			break;
+		}
+	}
+	if (!is_ok) {
+		return false;
+	}
+
+	std::vector<std::string> ids = utils::split(job->operator[]("leader_id"));
+	if (ids.empty()) {
+		// If no leader is specified, all leaders are okay.
+		return true;
+	}
+	return (std::find(ids.begin(), ids.end(), leader_data.leader->id()) != ids.end());
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * Checks if a given recruit-type is specified in the "type" attribute.
+ */
+bool recruitment::recruit_matches_job(const std::string& recruit, const config* job) const {
+	assert(job);
+	std::vector<std::string> job_types = utils::split(job->operator[]("type"));
+	if (job_types.empty()) {
+		// If no type is specified, all recruits are okay.
+		return true;
+	}
+	BOOST_FOREACH(const std::string& job_type, job_types) {
+		if (recruit_matches_type(recruit, job_type)) {
+			return true;
+		}
+	}
+	return false;
+}
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * Checks if a given recruit-type matches one atomic "type" attribute.
+ */
+bool recruitment::recruit_matches_type(const std::string& recruit, const std::string& type) const {
+	const unit_type* recruit_type = unit_types.find(recruit);
+	if (!recruit_type) {
+		return false;
+	}
+	// Consider type-name.
+	if (recruit_type->id() == type) {
+		return true;
+	}
+	// Consider usage.
+	if (recruit_type->usage() == type) {
+		return true;
+	}
+	// Consider level.
+	std::stringstream s;
+	s << recruit_type->level();
+	if (s.str() == type) {
+		return true;
+	}
+	return false;
+}
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ */
+bool recruitment::remove_job_if_no_blocker(config* job) {
+	assert(job);
+	if (!job->operator[]("blocker").to_bool(true)) {
+		LOG_AI_FLIX << "Canceling job.\n";
+		job->clear();
+		return true;
+	} else {
+		LOG_AI_FLIX << "Aborting recruitment.\n";
+		return false;
+	}
 }
 
 /**

@@ -138,12 +138,15 @@ private:
 	action_result_ptr execute_recruit(const std::string& type, data& leader_data);
 	const std::string* get_appropriate_recall(const std::string& type,
 			const data& leader_data) const;
-	data& get_best_leader_from_ratio_scores(std::vector<data>& leader_data) const;
-	const std::string get_best_recruit_from_scores(const data& leader_data) const;
+	data* get_best_leader_from_ratio_scores(std::vector<data>& leader_data,
+			const config* job) const;
+	const std::string get_best_recruit_from_scores(const data& leader_data,
+			const config* job);
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
 	int get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader);
 	void invalidate();
 	bool is_enemy_in_radius(const map_location& loc, int radius) const;
+	void update_own_units_count();
 
 	class recruit_situation_change_observer : public events::observer {
 	public:
@@ -162,6 +165,13 @@ private:
 		int gamestate_changed_;
 
 	};
+// Config / Aspects
+	config* get_most_important_job();
+	bool leader_matches_job(const data& leader_data, const config* job) const;
+	bool recruit_matches_job(const std::string& recruit, const config* job) const;
+	bool recruit_matches_type(const std::string& recruit, const std::string& type) const;
+	bool remove_job_if_no_blocker(config* job);
+
 // Map Analysis
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
@@ -201,6 +211,11 @@ private:
 	states state_;
 	recruit_situation_change_observer recruit_situation_change_observer_;
 	int average_lawful_bonus_;
+	config recruitment_instructions_;
+	int recruitment_instructions_turn_;
+	typedef std::map<std::string, int> count_map;
+	count_map own_units_count_;
+	int total_own_units_;
 
 	// Struct for debugging Gold Saving Strategies.  REMOVE ME
 	struct debug {

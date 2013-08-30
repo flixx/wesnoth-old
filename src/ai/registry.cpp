@@ -275,6 +275,9 @@ static register_aspect_factory< composite_aspect<bool> >
 static register_aspect_factory< composite_aspect<ministage> >
         recruitment__composite_aspect_factory("recruitment*composite_aspect");
 
+static register_aspect_factory< composite_aspect<config> >
+	recruitment_instructions__composite_aspect_factory("recruitment_instructions*composite_aspect");
+
 static register_aspect_factory< composite_aspect<bool> >
 	recruitment_ignore_bad_combat__composite_aspect_factory("recruitment_ignore_bad_combat*composite_aspect");
 
@@ -345,6 +348,9 @@ static register_aspect_factory< standard_aspect<bool> >
 
 static register_aspect_factory< standard_aspect<ministage> >
         recruitment__standard_aspect_factory("recruitment*standard_aspect");
+
+static register_aspect_factory< standard_aspect<config> >
+	recruitment_instructions__standard_aspect_factory("recruitment_instructions*standard_aspect");
 
 static register_aspect_factory< standard_aspect<bool> >
 	recruitment_ignore_bad_combat__standard_aspect_factory("recruitment_ignore_bad_combat*standard_aspect");
@@ -420,6 +426,9 @@ static register_aspect_factory< standard_aspect<bool> >
 
 static register_aspect_factory< standard_aspect<ministage> >
         recruitment__standard_aspect_factory2("recruitment*");
+
+static register_aspect_factory< standard_aspect<config> >
+	recruitment_instructions__standard_aspect_factory2("recruitment_instructions*");
 
 static register_aspect_factory< standard_aspect<bool> >
 	recruitment_ignore_bad_combat__standard_aspect_factory2("recruitment_ignore_bad_combat*");

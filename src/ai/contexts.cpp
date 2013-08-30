@@ -185,6 +185,7 @@ readonly_context_impl::readonly_context_impl(side_context &context, const config
 		recruitment_(),
 		recruitment_ignore_bad_combat_(),
 		recruitment_ignore_bad_movement_(),
+		recruitment_instructions_(),
 		recruitment_pattern_(),
 		recursion_counter_(context.get_recursion_count()),
 		scout_village_targeting_(),
@@ -215,6 +216,7 @@ readonly_context_impl::readonly_context_impl(side_context &context, const config
 		add_known_aspect("recruitment",recruitment_);
 		add_known_aspect("recruitment_ignore_bad_combat",recruitment_ignore_bad_combat_);
 		add_known_aspect("recruitment_ignore_bad_movement",recruitment_ignore_bad_movement_);
+		add_known_aspect("recruitment_instructions",recruitment_instructions_);
 		add_known_aspect("recruitment_pattern",recruitment_pattern_);
 		add_known_aspect("scout_village_targeting",scout_village_targeting_);
 		add_known_aspect("simple_targeting",simple_targeting_);
@@ -792,6 +794,15 @@ bool readonly_context_impl::get_recruitment_ignore_bad_movement() const
 		return recruitment_ignore_bad_movement_->get();
 	}
 	return false;
+}
+
+
+config readonly_context_impl::get_recruitment_instructions() const
+{
+	if (recruitment_instructions_) {
+		return recruitment_instructions_->get();
+	}
+	return config();
 }
 
 

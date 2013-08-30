@@ -78,6 +78,7 @@ void configuration::init(const config &game_config)
 	well_known_aspects.push_back(well_known_aspect("recruitment"));
 	well_known_aspects.push_back(well_known_aspect("recruitment_ignore_bad_combat"));
 	well_known_aspects.push_back(well_known_aspect("recruitment_ignore_bad_movement"));
+	well_known_aspects.push_back(well_known_aspect("recruitment_instructions"));
 	well_known_aspects.push_back(well_known_aspect("recruitment_pattern"));
 	well_known_aspects.push_back(well_known_aspect("scout_village_targeting"));
 	well_known_aspects.push_back(well_known_aspect("simple_targeting"));

@@ -309,6 +309,9 @@ public:
 	virtual bool get_recruitment_ignore_bad_movement() const = 0;
 
 
+	virtual config get_recruitment_instructions() const = 0;
+
+
 	virtual const std::vector<std::string> get_recruitment_pattern() const = 0;
 
 
@@ -816,6 +819,12 @@ public:
 	virtual bool get_recruitment_ignore_bad_movement() const
 	{
 		return target_->get_recruitment_ignore_bad_movement();
+	}
+
+
+	virtual config get_recruitment_instructions() const
+	{
+		return target_->get_recruitment_instructions();
 	}
 
 
@@ -1368,6 +1377,9 @@ public:
 	virtual bool get_recruitment_ignore_bad_movement() const;
 
 
+	virtual config get_recruitment_instructions() const;
+
+
 	virtual const std::vector<std::string> get_recruitment_pattern() const;
 
 
@@ -1495,6 +1507,7 @@ private:
 	aspect_type< ministage >::typesafe_ptr recruitment_;
 	aspect_type< bool >::typesafe_ptr recruitment_ignore_bad_combat_;
 	aspect_type< bool >::typesafe_ptr recruitment_ignore_bad_movement_;
+	aspect_type< config >::typesafe_ptr recruitment_instructions_;
 	aspect_type< std::vector<std::string> >::typesafe_ptr recruitment_pattern_;
 	recursion_counter recursion_counter_;
 	aspect_type< double >::typesafe_ptr scout_village_targeting_;
