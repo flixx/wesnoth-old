@@ -238,7 +238,6 @@ void recruitment::execute() {
 		BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
-			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 		}
 
@@ -246,7 +245,6 @@ void recruitment::execute() {
 		BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
-			data.limits[recruit] = 99999;
 			global_recruits.insert(recruit);
 		}
 
@@ -261,7 +259,6 @@ void recruitment::execute() {
 			}
 			data.recruits.insert(recall.type_id());
 			data.scores[recall.type_id()] = 0.0;
-			data.limits[recall.type_id()] = 99999;
 			global_recruits.insert(recall.type_id());
 		}
 
@@ -564,20 +561,16 @@ data* recruitment::get_best_leader_from_ratio_scores(std::vector<data>& leader_d
 const std::string recruitment::get_best_recruit_from_scores(const data& leader_data,
 		const config* job) {
 	assert(job);
-	std::string pattern_type;
-	if (job->operator[]("pattern").to_bool(false)) {
-		std::vector<std::string> job_types = utils::split(job->operator[]("type"));
-		if (!job_types.empty()) {
-			pattern_type = job_types[rand() % job_types.size()];
-		}
-	}
-
+	std::string pattern_type = get_random_pattern_type_if_exists(leader_data, job);
 	std::string best_recruit = "";
 	double biggest_difference = -99999.;
 	BOOST_FOREACH(const score_map::value_type& i, leader_data.get_normalized_scores()) {
 		const std::string& unit = i.first;
 		const double score = i.second;
 
+		if (!limit_ok(unit)) {
+			continue;
+		}
 		if (!pattern_type.empty()) {
 			if (!recruit_matches_type(unit, pattern_type)) {
 				continue;
@@ -721,6 +714,47 @@ config* recruitment::get_most_important_job() {
 
 /**
  * For Configuration / Aspect "recruitment-instructions"
+ * If the flag pattern is set, this method returns a random element of the
+ * type-attribute.
+ */
+const std::string recruitment::get_random_pattern_type_if_exists(const data& leader_data,
+		const config* job) const {
+	std::string choosen_type;
+	if (job->operator[]("pattern").to_bool(false)) {
+		std::vector<std::string> job_types = utils::split(job->operator[]("type"));
+
+		// Before we choose a random pattern type, we make sure that at least one recruit
+		// matches the types and doesn't exceed the [limit].
+		// We do this by erasing elements of job_types.
+		std::vector<std::string>::iterator job_types_it = job_types.begin();
+
+		// Iteration through all elements.
+		while (job_types_it != job_types.end()) {
+			bool type_ok = false;
+			BOOST_FOREACH(const std::string& recruit, leader_data.recruits) {
+				if (recruit_matches_type(recruit, *job_types_it) && limit_ok(recruit)) {
+					type_ok = true;
+					break;
+				}
+			}
+			if (type_ok) {
+				++job_types_it;
+			} else {
+				// Erase Element. erase() will return iterator of next element.
+				job_types_it = job_types.erase(job_types_it);
+			}
+		}
+
+		if (!job_types.empty()) {
+			// Choose a random job_type.
+			choosen_type = job_types[rand() % job_types.size()];
+		}
+	}
+	return choosen_type;
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
  * Checks if a given leader is specified in the "leader_id" attribute.
  */
 bool recruitment::leader_matches_job(const data& leader_data, const config* job) const {
@@ -729,7 +763,7 @@ bool recruitment::leader_matches_job(const data& leader_data, const config* job)
 	// at least one unit-type specified in the job.
 	bool is_ok = false;
 	BOOST_FOREACH(const std::string& recruit, leader_data.recruits) {
-		if (recruit_matches_job(recruit, job)) {
+		if (recruit_matches_job(recruit, job) && limit_ok(recruit)) {
 			is_ok = true;
 			break;
 		}
@@ -744,6 +778,35 @@ bool recruitment::leader_matches_job(const data& leader_data, const config* job)
 		return true;
 	}
 	return (std::find(ids.begin(), ids.end(), leader_data.leader->id()) != ids.end());
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * Checks if a recruit-type can be recruited according to the [limit]-tag.
+ */
+bool recruitment::limit_ok(const std::string& recruit) const {
+	// We don't use the member recruitment_instruction_ but instead
+	// retrieve the aspect again. So the [limit]s can be altered during a turn.
+	const config aspect = get_recruitment_instructions();
+
+	BOOST_FOREACH(const config& limit, aspect.child_range("limit")) {
+		if (recruit_matches_type(recruit, limit["type"])) {
+			// Count all own existing units which matches the type.
+			int count = 0;
+			BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
+				const std::string& unit = entry.first;
+				int number = entry.second;
+				if (recruit_matches_type(unit, limit["type"])) {
+					count += number;
+				}
+			}
+			// Check if we reached the limit.
+			if (count >= limit["max"]) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 /**

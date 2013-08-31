@@ -48,19 +48,12 @@ namespace flix_recruitment {
 // The leader will then recruit according to the map.
 typedef std::map<std::string, double> score_map;
 
-// In the limit_map it is stored how much units we can recruit per unit type.
-// Those limits come from configurations.
-// Each leader will have a limit_map and there will also be a global limit_map for both leader.
-// This is just a dummy yet and will depend on the configuration definitions.
-typedef std::map<std::string, int> limit_map;
-
 typedef std::map<t_translation::t_terrain, int> terrain_count_map;
 
 struct data {
 	unit_map::const_iterator leader;
 	std::set<std::string> recruits;
 	score_map scores;
-	limit_map limits;
 
 	// We use ratio_score to decide with which ratios the leaders recruit among each other.
 	// For example if leader1 have a ratio_score of 1 and leader2 have a ratio_score of 2
@@ -97,11 +90,8 @@ struct data {
 		s << "ratio_score: " << ratio_score << "\n";
 		s << "recruit_count: " << recruit_count << "\n\n";
 		BOOST_FOREACH(const score_map::value_type& entry, scores) {
-			limit_map::const_iterator limit_it = limits.find(entry.first);
-			int limit = (limit_it != limits.end()) ? (limit_it->second) : -1;
 			s << std::setw(20) << entry.first <<
-					" score: " << std::setw(7) << entry.second <<
-					" limit: " << limit << "\n";
+					" score: " << std::setw(7) << entry.second << "\n";
 		}
 		s << "----------------------------------------------------\n";
 		return s.str();
@@ -167,7 +157,10 @@ private:
 	};
 // Config / Aspects
 	config* get_most_important_job();
+	const std::string get_random_pattern_type_if_exists(const data& leader_data,
+			const config* job) const;
 	bool leader_matches_job(const data& leader_data, const config* job) const;
+	bool limit_ok(const std::string& recruit) const;
 	bool recruit_matches_job(const std::string& recruit, const config* job) const;
 	bool recruit_matches_type(const std::string& recruit, const std::string& type) const;
 	bool remove_job_if_no_blocker(config* job);
