@@ -83,7 +83,7 @@ const static int SPEND_ALL_GOLD_GOLD_THRESHOLD = 110;
 const static int SAVE_GOLD_FORECAST_TURNS = 5;
 
 // When a team has less then this much units, consider recruit-list too.
-const static int MAP_UNIT_THRESHOLD = 5;
+const static unsigned int UNIT_THRESHOLD = 5;
 
 // Defines the shape of the border-zone between enemies.
 // Higher values mean more important hexes.
@@ -112,7 +112,7 @@ const static double COMBAT_SCORE_POWER = 1.;
 // 0 means that only the best unit gets a 100 score and all other a 0 score.
 // 1 means that all units which are worse than average will get a 0 score.
 // Formula: zero_threshold = max_score - (COMBAT_SCORE_THRESHOLD * (max_score - average_score));
-const static double COMBAT_SCORE_THRESHOLD = 1.;
+const static double COMBAT_SCORE_THRESHOLD = 1.5;
 
 // If set to true combat analysis will work as follows:
 // For each enemy unit determine what unit would be best against it.
@@ -959,7 +959,7 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	pathfind::full_cost_map cost_map(true, true, team, true, true);
 
 	// First add all existing units to cost_map.
-	int unit_count = 0;
+	unsigned int unit_count = 0;
 	BOOST_FOREACH(const unit& unit, units) {
 		if (unit.side() != side || unit.can_recruit()) {
 			continue;
@@ -969,7 +969,7 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	}
 
 	// If this side has not so many units yet, add unit_types with the leaders position as origin.
-	if (unit_count < MAP_UNIT_THRESHOLD) {
+	if (unit_count < UNIT_THRESHOLD) {
 		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
 		BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
 			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
@@ -1139,8 +1139,41 @@ void recruitment::update_average_lawful_bonus() {
  * the scores.
  */
 void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
-
 	const unit_map& units = *resources::units;
+
+	// Collect all enemy units (and their hp) we want to take into account in enemy_units.
+	typedef std::vector<std::pair<std::string, int> > unit_hp_vector;
+	unit_hp_vector enemy_units;
+	BOOST_FOREACH(const unit& unit, units) {
+		if (!current_team().is_enemy(unit.side())) {
+			continue;
+		}
+		enemy_units.push_back(std::make_pair(unit.type_id(), unit.hitpoints()));
+	}
+	if (enemy_units.size() < UNIT_THRESHOLD) {
+		// Use also enemies recruitment lists and insert units into enemy_units.
+		BOOST_FOREACH(const team& team, *resources::teams) {
+			if (!current_team().is_enemy(team.side())) {
+				continue;
+			}
+			std::set<std::string> possible_recruits;
+			// Add team recruits.
+			possible_recruits.insert(team.recruits().begin(), team.recruits().end());
+			// Add extra recruits.
+			const std::vector<unit_map::const_iterator> leaders = units.find_leaders(team.side());
+			BOOST_FOREACH(unit_map::const_iterator leader, leaders) {
+				possible_recruits.insert(leader->recruits().begin(), leader->recruits().end());
+			}
+			// Insert set in enemy_units.
+			BOOST_FOREACH(const std::string& possible_recruit, possible_recruits) {
+				const unit_type* recruit_type = unit_types.find(possible_recruit);
+				if (recruit_type) {
+					int hp = recruit_type->hitpoints();
+					enemy_units.push_back(std::make_pair(possible_recruit, hp));
+				}
+			}
+		}
+	}
 
 	BOOST_FOREACH(data& leader, *leader_data) {
 		if (leader.recruits.empty()) {
@@ -1149,15 +1182,15 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 		typedef std::map<std::string, double> simple_score_map;
 		simple_score_map temp_scores;
 
-		BOOST_FOREACH(const unit& unit, units) {
-			if (!current_team().is_enemy(unit.side())) {
-				continue;
-			}
+		BOOST_FOREACH(const unit_hp_vector::value_type& entry, enemy_units) {
+			const std::string& enemy_unit = entry.first;
+			int enemy_unit_hp = entry.second;
+
 			std::string best_response;
 			double best_response_score = -99999.;
 			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
-				double score = compare_unit_types(recruit, unit.type_id());
-				score *= unit.hitpoints();
+				double score = compare_unit_types(recruit, enemy_unit);
+				score *= enemy_unit_hp;
 				score = pow(score, COMBAT_SCORE_POWER);
 				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
 				if (score > best_response_score) {
@@ -1166,7 +1199,7 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 				}
 			}
 			if (COMBAT_DIRECT_RESPONSE) {
-				temp_scores[best_response] += unit.hitpoints();
+				temp_scores[best_response] += enemy_unit_hp;
 			}
 		}
 
