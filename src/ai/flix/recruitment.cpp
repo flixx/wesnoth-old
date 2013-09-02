@@ -128,9 +128,9 @@ const static double COMBAT_CACHE_TOLERANCY = 0.5;
 
 const static double MAP_ANALYSIS_WEIGHT = 0.;
 const static double COMABAT_ANALYSIS_WEIGHT = 1.;
-const static double DIVERSITY_WEIGHT = 0.2;
+const static double DIVERSITY_WEIGHT = 0.5;
 
-const static double RANDOMNESS_MAXIMUM = 5.;
+const static double RANDOMNESS_MAXIMUM = 15.;
 
 // Used for time measurements.
 // REMOVE ME
@@ -325,8 +325,15 @@ void recruitment::execute() {
 	LOG_AI_FLIX << "In simulation: " << static_cast<double>(timer_simulation) / 1000 << " seconds.\n";
 	timer_simulation = 0;
 	timer_fight = 0;
+	LOG_AI_FLIX << "Scores before extra treatments:\n";
+	BOOST_FOREACH(const data& data, leader_data) {
+		LOG_AI_FLIX << "\n" << data.to_string();
+	}
+
+	do_similarity_penalty(&leader_data);
 	do_diversity_and_randomness_balancing(&leader_data);
 
+	LOG_AI_FLIX << "Scores after extra treatments:\n";
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
 	}
@@ -1604,6 +1611,49 @@ void recruitment::do_diversity_and_randomness_balancing(std::vector<data>* leade
 			double& score = entry.second;
 			score += DIVERSITY_WEIGHT * 50;
 			score += (static_cast<double>(rand()) / RAND_MAX) * RANDOMNESS_MAXIMUM;
+		}
+	}
+}
+
+/**
+ * Will give a penalty to similar units. Similar units are units in one advancement tree.
+ * Example (Archer can advance to Ranger):
+ *                 before    after
+ * Elvish Fighter:   50        50
+ * Elvish Archer:    50        25
+ * Elvish Ranger:    50        25
+ */
+void recruitment::do_similarity_penalty(std::vector<data>* leader_data) const {
+	if (!leader_data) {
+		return;
+	}
+	BOOST_FOREACH(data& data, *leader_data) {
+		// First we count how many similarities each recruit have to other ones (in a map).
+		// Some examples:
+		// If unit A and unit B have nothing to do with each other, they have similarity = 0.
+		// If A advances to B both have similarity = 1.
+		// If A advances to B and B to C, A, B and C have similarity = 2.
+		// If A advances to B or C, A have similarity = 2. B and C have similarity = 1.
+		typedef std::map<std::string, int> similarity_map;
+		similarity_map similarities;
+		BOOST_FOREACH(const score_map::value_type& entry, data.scores) {
+			const std::string& recruit = entry.first;
+			const unit_type* recruit_type = unit_types.find(recruit);
+			if (!recruit_type) {
+				continue;
+			}
+			BOOST_FOREACH(const std::string& advanced_type, recruit_type->advancement_tree()){
+				if (data.scores.count(advanced_type) != 0) {
+					++similarities[recruit];
+					++similarities[advanced_type];
+				}
+			}
+		}
+		// Now we divide each score by similarity + 1.
+		BOOST_FOREACH(score_map::value_type& entry, data.scores) {
+			const std::string& recruit = entry.first;
+			double& score = entry.second;
+			score /= (similarities[recruit] + 1);
 		}
 	}
 }
