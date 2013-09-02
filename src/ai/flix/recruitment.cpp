@@ -76,7 +76,7 @@ const static double SAVE_GOLD_END_THRESHOLD = 0.7;
 
 // When we have earned this much gold, the AI will start spending all gold to start
 // a big offensive wave.
-const static int SPEND_ALL_GOLD_GOLD_THRESHOLD = 110;
+const static int SPEND_ALL_GOLD_GOLD_THRESHOLD = -1;
 
 // This is used for a income estimation. We'll calculate the estimated income of this much
 // future turns and decide if we'd gain gold if we start to recruit no units anymore.
@@ -1540,7 +1540,9 @@ void recruitment::update_state() {
 	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_GOLD) {
 		return;
 	}
-	if (current_team().gold() >= SPEND_ALL_GOLD_GOLD_THRESHOLD) {
+	int threshold = (SPEND_ALL_GOLD_GOLD_THRESHOLD < 0) ?
+			current_team().start_gold() + 1: SPEND_ALL_GOLD_GOLD_THRESHOLD;
+	if (current_team().gold() >= threshold) {
 		state_ = SPEND_ALL_GOLD;
 		LOG_AI_FLIX << "Changed state_ to SPEND_ALL_GOLD. \n";
 		return;
