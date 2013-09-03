@@ -159,6 +159,7 @@ private:
 	config* get_most_important_job();
 	const std::string get_random_pattern_type_if_exists(const data& leader_data,
 			const config* job) const;
+	void integrate_recruitment_pattern_in_recruitment_instructions();
 	bool leader_matches_job(const data& leader_data, const config* job) const;
 	bool limit_ok(const std::string& recruit) const;
 	bool recruit_matches_job(const std::string& recruit, const config* job) const;

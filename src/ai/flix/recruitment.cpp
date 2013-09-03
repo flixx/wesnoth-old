@@ -162,6 +162,7 @@ double recruitment::evaluate() {
 	// we'll retrieve the recruitment-instruction aspect.
 	if (resources::tod_manager->turn() != recruitment_instructions_turn_) {
 		recruitment_instructions_ = get_recruitment_instructions();
+		integrate_recruitment_pattern_in_recruitment_instructions();
 		recruitment_instructions_turn_ = resources::tod_manager->turn();
 		LOG_AI_FLIX << "Recruitment-instructions updated:\n" << recruitment_instructions_ << "\n";
 	}
@@ -604,7 +605,7 @@ recruitment::~recruitment() { }
 // This is going to be called when the recruitment list changes
 // (not implemented yet, just here as a reminder)
 void recruitment::invalidate() {
-	cheapest_unit_costs_.clear();;
+	cheapest_unit_costs_.clear();
 }
 
 /**
@@ -761,6 +762,34 @@ const std::string recruitment::get_random_pattern_type_if_exists(const data& lea
 }
 
 /**
+ * For Configuration / Aspect "recruitment_pattern"
+ * Converts the (old) recruitment_pattern into a recruitment_instruction (job).
+ */
+void recruitment::integrate_recruitment_pattern_in_recruitment_instructions() {
+	const std::vector<std::string> recruitment_pattern = get_recruitment_pattern();
+	if (recruitment_pattern.empty()) {
+		return;
+	}
+	// Create a job (recruitment_instruction).
+	config job;
+	std::stringstream s;
+	for (std::vector<std::string>::const_iterator type = recruitment_pattern.begin();
+			type != recruitment_pattern.end(); ++type) {
+		s << *type;
+		if (type != recruitment_pattern.end() - 1) {  // Avoid trailing comma.
+			s  << ", ";
+		}
+	}
+	job["type"] = s.str();
+	job["number"] = 99999;
+	job["pattern"] = true;
+	job["blocker"] = true;
+	job["total"] = false;
+	job["importance"] = 1;
+	recruitment_instructions_.add_child("recruit", job);
+}
+
+/**
  * For Configuration / Aspect "recruitment-instructions"
  * Checks if a given leader is specified in the "leader_id" attribute.
  */
@@ -834,6 +863,7 @@ bool recruitment::recruit_matches_job(const std::string& recruit, const config* 
 	}
 	return false;
 }
+
 /**
  * For Configuration / Aspect "recruitment-instructions"
  * Checks if a given recruit-type matches one atomic "type" attribute.
@@ -859,6 +889,7 @@ bool recruitment::recruit_matches_type(const std::string& recruit, const std::st
 	}
 	return false;
 }
+
 /**
  * For Configuration / Aspect "recruitment-instructions"
  */
