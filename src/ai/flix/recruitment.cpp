@@ -132,6 +132,10 @@ const static double DIVERSITY_WEIGHT = 0.5;
 
 const static double RANDOMNESS_MAXIMUM = 15.;
 
+// The old recruitment CA usually recruited too many scouts.
+// To prevent this we multiply the aspect village_per_scout with this constant.
+const static double VILLAGE_PER_SCOUT_MULTIPLICATOR = 2.;
+
 // Used for time measurements.
 // REMOVE ME
 static long timer_fight = 0;
@@ -308,6 +312,7 @@ void recruitment::execute() {
 	 * (TODO)
 	 */
 
+	create_and_add_scout_job(&leader_data);
 	LOG_AI_FLIX << "RECRUITMENT INSTRUCTIONS:\n" << recruitment_instructions_ << "\n";
 
 	/**
@@ -749,6 +754,7 @@ const std::string recruitment::get_random_pattern_type_if_exists(const data& lea
 				++job_types_it;
 			} else {
 				// Erase Element. erase() will return iterator of next element.
+				LOG_AI_FLIX << "Erase type " << *job_types_it << " from pattern.\n";
 				job_types_it = job_types.erase(job_types_it);
 			}
 		}
@@ -1627,6 +1633,74 @@ void recruitment::update_state() {
 		LOG_AI_FLIX << "EI: " << debug.estimated_income << ", RI: " << current_team().gold() - debug.gold << "\n";
 		LOG_AI_FLIX << "----------------END---------------------\n";
 	}
+}
+
+/**
+ * This function will use the aspect villages_per_scout to decide how many
+ * scouts we want to recruit. Then it creates a new job.
+ */
+void recruitment::create_and_add_scout_job(const std::vector<data>* leader_data) {
+	assert(leader_data);
+	if (get_villages_per_scout() == 0) {
+		return;
+	}
+	int neutral_villages = 0;
+	// We recruit the initial allocation of scouts
+	// based on how many neutral villages there are.
+	BOOST_FOREACH(const map_location& village, resources::game_map->villages()) {
+		if (village_owner(village) == -1) {
+			++neutral_villages;
+		}
+	}
+	double our_share = static_cast<double>(neutral_villages) / resources::teams->size();
+
+	// The villages per scout is for a two-side battle,
+	// accounting for all neutral villages on the map.
+	// We only look at our share of villages, so we halve it,
+	// making us get twice as many scouts.
+	double villages_per_scout = (VILLAGE_PER_SCOUT_MULTIPLICATOR * get_villages_per_scout()) / 2;
+
+	int scouts_wanted = (villages_per_scout > 0) ? round_double(our_share / villages_per_scout) : 0;
+	if (scouts_wanted == 0) {
+		return;
+	}
+
+	// We also consider unit-typs which are not
+	// scouts per definition but are fast as well.
+	// For example a Horseman can move as fast as a Cavalryman.
+	// First collect all possible recruits and save the
+	// movement of the fastest unit.
+	std::set<const unit_type*> possible_recruits;
+	int max_moves = 0;
+	BOOST_FOREACH(const data& data, *leader_data) {
+		BOOST_FOREACH(const std::string& recruit, data.recruits) {
+			const unit_type* recruit_type = unit_types.find(recruit);
+			if (!recruit_type) {
+				continue;
+			}
+			possible_recruits.insert(recruit_type);
+			if (recruit_type->movement() > max_moves) {
+				max_moves = recruit_type->movement();
+			}
+		}
+	}
+	// Now add all units, which not so much slower then the fastest unit.
+	std::stringstream s;
+	BOOST_FOREACH(const unit_type* recruit, possible_recruits) {
+		if (recruit && recruit->movement() >= max_moves - 2) {
+			s << recruit->id() << ", ";
+		}
+	}
+	s << "scout";
+
+	config job;
+	job["type"] = s.str(); // Is now something like "Horseman, scout".
+	job["number"] = scouts_wanted;
+	job["pattern"] = false;
+	job["blocker"] = false;
+	job["total"] = true;
+	job["importance"] = 2;
+	recruitment_instructions_.add_child("recruit", job);
 }
 
 /**
