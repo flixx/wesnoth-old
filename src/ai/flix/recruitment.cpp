@@ -64,20 +64,6 @@ namespace {
 // If gold is available, this leader will recruit as much units as possible.
 const static int LEADER_IN_DANGER_RADIUS = 3;
 
-// Save Gold Strategies will work as follow:
-// The AI will always keep track of the ratio
-// our_total_unit_costs / enemy_total_unit_costs
-// whereas the costs are the sum of the cost of all units on the map weighted by their HP.
-// When this ratio is bigger then SAVE_GOLD_BEGIN_THRESHOLD, the AI will stop recruiting units
-// until the ratio is less then SAVE_GOLD_END_THRESHOLD.
-const static bool ACTIVATE_SAVE_GOLD_STRATEGIES = false;
-const static double SAVE_GOLD_BEGIN_THRESHOLD = 1.0;
-const static double SAVE_GOLD_END_THRESHOLD = 0.7;
-
-// When we have earned this much gold, the AI will start spending all gold to start
-// a big offensive wave.
-const static int SPEND_ALL_GOLD_GOLD_THRESHOLD = -1;
-
 // This is used for a income estimation. We'll calculate the estimated income of this much
 // future turns and decide if we'd gain gold if we start to recruit no units anymore.
 const static int SAVE_GOLD_FORECAST_TURNS = 5;
@@ -128,9 +114,6 @@ const static double COMBAT_CACHE_TOLERANCY = 0.5;
 
 const static double MAP_ANALYSIS_WEIGHT = 0.;
 const static double COMABAT_ANALYSIS_WEIGHT = 1.;
-const static double DIVERSITY_WEIGHT = 0.5;
-
-const static double RANDOMNESS_MAXIMUM = 15.;
 
 // The old recruitment CA usually recruited too many scouts.
 // To prevent this we multiply the aspect village_per_scout with this constant.
@@ -339,6 +322,9 @@ void recruitment::execute() {
 	do_similarity_penalty(&leader_data);
 	do_diversity_and_randomness_balancing(&leader_data);
 
+	// Handle aspect "recruitment_more".
+	handle_recruitment_more(&leader_data);
+
 	LOG_AI_FLIX << "Scores after extra treatments:\n";
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -355,7 +341,11 @@ void recruitment::execute() {
 	do {
 		recruit_situation_change_observer_.reset_gamestate_changed();
 		update_state();
-		if (state_ == SAVE_GOLD && ACTIVATE_SAVE_GOLD_STRATEGIES) {
+
+		// Retrieve from aspect.
+		bool save_gold_active = get_recruitment_save_gold()["active"].to_bool(true);
+
+		if (state_ == SAVE_GOLD && save_gold_active) {
 			break;
 		}
 		job = get_most_important_job();
@@ -1584,8 +1574,10 @@ void recruitment::update_state() {
 	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_GOLD) {
 		return;
 	}
-	int threshold = (SPEND_ALL_GOLD_GOLD_THRESHOLD < 0) ?
-			current_team().start_gold() + 1: SPEND_ALL_GOLD_GOLD_THRESHOLD;
+	// Retrieve from aspect.
+	int spend_all_gold = get_recruitment_save_gold()["spend_all_gold"].to_int(-1);
+
+	int threshold = (spend_all_gold < 0) ? current_team().start_gold() + 1 : spend_all_gold;
 	if (current_team().gold() >= threshold) {
 		state_ = SPEND_ALL_GOLD;
 		LOG_AI_FLIX << "Changed state_ to SPEND_ALL_GOLD. \n";
@@ -1595,7 +1587,12 @@ void recruitment::update_state() {
 	double income_estimation = get_estimated_income(SAVE_GOLD_FORECAST_TURNS);
 	LOG_AI_FLIX << "Ratio is " << ratio << "\n";
 	LOG_AI_FLIX << "Estimated income is " << income_estimation << "\n";
-	if (state_ == NORMAL && ratio > SAVE_GOLD_BEGIN_THRESHOLD && income_estimation > 0) {
+
+	// Retrieve from aspect.
+	double save_gold_begin = get_recruitment_save_gold()["begin"].to_double(1.0);
+	double save_gold_end = get_recruitment_save_gold()["end"].to_double(0.7);
+
+	if (state_ == NORMAL && ratio > save_gold_begin && income_estimation > 0) {
 		state_ = SAVE_GOLD;
 		LOG_AI_FLIX << "Changed state to SAVE_GOLD.\n";
 
@@ -1614,7 +1611,7 @@ void recruitment::update_state() {
 		debug.units = own_units;
 		debug.villages = (*resources::teams)[get_side() - 1].villages().size();
 		debug.gold = current_team().gold();
-	} else if (state_ == SAVE_GOLD && ratio < SAVE_GOLD_END_THRESHOLD) {
+	} else if (state_ == SAVE_GOLD && ratio < save_gold_end) {
 		state_ = NORMAL;
 		LOG_AI_FLIX << "Changed state to NORMAL.\n";
 
@@ -1714,8 +1711,8 @@ void recruitment::do_diversity_and_randomness_balancing(std::vector<data>* leade
 	BOOST_FOREACH(data& data, *leader_data) {
 		BOOST_FOREACH(score_map::value_type& entry, data.scores) {
 			double& score = entry.second;
-			score += DIVERSITY_WEIGHT * 50;
-			score += (static_cast<double>(rand()) / RAND_MAX) * RANDOMNESS_MAXIMUM;
+			score += get_recruitment_diversity() * 25;
+			score += (static_cast<double>(rand()) / RAND_MAX) * get_recruitment_randomness();
 		}
 	}
 }
@@ -1759,6 +1756,27 @@ void recruitment::do_similarity_penalty(std::vector<data>* leader_data) const {
 			const std::string& recruit = entry.first;
 			double& score = entry.second;
 			score /= (similarities[recruit] + 1);
+		}
+	}
+}
+
+/**
+ * For Aspect "recruitment_more"
+ */
+void recruitment::handle_recruitment_more(std::vector<data>* leader_data) const {
+	if (!leader_data) {
+		return;
+	}
+	const std::vector<std::string> aspect = get_recruitment_more();
+	BOOST_FOREACH(const std::string& type, aspect) {
+		BOOST_FOREACH(data& data, *leader_data) {
+			BOOST_FOREACH(score_map::value_type& entry, data.scores) {
+				const std::string& recruit = entry.first;
+				double& score = entry.second;
+				if (recruit_matches_type(recruit, type)) {
+					score += 25.;
+				}
+			}
 		}
 	}
 }

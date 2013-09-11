@@ -196,6 +196,7 @@ private:
 	void create_and_add_scout_job(const std::vector<data>* leader_data);
 	void do_diversity_and_randomness_balancing(std::vector<data>* leader_data) const;
 	void do_similarity_penalty(std::vector<data>* leader_data) const;
+	void handle_recruitment_more(std::vector<data>* leader_data) const;
 
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;
