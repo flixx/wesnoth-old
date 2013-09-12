@@ -37,6 +37,7 @@
 #include "../../unit_types.hpp"
 #include "../../util.hpp"
 #include "../../variable.hpp"
+#include "../../wml_exception.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -129,14 +130,34 @@ recruitment::recruitment(rca_context& context, const config& cfg)
 		: candidate_action(context, cfg),
 		  own_units_in_combat_counter_(0),
 		  cheapest_unit_costs_(),
-		  state_(NORMAL),
 		  recruit_situation_change_observer_(),
 		  average_lawful_bonus_(0.0),
 		  recruitment_instructions_(),
 		  recruitment_instructions_turn_(-1),
 		  own_units_count_(),
 		  total_own_units_(0),
-		  scouts_wanted_(0) { }
+		  scouts_wanted_(0)
+{
+	if (cfg["state"] == "save_gold") {
+		state_ = SAVE_GOLD;
+	} else if (cfg["state"] == "spend_all_gold") {
+		state_ = SPEND_ALL_GOLD;
+	} else {
+		state_ = NORMAL;
+	}
+}
+
+config recruitment::to_config() const {
+	config cfg = candidate_action::to_config();
+	if (state_ == SAVE_GOLD) {
+		cfg["state"] = "save_gold";
+	} else if (state_ == SPEND_ALL_GOLD) {
+		cfg["state"] = "spend_all_gold";
+	} else {
+		cfg["state"] = "normal";
+	}
+	return cfg;
+}
 
 double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
@@ -225,6 +246,9 @@ void recruitment::execute() {
 
 		// Add team recruits.
 		BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
+			if (!unit_types.find(recruit)) {
+				lg::wml_error << "Unit-type \"" << recruit << "\" doesn't exist.\n";
+			}
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
 			global_recruits.insert(recruit);
@@ -232,6 +256,9 @@ void recruitment::execute() {
 
 		// Add extra recruits.
 		BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
+			if (!unit_types.find(recruit)) {
+				lg::wml_error << "Unit-type \"" << recruit << "\" doesn't exist.\n";
+			}
 			data.recruits.insert(recruit);
 			data.scores[recruit] = 0.0;
 			global_recruits.insert(recruit);
@@ -625,6 +652,9 @@ int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterato
 	// team recruits
 	BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
 		const unit_type* const info = unit_types.find(recruit);
+		if (!info) {
+			continue;
+		}
 		if (info->cost() < cheapest_cost) {
 			cheapest_cost = info->cost();
 		}
@@ -632,6 +662,9 @@ int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterato
 	// extra recruits
 	BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
 		const unit_type* const info = unit_types.find(recruit);
+		if (!info) {
+			continue;
+		}
 		if (info->cost() < cheapest_cost) {
 			cheapest_cost = info->cost();
 		}
@@ -737,6 +770,13 @@ const std::string recruitment::get_random_pattern_type_if_exists(const data& lea
 	if (job->operator[]("pattern").to_bool(false)) {
 		std::vector<std::string> job_types = utils::split(job->operator[]("type"));
 
+		if (job_types.empty()) {
+			// Empty type attribute means random recruiting.
+			// Fill job_types with recruitment list.
+			std::copy(leader_data.recruits.begin(), leader_data.recruits.end(),
+					std::back_inserter(job_types));
+		}
+
 		// Before we choose a random pattern type, we make sure that at least one recruit
 		// matches the types and doesn't exceed the [limit].
 		// We do this by erasing elements of job_types.
@@ -833,18 +873,20 @@ bool recruitment::limit_ok(const std::string& recruit) const {
 	const config aspect = get_recruitment_instructions();
 
 	BOOST_FOREACH(const config& limit, aspect.child_range("limit")) {
-		if (recruit_matches_type(recruit, limit["type"])) {
+		std::vector<std::string> types = utils::split(limit["type"]);
+		// First check if the recruit matches one of the types.
+		if (recruit_matches_types(recruit, types)) {
 			// Count all own existing units which matches the type.
 			int count = 0;
 			BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
 				const std::string& unit = entry.first;
 				int number = entry.second;
-				if (recruit_matches_type(unit, limit["type"])) {
+				if (recruit_matches_types(unit, types)) {
 					count += number;
 				}
 			}
 			// Check if we reached the limit.
-			if (count >= limit["max"]) {
+			if (count >= limit["max"].to_int(0)) {
 				return false;
 			}
 		}
@@ -859,16 +901,7 @@ bool recruitment::limit_ok(const std::string& recruit) const {
 bool recruitment::recruit_matches_job(const std::string& recruit, const config* job) const {
 	assert(job);
 	std::vector<std::string> job_types = utils::split(job->operator[]("type"));
-	if (job_types.empty()) {
-		// If no type is specified, all recruits are okay.
-		return true;
-	}
-	BOOST_FOREACH(const std::string& job_type, job_types) {
-		if (recruit_matches_type(recruit, job_type)) {
-			return true;
-		}
-	}
-	return false;
+	return recruit_matches_types(recruit, job_types);
 }
 
 /**
@@ -893,6 +926,24 @@ bool recruitment::recruit_matches_type(const std::string& recruit, const std::st
 	s << recruit_type->level();
 	if (s.str() == type) {
 		return true;
+	}
+	return false;
+}
+
+/**
+ * For Configuration / Aspect "recruitment-instructions"
+ * Checks if a given recruit-type matches one of the given types.
+ */
+bool recruitment::recruit_matches_types(const std::string& recruit,
+		const std::vector<std::string>& types) const {
+	// If no type is specified, all recruits are okay.
+	if (types.empty()) {
+		return true;
+	}
+	BOOST_FOREACH(const std::string& type, types) {
+		if (recruit_matches_type(recruit, type)) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -1113,6 +1164,9 @@ void recruitment::update_average_local_cost() {
 			int count = 0;
 			BOOST_FOREACH(const std::string& recruit, team.recruits()){
 				const unit_type* const unit_type = unit_types.find(recruit);
+				if (!unit_type) {
+					continue;
+				}
 				int cost = unit_type->movement_type().get_movement().cost(map[loc]);
 				if (cost < 99) {
 					summed_cost += cost;
@@ -1292,9 +1346,8 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 /**
  * For Combat Analysis.
  * Calculates how good unit-type a is against unit type b.
- * If the value is bigger then 1, a is better then b.
- * The value is always bigger then 0.
- * If the value is 2 then unit-type a is twice as good as unit-type b.
+ * If the value is bigger then 0, a is better then b.
+ * If the value is 2.0 then unit-type a is twice as good as unit-type b.
  * Since this function is called very often it uses a cache.
  */
 double recruitment::compare_unit_types(const std::string& a, const std::string& b) {

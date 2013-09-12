@@ -123,6 +123,7 @@ public:
 	void update_important_hexes();
 	//Debug only
 	void show_important_hexes() const;
+	config to_config() const;
 private:
 	action_result_ptr execute_recall(const std::string& id, data& leader_data);
 	action_result_ptr execute_recruit(const std::string& type, data& leader_data);
@@ -164,6 +165,8 @@ private:
 	bool limit_ok(const std::string& recruit) const;
 	bool recruit_matches_job(const std::string& recruit, const config* job) const;
 	bool recruit_matches_type(const std::string& recruit, const std::string& type) const;
+	bool recruit_matches_types(const std::string& recruit,
+			const std::vector<std::string>& types) const;
 	bool remove_job_if_no_blocker(config* job);
 
 // Map Analysis
