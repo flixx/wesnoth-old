@@ -135,7 +135,8 @@ recruitment::recruitment(rca_context& context, const config& cfg)
 		  recruitment_instructions_(),
 		  recruitment_instructions_turn_(-1),
 		  own_units_count_(),
-		  total_own_units_(0) { }
+		  total_own_units_(0),
+		  scouts_wanted_(0) { }
 
 double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
@@ -289,13 +290,13 @@ void recruitment::execute() {
 
 	update_average_lawful_bonus();
 	update_own_units_count();
+	update_scouts_wanted();
 
 	/**
 	 * Step 2: Filter own_recruits according to configurations
 	 * (TODO)
 	 */
 
-	create_and_add_scout_job(&leader_data);
 	LOG_AI_FLIX << "RECRUITMENT INSTRUCTIONS:\n" << recruitment_instructions_ << "\n";
 
 	/**
@@ -364,6 +365,7 @@ void recruitment::execute() {
 				break;
 			}
 		}
+		LOG_AI_FLIX << "We want to have " << scouts_wanted_ << " more scouts.\n";
 		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data, job);
 		if (best_recruit.empty()) {
 			LOG_AI_FLIX << "Cannot fullfil recruitment-instruction.\n";
@@ -391,6 +393,9 @@ void recruitment::execute() {
 		if (action_result->is_ok()) {
 			++own_units_count_[best_recruit];
 			++total_own_units_;
+			if (recruit_matches_type(best_recruit, "scout")) {
+				--scouts_wanted_;
+			}
 
 			// Update the current job.
 			if (!job->operator[]("total").to_bool()) {
@@ -587,6 +592,9 @@ const std::string recruitment::get_best_recruit_from_scores(const data& leader_d
 		double desired_ammount = score * (total_own_units_ + 1);
 		double current_ammount = own_units_count_[unit];
 		double difference = desired_ammount - current_ammount;
+		if (scouts_wanted_ > 0 && recruit_matches_type(unit, "scout")) {
+			difference += 1000.;
+		}
 		if (difference > biggest_difference) {
 			biggest_difference = difference;
 			best_recruit = unit;
@@ -688,7 +696,10 @@ config* recruitment::get_most_important_job() {
 			continue;
 		}
 		int importance = job["importance"].to_int(1);
-		int number = job["number"].to_int(99999);
+		int number = job["number"].to_int(-1);
+		if (number == -1) {
+			number = 99999; // "As much as possible" is just a lot.
+		}
 		bool total = job["total"].to_bool(false);
 		if (total) {
 			// If the total flag is set we have to subtract
@@ -1634,10 +1645,10 @@ void recruitment::update_state() {
 
 /**
  * This function will use the aspect villages_per_scout to decide how many
- * scouts we want to recruit. Then it creates a new job.
+ * scouts we want to recruit.
  */
-void recruitment::create_and_add_scout_job(const std::vector<data>* leader_data) {
-	assert(leader_data);
+void recruitment::update_scouts_wanted() {
+	scouts_wanted_ = 0;
 	if (get_villages_per_scout() == 0) {
 		return;
 	}
@@ -1657,47 +1668,20 @@ void recruitment::create_and_add_scout_job(const std::vector<data>* leader_data)
 	// making us get twice as many scouts.
 	double villages_per_scout = (VILLAGE_PER_SCOUT_MULTIPLICATOR * get_villages_per_scout()) / 2;
 
-	int scouts_wanted = (villages_per_scout > 0) ? round_double(our_share / villages_per_scout) : 0;
-	if (scouts_wanted == 0) {
+	scouts_wanted_ = (villages_per_scout > 0) ? round_double(our_share / villages_per_scout) : 0;
+
+	if (scouts_wanted_ == 0) {
 		return;
 	}
 
-	// We also consider unit-typs which are not
-	// scouts per definition but are fast as well.
-	// For example a Horseman can move as fast as a Cavalryman.
-	// First collect all possible recruits and save the
-	// movement of the fastest unit.
-	std::set<const unit_type*> possible_recruits;
-	int max_moves = 0;
-	BOOST_FOREACH(const data& data, *leader_data) {
-		BOOST_FOREACH(const std::string& recruit, data.recruits) {
-			const unit_type* recruit_type = unit_types.find(recruit);
-			if (!recruit_type) {
-				continue;
-			}
-			possible_recruits.insert(recruit_type);
-			if (recruit_type->movement() > max_moves) {
-				max_moves = recruit_type->movement();
-			}
+	// Subtract already recruited scouts.
+	BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
+		const std::string& unit_type = entry.first;
+		const int count = entry.second;
+		if (recruit_matches_type(unit_type, "scout")) {
+			scouts_wanted_ -= count;
 		}
 	}
-	// Now add all units, which not so much slower then the fastest unit.
-	std::stringstream s;
-	BOOST_FOREACH(const unit_type* recruit, possible_recruits) {
-		if (recruit && recruit->movement() >= max_moves - 2) {
-			s << recruit->id() << ", ";
-		}
-	}
-	s << "scout";
-
-	config job;
-	job["type"] = s.str(); // Is now something like "Horseman, scout".
-	job["number"] = scouts_wanted;
-	job["pattern"] = false;
-	job["blocker"] = false;
-	job["total"] = true;
-	job["importance"] = 2;
-	recruitment_instructions_.add_child("recruit", job);
 }
 
 /**

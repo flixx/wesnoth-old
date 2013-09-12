@@ -193,10 +193,10 @@ private:
 	void update_state();
 
 // Diversity and Other
-	void create_and_add_scout_job(const std::vector<data>* leader_data);
 	void do_diversity_and_randomness_balancing(std::vector<data>* leader_data) const;
 	void do_similarity_penalty(std::vector<data>* leader_data) const;
 	void handle_recruitment_more(std::vector<data>* leader_data) const;
+	void update_scouts_wanted();
 
 	std::set<map_location> important_hexes_;
 	terrain_count_map important_terrain_;
@@ -213,6 +213,7 @@ private:
 	typedef std::map<std::string, int> count_map;
 	count_map own_units_count_;
 	int total_own_units_;
+	int scouts_wanted_;
 
 	// Struct for debugging Gold Saving Strategies.  REMOVE ME
 	struct debug {
