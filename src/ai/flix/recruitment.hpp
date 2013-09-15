@@ -15,6 +15,7 @@
 /**
  * @file
  * Recruitment Engine by flix
+ * See http://wiki.wesnoth.org/AI_Recruitment
  */
 
 #ifndef AI_FLIX_RECRUITMENT_HPP_INCLUDED
@@ -217,17 +218,6 @@ private:
 	count_map own_units_count_;
 	int total_own_units_;
 	int scouts_wanted_;
-
-	// Struct for debugging Gold Saving Strategies.  REMOVE ME
-	struct debug {
-		int turn_start;
-		double estimated_village_gain;
-		int villages;
-		double estimated_unit_gain;
-		int units;
-		double estimated_income;
-		int gold;
-	} debug;
 };
 
 }  // of namespace flix_recruitment

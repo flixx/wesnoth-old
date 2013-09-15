@@ -119,11 +119,6 @@ const static double COMABAT_ANALYSIS_WEIGHT = 1.;
 // The old recruitment CA usually recruited too many scouts.
 // To prevent this we multiply the aspect village_per_scout with this constant.
 const static double VILLAGE_PER_SCOUT_MULTIPLICATOR = 2.;
-
-// Used for time measurements.
-// REMOVE ME
-static long timer_fight = 0;
-static long timer_simulation = 0;
 }
 
 recruitment::recruitment(rca_context& context, const config& cfg)
@@ -330,18 +325,10 @@ void recruitment::execute() {
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
 
-	int start =  SDL_GetTicks();
+
 	do_map_analysis(&leader_data);
-	int end =  SDL_GetTicks();
-	LOG_AI_FLIX << "Map-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
-	start =  SDL_GetTicks();
 	do_combat_analysis(&leader_data);
-	end =  SDL_GetTicks();
-	LOG_AI_FLIX << "Combat-analysis: " << static_cast<double>(end - start) / 1000 << " seconds.\n";
-	LOG_AI_FLIX << "In fight: " << static_cast<double>(timer_fight) / 1000 << " seconds.\n";
-	LOG_AI_FLIX << "In simulation: " << static_cast<double>(timer_simulation) / 1000 << " seconds.\n";
-	timer_simulation = 0;
-	timer_fight = 0;
+
 	LOG_AI_FLIX << "Scores before extra treatments:\n";
 	BOOST_FOREACH(const data& data, leader_data) {
 		LOG_AI_FLIX << "\n" << data.to_string();
@@ -349,8 +336,6 @@ void recruitment::execute() {
 
 	do_similarity_penalty(&leader_data);
 	do_diversity_and_randomness_balancing(&leader_data);
-
-	// Handle aspect "recruitment_more".
 	handle_recruitment_more(&leader_data);
 
 	LOG_AI_FLIX << "Scores after extra treatments:\n";
@@ -395,7 +380,7 @@ void recruitment::execute() {
 		LOG_AI_FLIX << "We want to have " << scouts_wanted_ << " more scouts.\n";
 		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data, job);
 		if (best_recruit.empty()) {
-			LOG_AI_FLIX << "Cannot fullfil recruitment-instruction.\n";
+			LOG_AI_FLIX << "Cannot fulfill recruitment-instruction.\n";
 			if (remove_job_if_no_blocker(job)) {
 				continue;
 			} else {
@@ -447,9 +432,6 @@ void recruitment::execute() {
 			// 1. We haven't enough gold,
 			// 2. There aren't any free hexes around leaders,
 			// 3. This leader can not recruit this type (this can happen after a recall)
-
-			// TODO(flix): here something is needed to decide if we may want to recruit a
-			// cheaper unit, when recruitment failed because of unit costs.
 		}
 	} while((action_result && action_result->is_ok()) || !action_result);
 	// A action_result may be uninitialized if a job was removed. Continue then anyway.
@@ -519,7 +501,7 @@ const std::string* recruitment::get_appropriate_recall(const std::string& type,
 		// Check if this leader is allowed to recall this unit.
 		vconfig filter = vconfig(leader_data.leader->recall_filter());
 		if (!recall_unit.matches_filter(filter, map_location::null_location)) {
-			LOG_AI_FLIX << "Refused recall because filter: " << recall_unit.id() << "\n";
+			LOG_AI_FLIX << "Refused recall because of filter: " << recall_unit.id() << "\n";
 			continue;
 		}
 		double average_cost_of_advanced_unit = 0;
@@ -1466,9 +1448,7 @@ struct attack_simulation {
 			attacker_combatant(attacker_stats),
 			defender_combatant(defender_stats)
 	{
-		int start = SDL_GetTicks();  // REMOVE ME
 		attacker_combatant.fight(defender_combatant);
-		timer_fight += SDL_GetTicks() - start;  // REMOVE ME
 	}
 
 	bool better_result(const attack_simulation* other, bool for_defender) {
@@ -1498,18 +1478,6 @@ struct attack_simulation {
 
 		// handle poisson
 		avg_hp -= combatant.poisoned * game_config::poison_amount;
-
-		// handle regenaration
-		// (test shown that it is better not to do this here)
-		// REMOVE ME
-//		unit_ability_list regen_list;
-//		if (const config &abilities = unit_type->get_cfg().child("abilities")) {
-//			BOOST_FOREACH(const config &i, abilities.child_range("regenerate")) {
-//				regen_list.push_back(unit_ability(&i, map_location::null_location));
-//			}
-//		}
-//		unit_abilities::effect regen_effect(regen_list, 0, false);
-//		avg_hp += regen_effect.get_composite_value();
 
 		avg_hp = std::max(0., avg_hp);
 		avg_hp = std::min(static_cast<double>(unit_type->hitpoints()), avg_hp);
@@ -1543,12 +1511,10 @@ void recruitment::simulate_attack(
 			if (att_weapon.range() != def_weapon.range()) {
 				continue;
 			}
-			int start = SDL_GetTicks();  // REMOVE ME
 			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
 					attacker, defender,
 					attacker_defense, defender_defense,
 					&att_weapon, &def_weapon, average_lawful_bonus_));
-			timer_simulation += SDL_GetTicks() - start;  // REMOVE ME
 			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
 				best_def_response = simulation;
 			}
@@ -1667,40 +1633,9 @@ void recruitment::update_state() {
 	if (state_ == NORMAL && ratio > save_gold_begin && income_estimation > 0) {
 		state_ = SAVE_GOLD;
 		LOG_AI_FLIX << "Changed state to SAVE_GOLD.\n";
-
-		// Create a debug object. // REMOVE ME
-		debug.estimated_income = get_estimated_income(SAVE_GOLD_FORECAST_TURNS);
-		debug.estimated_unit_gain = get_estimated_unit_gain();
-		debug.estimated_village_gain = get_estimated_village_gain();
-		debug.turn_start =  resources::tod_manager->turn();
-		const unit_map& units = *resources::units;
-		int own_units = 0;
-		BOOST_FOREACH(const unit& unit, units) {
-			if (get_side() == unit.side()) {
-				++own_units;
-			}
-		}
-		debug.units = own_units;
-		debug.villages = (*resources::teams)[get_side() - 1].villages().size();
-		debug.gold = current_team().gold();
 	} else if (state_ == SAVE_GOLD && ratio < save_gold_end) {
 		state_ = NORMAL;
 		LOG_AI_FLIX << "Changed state to NORMAL.\n";
-
-		// Use the debug object to create a output. // REMOVE ME
-		LOG_AI_FLIX << "-------EVALUATE ESTIMATIONS-----------\n";
-		LOG_AI_FLIX << "Turns: " << resources::tod_manager->turn() - debug.turn_start << "\n";
-		LOG_AI_FLIX << "EVG: " << debug.estimated_village_gain << ", RVG: " << (*resources::teams)[get_side() - 1].villages().size() - debug.villages << "\n";
-		const unit_map& units = *resources::units;
-		int own_units = 0;
-		BOOST_FOREACH(const unit& unit, units) {
-			if (get_side() == unit.side()) {
-				++own_units;
-			}
-		}
-		LOG_AI_FLIX << "EUG: " << debug.estimated_unit_gain << ", RUG: " << own_units - debug.units << "\n";
-		LOG_AI_FLIX << "EI: " << debug.estimated_income << ", RI: " << current_team().gold() - debug.gold << "\n";
-		LOG_AI_FLIX << "----------------END---------------------\n";
 	}
 }
 
