@@ -35,7 +35,7 @@
 #include "testing/stage_fallback.hpp"
 #include "akihara/recruitment.hpp"
 #include "lua/unit_advancements_aspect.hpp"
-#include "flix/recruitment.hpp"
+#include "recruitment/recruitment.hpp"
 
 namespace ai {
 // =======================================================================
@@ -137,8 +137,8 @@ static register_candidate_action_factory<testing_ai_default::global_fallback_pha
 static register_candidate_action_factory<akihara_recruitment::recruitment>
 	recruitment_factory("akihara_recruitment::recruitment");
 
-static register_candidate_action_factory<flix_recruitment::recruitment>
-	flix_recruitment_factory("flix_recruitment::recruitment");
+static register_candidate_action_factory<default_recruitment::recruitment>
+	default_recruitment_factory("default_recruitment::recruitment");
 
 // === Also keep the old syntax ===
 static register_candidate_action_factory<testing_ai_default::goto_phase>

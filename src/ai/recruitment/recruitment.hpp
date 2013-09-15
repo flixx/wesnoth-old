@@ -18,8 +18,8 @@
  * See http://wiki.wesnoth.org/AI_Recruitment
  */
 
-#ifndef AI_FLIX_RECRUITMENT_HPP_INCLUDED
-#define AI_FLIX_RECRUITMENT_HPP_INCLUDED
+#ifndef AI_DEFAULT_RECRUITMENT_HPP_INCLUDED
+#define AI_DEFAULT_RECRUITMENT_HPP_INCLUDED
 
 #include "../composite/rca.hpp"
 #include "../../unit.hpp"
@@ -42,7 +42,7 @@ struct full_cost_map;
 
 namespace ai {
 
-namespace flix_recruitment {
+namespace default_recruitment {
 
 // each leader have a score_map
 // the score map indicates what is the best mix of own units from the leader point of view.
@@ -219,7 +219,7 @@ private:
 	int scouts_wanted_;
 };
 
-}  // of namespace flix_recruitment
+}  // of namespace default_recruitment
 
 }  // of namespace ai
 
