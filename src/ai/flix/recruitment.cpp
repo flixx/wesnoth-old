@@ -114,7 +114,6 @@ const static bool COMBAT_DIRECT_RESPONSE = false;
 // until the simulation will run again.
 const static double COMBAT_CACHE_TOLERANCY = 0.5;
 
-const static double MAP_ANALYSIS_WEIGHT = 0.;
 const static double COMABAT_ANALYSIS_WEIGHT = 1.;
 
 // The old recruitment CA usually recruited too many scouts.
@@ -330,8 +329,6 @@ void recruitment::execute() {
 	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
 	 */
 
-
-	do_map_analysis(&leader_data);
 	do_combat_analysis(&leader_data);
 
 	LOG_AI_FLIX << "Scores before extra treatments:\n";
@@ -794,19 +791,6 @@ void recruitment::update_average_local_cost() {
 				}
 			}
 			average_local_cost_[loc] = (count == 0) ? 0 : static_cast<double>(summed_cost) / count;
-		}
-	}
-}
-
-/**
- * Map Analysis.
- * When this function is called, important_hexes_ is already build.
- * This function fills the scores according to important_hexes_.
- */
-void recruitment::do_map_analysis(std::vector<data>* leader_data) {
-	BOOST_FOREACH(data& data, *leader_data) {
-		BOOST_FOREACH(const std::string& recruit, data.recruits) {
-			data.scores[recruit] += get_average_defense(recruit) * MAP_ANALYSIS_WEIGHT;
 		}
 	}
 }

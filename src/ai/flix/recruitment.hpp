@@ -137,7 +137,6 @@ private:
 	void compare_cost_maps_and_update_important_hexes(
 			const pathfind::full_cost_map& my_cost_map,
 			const pathfind::full_cost_map& enemy_cost_map);
-	void do_map_analysis(std::vector<data>* leader_data);
 	double get_average_defense(const std::string& unit_type) const;
 	const pathfind::full_cost_map get_cost_map_of_side(int side) const;
 	void show_important_hexes() const;  //Debug only
