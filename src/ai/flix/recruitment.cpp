@@ -210,8 +210,7 @@ void recruitment::execute() {
 			" SIDE: " << current_team().side() << "\n";
 
 	/*
-	 * Step 0: Check which leaders can recruit and collect them in leader_data.
-	 *         Also initialize some other stuff.
+	 * Check which leaders can recruit and collect them in leader_data.
 	 */
 
 	const unit_map& units = *resources::units;
@@ -300,9 +299,7 @@ void recruitment::execute() {
 	}
 
 	/**
-	 * Step 1: Find important hexes and calculate other static things.
-	 * Maybe cache it for later use.
-	 * (TODO)
+	 * Find important hexes and calculate other static things.
 	 */
 
 	update_important_hexes();
@@ -319,14 +316,7 @@ void recruitment::execute() {
 	update_scouts_wanted();
 
 	/**
-	 * Step 2: Filter own_recruits according to configurations
-	 * (TODO)
-	 */
-
-	LOG_AI_FLIX << "RECRUITMENT INSTRUCTIONS:\n" << recruitment_instructions_ << "\n";
-
-	/**
-	 * Step 3: Fill scores with values coming from combat analysis and other stuff.
+	 * Fill scores.
 	 */
 
 	do_combat_analysis(&leader_data);
@@ -346,14 +336,14 @@ void recruitment::execute() {
 	}
 
 	/**
-	 * Step 4: Do recruitment according to scores and the leaders ratio_scores.
+	 * Do recruitment according to [recruit]-tags and scores.
 	 * Note that the scores don't indicate the preferred mix to recruit but rather
 	 * the preferred mix of all units. So already existing units are considered.
 	 */
 
 	action_result_ptr action_result;
 	config* job = NULL;
-	do {
+	do {  // Recruitment loop
 		recruit_situation_change_observer_.reset_gamestate_changed();
 		update_state();
 
@@ -380,6 +370,7 @@ void recruitment::execute() {
 			}
 		}
 		LOG_AI_FLIX << "We want to have " << scouts_wanted_ << " more scouts.\n";
+
 		const std::string best_recruit = get_best_recruit_from_scores(*best_leader_data, job);
 		if (best_recruit.empty()) {
 			LOG_AI_FLIX << "Cannot fulfill recruitment-instruction.\n";
@@ -389,11 +380,6 @@ void recruitment::execute() {
 				break;
 			}
 		}
-
-		// TODO(flix): find the best hex for recruiting best_recruit.
-		// see http://forums.wesnoth.org/viewtopic.php?f=8&t=36571&p=526035#p525946
-		// "It also means there is a tendency to recruit from the outside in
-		// rather than the default inside out."
 
 		LOG_AI_FLIX << "Best recruit is: " << best_recruit << "\n";
 		const std::string* recall_id = get_appropriate_recall(best_recruit, *best_leader_data);
@@ -430,7 +416,7 @@ void recruitment::execute() {
 
 		} else {
 			LOG_AI_FLIX << "Recruit result not ok.\n";
-			// We'll end up here when
+			// We'll end up here if
 			// 1. We haven't enough gold,
 			// 2. There aren't any free hexes around leaders,
 			// 3. This leader can not recruit this type (this can happen after a recall)
