@@ -451,7 +451,8 @@ void recruitment::execute() {
 			// TODO(flix): here something is needed to decide if we may want to recruit a
 			// cheaper unit, when recruitment failed because of unit costs.
 		}
-	} while(action_result->is_ok());
+	} while((action_result && action_result->is_ok()) || !action_result);
+	// A action_result may be uninitialized if a job was removed. Continue then anyway.
 
 	// Recruiting is done now.
 	// Update state_ for next execution().
@@ -597,6 +598,9 @@ const std::string recruitment::get_best_recruit_from_scores(const data& leader_d
 		const config* job) {
 	assert(job);
 	std::string pattern_type = get_random_pattern_type_if_exists(leader_data, job);
+	if (!pattern_type.empty()) {
+		LOG_AI_FLIX << "Randomly chosen pattern_type: " << pattern_type << "\n";
+	}
 	std::string best_recruit = "";
 	double biggest_difference = -99999.;
 	BOOST_FOREACH(const score_map::value_type& i, leader_data.get_normalized_scores()) {
@@ -668,6 +672,10 @@ int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterato
 		if (info->cost() < cheapest_cost) {
 			cheapest_cost = info->cost();
 		}
+	}
+	// Consider recall costs.
+	if (!current_team().recall_list().empty() && current_team().recall_cost() < cheapest_cost) {
+		cheapest_cost = current_team().recall_cost();
 	}
 	LOG_AI_FLIX << "Cheapest unit cost updated to " << cheapest_cost << ".\n";
 	cheapest_unit_costs_[leader->underlying_id()] = cheapest_cost;
