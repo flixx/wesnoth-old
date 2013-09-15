@@ -15,6 +15,7 @@
 /**
  * @file
  * Recruitment Engine by flix
+ * See http://wiki.wesnoth.org/AI_Recruitment
  */
 
 #include "recruitment.hpp"
@@ -123,8 +124,12 @@ const static double VILLAGE_PER_SCOUT_MULTIPLICATOR = 2.;
 
 recruitment::recruitment(rca_context& context, const config& cfg)
 		: candidate_action(context, cfg),
+		  important_hexes_(),
+		  important_terrain_(),
 		  own_units_in_combat_counter_(0),
+		  average_local_cost_(),
 		  cheapest_unit_costs_(),
+		  combat_cache_(),
 		  recruit_situation_change_observer_(),
 		  average_lawful_bonus_(0.0),
 		  recruitment_instructions_(),
@@ -158,7 +163,7 @@ double recruitment::evaluate() {
 	// Check if the recruitment list has changed.
 	// Then cheapest_unit_costs_ is not valid anymore.
 	if (recruit_situation_change_observer_.recruit_list_changed()) {
-		invalidate();
+		cheapest_unit_costs_.clear();
 		recruit_situation_change_observer_.set_recruit_list_changed(false);
 	}
 
@@ -616,94 +621,591 @@ const std::string recruitment::get_best_recruit_from_scores(const data& leader_d
 	return best_recruit;
 }
 
-recruitment::~recruitment() { }
+/**
+ * For Map Analysis
+ * Computes from our cost map and the combined cost map of all enemies the important hexes.
+ */
+void recruitment::compare_cost_maps_and_update_important_hexes(
+		const pathfind::full_cost_map& my_cost_map,
+		const pathfind::full_cost_map& enemy_cost_map) {
 
-// This is going to be called when the recruitment list changes
-// (not implemented yet, just here as a reminder)
-void recruitment::invalidate() {
-	cheapest_unit_costs_.clear();
+	const gamemap& map = *resources::game_map;
+
+	// First collect all hexes where the average costs are similar in important_hexes_candidates
+	// Then chose only those hexes where the average costs are relatively low.
+	// This is done to remove hexes to where the teams need a similar amount of moves but
+	// which are relatively far away comparing to other important hexes.
+	typedef std::map<map_location, double> border_cost_map;
+	border_cost_map important_hexes_candidates;
+	double smallest_border_movecost = 999999;
+	double biggest_border_movecost = 0;
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			double my_cost_average = my_cost_map.get_average_cost_at(x, y);
+			double enemy_cost_average = enemy_cost_map.get_average_cost_at(x, y);
+			if (my_cost_average == -1 || enemy_cost_average == -1) {
+				continue;
+			}
+			// We multiply the threshold MAP_BORDER_THICKNESS by the average_local_cost
+			// to favor high cost hexes (a bit).
+			if (std::abs(my_cost_average - MAP_OFFENSIVE_SHIFT - enemy_cost_average) <
+					MAP_BORDER_THICKNESS * average_local_cost_[map_location(x, y)]) {
+				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
+
+				important_hexes_candidates[map_location(x, y)] = border_movecost;
+
+				if (border_movecost < smallest_border_movecost) {
+					smallest_border_movecost = border_movecost;
+				}
+				if (border_movecost > biggest_border_movecost) {
+					biggest_border_movecost = border_movecost;
+				}
+			}
+		}  // for
+	}  // for
+	double threshold = (biggest_border_movecost - smallest_border_movecost) *
+			MAP_BORDER_WIDTH + smallest_border_movecost;
+	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
+		if (candidate.second < threshold) {
+			important_hexes_.insert(candidate.first);
+		}
+	}
 }
 
 /**
- * Called at the beginning and whenever the recruitment list changes.
+ * For Map Analysis.
+ * Calculates for a given unit the average defense on the map.
+ * (According to important_hexes_ / important_terrain_)
  */
-int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader) {
-	std::map<size_t, int>::const_iterator it = cheapest_unit_costs_.find(leader->underlying_id());
-	if (it != cheapest_unit_costs_.end()) {
-		return it->second;
+double recruitment::get_average_defense(const std::string& u_type) const {
+	const unit_type* const u_info = unit_types.find(u_type);
+	if (!u_info) {
+		return 0.0;
 	}
-
-	int cheapest_cost = 999999;
-
-	// team recruits
-	BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
-		const unit_type* const info = unit_types.find(recruit);
-		if (!info) {
-			continue;
-		}
-		if (info->cost() < cheapest_cost) {
-			cheapest_cost = info->cost();
-		}
+	long summed_defense = 0;
+	int total_terrains = 0;
+	BOOST_FOREACH(const terrain_count_map::value_type& entry, important_terrain_) {
+		const t_translation::t_terrain& terrain = entry.first;
+		int count = entry.second;
+		int defense = 100 - u_info->movement_type().defense_modifier(terrain);
+		summed_defense += defense * count;
+		total_terrains += count;
 	}
-	// extra recruits
-	BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
-		const unit_type* const info = unit_types.find(recruit);
-		if (!info) {
-			continue;
-		}
-		if (info->cost() < cheapest_cost) {
-			cheapest_cost = info->cost();
-		}
-	}
-	// Consider recall costs.
-	if (!current_team().recall_list().empty() && current_team().recall_cost() < cheapest_cost) {
-		cheapest_cost = current_team().recall_cost();
-	}
-	LOG_AI_FLIX << "Cheapest unit cost updated to " << cheapest_cost << ".\n";
-	cheapest_unit_costs_[leader->underlying_id()] = cheapest_cost;
-	return cheapest_cost;
+	double average_defense = (total_terrains == 0) ? 0.0 :
+			static_cast<double>(summed_defense) / total_terrains;
+	return average_defense;
 }
 
 /**
- * Helper function.
- * Returns true if there is a enemy within the radius.
+ * For Map Analysis.
+ * Creates cost maps for a side. Each hex is map to
+ * a) the summed movecost and
+ * b) how many units can reach this hex
+ * for all units of side.
  */
-bool recruitment::is_enemy_in_radius(const map_location& loc, int radius) const {
+const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const {
 	const unit_map& units = *resources::units;
-	std::vector<map_location> surrounding;
-	get_tiles_in_radius(loc, radius, surrounding);
-	if (surrounding.empty()) {
-		return false;
-	}
-	BOOST_FOREACH(const map_location& loc, surrounding) {
-		const unit_map::const_iterator& enemy_it = units.find(loc);
-		if(enemy_it == units.end()) {
-			continue;
-		}
-		if (!current_team().is_enemy(enemy_it->side())) {
-			continue;
-		}
-		return true;
-	}
-	return false;
-}
+	const team& team = (*resources::teams)[side - 1];
 
-/*
- * Helper Function.
- * Counts own units on the map and saves the result
- * in member own_units_count_
- */
-void recruitment::update_own_units_count() {
-	own_units_count_.clear();
-	total_own_units_ = 0;
-	const unit_map& units = *resources::units;
+	pathfind::full_cost_map cost_map(true, true, team, true, true);
+
+	// First add all existing units to cost_map.
+	unsigned int unit_count = 0;
 	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side() || unit.can_recruit()) {
+		if (unit.side() != side || unit.can_recruit()) {
 			continue;
 		}
-		++own_units_count_[unit.type_id()];
-		++total_own_units_;
+		++unit_count;
+		cost_map.add_unit(unit);
 	}
+
+	// If this side has not so many units yet, add unit_types with the leaders position as origin.
+	if (unit_count < UNIT_THRESHOLD) {
+		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
+		BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
+			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
+			BOOST_FOREACH(const std::string& recruit, team.recruits()) {
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			}
+
+			// Next add extra-recruits.
+			BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
+				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
+			}
+		}
+	}
+	return cost_map;
+}
+
+/**
+ * For Map Analysis.
+ * Shows the important hexes for debugging purposes on the map. Only if debug is activated.
+ */
+void recruitment::show_important_hexes() const {
+	if (!game_config::debug) {
+		return;
+	}
+	resources::screen->labels().clear_all();
+	BOOST_FOREACH(const map_location& loc, important_hexes_) {
+		// Little hack: use map_location north from loc and make 2 linebreaks to center the dot
+		resources::screen->labels().set_label(loc.get_direction(map_location::NORTH), "\n\n\u2B24");
+	}
+}
+
+/**
+ * Calculates a average lawful bonus, so Combat Analysis will work
+ * better in caves and custom time of day cycles.
+ */
+void recruitment::update_average_lawful_bonus() {
+	int sum = 0;
+	int counter = 0;
+	BOOST_FOREACH(const time_of_day& time, resources::tod_manager->times()) {
+		sum += time.lawful_bonus;
+		++counter;
+	}
+	if (counter > 0) {
+		average_lawful_bonus_ = round_double(static_cast<double>(sum) / counter);
+	}
+}
+
+/**
+ * For Map Analysis.
+ * Creates a map where each hex is mapped to the average cost of the terrain for our units.
+ */
+void recruitment::update_average_local_cost() {
+	average_local_cost_.clear();
+	const gamemap& map = *resources::game_map;
+	const team& team = (*resources::teams)[get_side() - 1];
+
+	for(int x = 0; x < map.w(); ++x) {
+		for (int y = 0; y < map.h(); ++y) {
+			map_location loc(x, y);
+			int summed_cost = 0;
+			int count = 0;
+			BOOST_FOREACH(const std::string& recruit, team.recruits()){
+				const unit_type* const unit_type = unit_types.find(recruit);
+				if (!unit_type) {
+					continue;
+				}
+				int cost = unit_type->movement_type().get_movement().cost(map[loc]);
+				if (cost < 99) {
+					summed_cost += cost;
+					++count;
+				}
+			}
+			average_local_cost_[loc] = (count == 0) ? 0 : static_cast<double>(summed_cost) / count;
+		}
+	}
+}
+
+/**
+ * Map Analysis.
+ * When this function is called, important_hexes_ is already build.
+ * This function fills the scores according to important_hexes_.
+ */
+void recruitment::do_map_analysis(std::vector<data>* leader_data) {
+	BOOST_FOREACH(data& data, *leader_data) {
+		BOOST_FOREACH(const std::string& recruit, data.recruits) {
+			data.scores[recruit] += get_average_defense(recruit) * MAP_ANALYSIS_WEIGHT;
+		}
+	}
+}
+
+/**
+ * For Map Analysis.
+ * Creates a std::set of hexes where a fight will occur with high probability.
+ */
+void recruitment::update_important_hexes() {
+	important_hexes_.clear();
+	important_terrain_.clear();
+	own_units_in_combat_counter_ = 0;
+
+	update_average_local_cost();
+	const gamemap& map = *resources::game_map;
+	const unit_map& units = *resources::units;
+
+	// TODO(flix) If leader is in danger or only leader is left
+	// mark only hexes near to this leader as important.
+
+	// Mark battle areas as important
+	// This are locations where one of my units is adjacent
+	// to a enemies unit.
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side()) {
+			continue;
+		}
+		if (is_enemy_in_radius(unit.get_location(), 1)) {
+			// We found a enemy next to us. Mark our unit and all adjacent
+			// hexes as important.
+			std::vector<map_location> surrounding;
+			get_tiles_in_radius(unit.get_location(), 1, surrounding);
+			important_hexes_.insert(unit.get_location());
+			std::copy(surrounding.begin(), surrounding.end(),
+					std::inserter(important_hexes_, important_hexes_.begin()));
+			++own_units_in_combat_counter_;
+		}
+	}
+
+	// Mark area between me and enemies as important
+	// This is done by creating a cost_map for each team.
+	// A cost_map maps to each hex the average costs to reach this hex
+	// for all units of the team.
+	// The important hexes are those where my value on the cost map is
+	// similar to a enemies one.
+	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
+	BOOST_FOREACH(const team& team, *resources::teams) {
+		if (current_team().is_enemy(team.side())) {
+			const pathfind::full_cost_map enemy_cost_map = get_cost_map_of_side(team.side());
+
+			compare_cost_maps_and_update_important_hexes(my_cost_map, enemy_cost_map);
+		}
+	}
+
+	// Mark 'near' villages and area around them as important
+	// To prevent a 'feedback' of important locations collect all
+	// important villages first and add them and their surroundings
+	// to important_hexes_ in a second step.
+	std::vector<map_location> important_villages;
+	BOOST_FOREACH(const map_location& village, map.villages()) {
+		std::vector<map_location> surrounding;
+		get_tiles_in_radius(village, MAP_VILLAGE_NEARNESS_THRESHOLD, surrounding);
+		BOOST_FOREACH(const map_location& hex, surrounding) {
+			if (important_hexes_.find(hex) != important_hexes_.end()) {
+				important_villages.push_back(village);
+				break;
+			}
+		}
+	}
+	BOOST_FOREACH(const map_location& village, important_villages) {
+		important_hexes_.insert(village);
+		std::vector<map_location> surrounding;
+		get_tiles_in_radius(village, MAP_VILLAGE_SURROUNDING, surrounding);
+		BOOST_FOREACH(const map_location& hex, surrounding) {
+			// only add hex if one of our units can reach the hex
+			if (map.on_board(hex) && my_cost_map.get_cost_at(hex.x, hex.y) != -1) {
+				important_hexes_.insert(hex);
+			}
+		}
+	}
+}
+
+/**
+ * For Combat Analysis.
+ * Calculates how good unit-type a is against unit type b.
+ * If the value is bigger then 0, a is better then b.
+ * If the value is 2.0 then unit-type a is twice as good as unit-type b.
+ * Since this function is called very often it uses a cache.
+ */
+double recruitment::compare_unit_types(const std::string& a, const std::string& b) {
+	const unit_type* const type_a = unit_types.find(a);
+	const unit_type* const type_b = unit_types.find(b);
+	if (!type_a || !type_b) {
+		ERR_AI_FLIX << "Couldn't find unit type: " << ((type_a) ? b : a) << ".\n";
+		return 0.0;
+	}
+	double defense_a = get_average_defense(a);
+	double defense_b = get_average_defense(b);
+
+	const double* cache_value = get_cached_combat_value(a, b, defense_a, defense_b);
+	if (cache_value) {
+		return *cache_value;
+	}
+
+	double damage_to_a = 0.0;
+	double damage_to_b = 0.0;
+
+	// a attacks b
+	simulate_attack(type_a, type_b, defense_a, defense_b, &damage_to_a, &damage_to_b);
+	// b attacks a
+	simulate_attack(type_b, type_a, defense_b, defense_a, &damage_to_b, &damage_to_a);
+
+	int a_cost = (type_a->cost() > 0) ? type_a->cost() : 1;
+	int b_cost = (type_b->cost() > 0) ? type_b->cost() : 1;
+	int a_max_hp = (type_a->hitpoints() > 0) ? type_a->hitpoints() : 1;
+	int b_max_hp = (type_b->hitpoints() > 0) ? type_b->hitpoints() : 1;
+
+	double retval = 1.;
+	// There are rare cases where a unit deals 0 damage (eg. Elvish Lady).
+	// Then we just set the value to something reasonable.
+	if (damage_to_a <= 0 && damage_to_b <= 0) {
+		retval = 1.;
+	} else if (damage_to_a <= 0) {
+		retval = 2.;
+	} else if (damage_to_b <= 0) {
+		retval = 0.5;
+	} else {
+		// Normal case
+		double value_of_a = damage_to_b / (b_max_hp * a_cost);
+		double value_of_b = damage_to_a / (a_max_hp * b_cost);
+
+		if (value_of_a > value_of_b) {
+			return value_of_a / value_of_b;
+		} else if (value_of_a < value_of_b) {
+			return -value_of_b / value_of_a;
+		} else {
+			return 0.;
+		}
+	}
+
+	// Insert in cache.
+	const cached_combat_value entry(defense_a, defense_b, retval);
+	std::set<cached_combat_value>& cache = combat_cache_[a][b];
+	cache.insert(entry);
+
+	return retval;
+}
+
+/**
+ * Combat Analysis.
+ * Main function.
+ * Compares all enemy units with all of our possible recruits and fills
+ * the scores.
+ */
+void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
+	const unit_map& units = *resources::units;
+
+	// Collect all enemy units (and their hp) we want to take into account in enemy_units.
+	typedef std::vector<std::pair<std::string, int> > unit_hp_vector;
+	unit_hp_vector enemy_units;
+	BOOST_FOREACH(const unit& unit, units) {
+		if (!current_team().is_enemy(unit.side())) {
+			continue;
+		}
+		enemy_units.push_back(std::make_pair(unit.type_id(), unit.hitpoints()));
+	}
+	if (enemy_units.size() < UNIT_THRESHOLD) {
+		// Use also enemies recruitment lists and insert units into enemy_units.
+		BOOST_FOREACH(const team& team, *resources::teams) {
+			if (!current_team().is_enemy(team.side())) {
+				continue;
+			}
+			std::set<std::string> possible_recruits;
+			// Add team recruits.
+			possible_recruits.insert(team.recruits().begin(), team.recruits().end());
+			// Add extra recruits.
+			const std::vector<unit_map::const_iterator> leaders = units.find_leaders(team.side());
+			BOOST_FOREACH(unit_map::const_iterator leader, leaders) {
+				possible_recruits.insert(leader->recruits().begin(), leader->recruits().end());
+			}
+			// Insert set in enemy_units.
+			BOOST_FOREACH(const std::string& possible_recruit, possible_recruits) {
+				const unit_type* recruit_type = unit_types.find(possible_recruit);
+				if (recruit_type) {
+					int hp = recruit_type->hitpoints();
+					enemy_units.push_back(std::make_pair(possible_recruit, hp));
+				}
+			}
+		}
+	}
+
+	BOOST_FOREACH(data& leader, *leader_data) {
+		if (leader.recruits.empty()) {
+			continue;
+		}
+		typedef std::map<std::string, double> simple_score_map;
+		simple_score_map temp_scores;
+
+		BOOST_FOREACH(const unit_hp_vector::value_type& entry, enemy_units) {
+			const std::string& enemy_unit = entry.first;
+			int enemy_unit_hp = entry.second;
+
+			std::string best_response;
+			double best_response_score = -99999.;
+			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
+				double score = compare_unit_types(recruit, enemy_unit);
+				score *= enemy_unit_hp;
+				score = pow(score, COMBAT_SCORE_POWER);
+				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
+				if (score > best_response_score) {
+					best_response_score = score;
+					best_response = recruit;
+				}
+			}
+			if (COMBAT_DIRECT_RESPONSE) {
+				temp_scores[best_response] += enemy_unit_hp;
+			}
+		}
+
+		// Find things for normalization.
+		double max = -99999.;
+		double sum = 0;
+		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
+			double score = entry.second;
+			if (score > max) {
+				max = score;
+			}
+			sum += score;
+		}
+		assert(!temp_scores.empty());
+		double average = sum / temp_scores.size();
+
+		// What we do now is a linear transformation.
+		// We want to map the scores in temp_scores to something between 0 and 100.
+		// The max score shall always be 100.
+		// The min score depends on parameters.
+		double new_100 = max;
+		double score_threshold = (COMBAT_SCORE_THRESHOLD > 0) ? COMBAT_SCORE_THRESHOLD : 0.000001;
+		double new_0 = (COMBAT_DIRECT_RESPONSE) ? 0 : max - (score_threshold * (max - average));
+		if (new_100 == new_0) {
+			// This can happen if max == average. (E.g. only one possible recruit)
+			new_0 -= 0.000001;
+		}
+
+		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
+			const std::string& recruit = entry.first;
+			double score = entry.second;
+
+			// Here we transform.
+			// (If score <= new_0 then normalized_score will be 0)
+			// (If score = new_100 then normalized_score will be 100)
+			double normalized_score = 100 * ((score - new_0) / (new_100 - new_0));
+			if (normalized_score < 0) {
+				normalized_score = 0;
+			}
+			leader.scores[recruit] += normalized_score * COMABAT_ANALYSIS_WEIGHT;
+		}
+	}  // for all leaders
+}
+
+/**
+ * For Combat Analysis.
+ * Returns the cached combat value for two unit types
+ * or NULL if there is none or terrain defenses are not within range.
+ */
+const double* recruitment::get_cached_combat_value(const std::string& a, const std::string& b,
+		double a_defense, double b_defense) {
+	double best_distance = 999;
+	const double* best_value = NULL;
+	const std::set<cached_combat_value>& cache = combat_cache_[a][b];
+	BOOST_FOREACH(const cached_combat_value& entry, cache) {
+		double distance_a = std::abs(entry.a_defense - a_defense);
+		double distance_b = std::abs(entry.b_defense - b_defense);
+		if (distance_a <= COMBAT_CACHE_TOLERANCY && distance_b <= COMBAT_CACHE_TOLERANCY) {
+			if(distance_a + distance_b <= best_distance) {
+				best_distance = distance_a + distance_b;
+				best_value = &entry.value;
+			}
+		}
+	}
+	return best_value;
+}
+
+/**
+ * For Combat Analysis.
+ * This struct encapsulates all information for one attack simulation.
+ * One attack simulation is defined by the unit-types, the weapons and the units defenses.
+ */
+struct attack_simulation {
+	const unit_type* attacker_type;
+	const unit_type* defender_type;
+	const battle_context_unit_stats attacker_stats;
+	const battle_context_unit_stats defender_stats;
+	combatant attacker_combatant;
+	combatant defender_combatant;
+
+	attack_simulation(const unit_type* attacker, const unit_type* defender,
+			double attacker_defense, double defender_defense,
+			const attack_type* att_weapon, const attack_type* def_weapon,
+			int average_lawful_bonus) :
+			attacker_type(attacker),
+			defender_type(defender),
+			attacker_stats(attacker, att_weapon, true, defender, def_weapon,
+					round_double(defender_defense), average_lawful_bonus),
+			defender_stats(defender, def_weapon, false, attacker, att_weapon,
+					round_double(attacker_defense), average_lawful_bonus),
+			attacker_combatant(attacker_stats),
+			defender_combatant(defender_stats)
+	{
+		attacker_combatant.fight(defender_combatant);
+	}
+
+	bool better_result(const attack_simulation* other, bool for_defender) {
+		assert(other);
+		if (for_defender) {
+			return battle_context::better_combat(
+					defender_combatant, attacker_combatant,
+					other->defender_combatant, other->attacker_combatant, 0);
+		} else {
+			return battle_context::better_combat(
+					attacker_combatant, defender_combatant,
+					other->attacker_combatant, other->defender_combatant, 0);
+		}
+	}
+
+	double get_avg_hp_of_defender() const {
+		return get_avg_hp_of_combatant(false);
+	}
+
+	double get_avg_hp_of_attacker() const {
+		return get_avg_hp_of_combatant(true);
+	}
+	double get_avg_hp_of_combatant(bool attacker) const {
+		const combatant& combatant = (attacker) ? attacker_combatant : defender_combatant;
+		const unit_type* unit_type = (attacker) ? attacker_type : defender_type;
+		double avg_hp = combatant.average_hp(0);
+
+		// handle poisson
+		avg_hp -= combatant.poisoned * game_config::poison_amount;
+
+		avg_hp = std::max(0., avg_hp);
+		avg_hp = std::min(static_cast<double>(unit_type->hitpoints()), avg_hp);
+		return avg_hp;
+	}
+};
+
+/**
+ * For Combat Analysis.
+ * Simulates a attack with a attacker and a defender.
+ * The function will use battle_context::better_combat() to decide which weapon to use.
+ */
+void recruitment::simulate_attack(
+			const unit_type* const attacker, const unit_type* const defender,
+			double attacker_defense, double defender_defense,
+			double* damage_to_attacker, double* damage_to_defender) const {
+	if(!attacker || !defender || !damage_to_attacker || !damage_to_defender) {
+		ERR_AI_FLIX << "NULL pointer in simulate_attack()\n";
+		return;
+	}
+	const std::vector<attack_type> attacker_weapons = attacker->attacks();
+	const std::vector<attack_type> defender_weapons = defender->attacks();
+
+	boost::shared_ptr<attack_simulation> best_att_attack;
+
+	// Let attacker choose weapon
+	BOOST_FOREACH(const attack_type& att_weapon, attacker_weapons) {
+		boost::shared_ptr<attack_simulation> best_def_response;
+		// Let defender choose weapon
+		BOOST_FOREACH(const attack_type& def_weapon, defender_weapons) {
+			if (att_weapon.range() != def_weapon.range()) {
+				continue;
+			}
+			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
+					attacker, defender,
+					attacker_defense, defender_defense,
+					&att_weapon, &def_weapon, average_lawful_bonus_));
+			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
+				best_def_response = simulation;
+			}
+		}  // for defender weapons
+
+		if (!best_def_response) {
+			// Defender can not fight back. Simulate this as well.
+			best_def_response.reset(new attack_simulation(
+					attacker, defender,
+					attacker_defense, defender_defense,
+					&att_weapon, NULL, average_lawful_bonus_));
+		}
+		if (!best_att_attack || best_def_response->better_result(best_att_attack.get(), false)) {
+			best_att_attack = best_def_response;
+		}
+	}  // for attacker weapons
+
+	if (!best_att_attack) {
+		return;
+	}
+
+	*damage_to_defender += (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender());
+	*damage_to_attacker += (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker());
 }
 
 /**
@@ -954,594 +1456,7 @@ bool recruitment::remove_job_if_no_blocker(config* job) {
 }
 
 /**
- * For Map Analysis.
- * Creates a std::set of hexes where a fight will occur with high probability.
- */
-void recruitment::update_important_hexes() {
-	important_hexes_.clear();
-	important_terrain_.clear();
-	own_units_in_combat_counter_ = 0;
-
-	update_average_local_cost();
-	const gamemap& map = *resources::game_map;
-	const unit_map& units = *resources::units;
-
-	// TODO(flix) If leader is in danger or only leader is left
-	// mark only hexes near to this leader as important.
-
-	// Mark battle areas as important
-	// This are locations where one of my units is adjacent
-	// to a enemies unit.
-	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side()) {
-			continue;
-		}
-		if (is_enemy_in_radius(unit.get_location(), 1)) {
-			// We found a enemy next to us. Mark our unit and all adjacent
-			// hexes as important.
-			std::vector<map_location> surrounding;
-			get_tiles_in_radius(unit.get_location(), 1, surrounding);
-			important_hexes_.insert(unit.get_location());
-			std::copy(surrounding.begin(), surrounding.end(),
-					std::inserter(important_hexes_, important_hexes_.begin()));
-			++own_units_in_combat_counter_;
-		}
-	}
-
-	// Mark area between me and enemies as important
-	// This is done by creating a cost_map for each team.
-	// A cost_map maps to each hex the average costs to reach this hex
-	// for all units of the team.
-	// The important hexes are those where my value on the cost map is
-	// similar to a enemies one.
-	const pathfind::full_cost_map my_cost_map = get_cost_map_of_side(get_side());
-	BOOST_FOREACH(const team& team, *resources::teams) {
-		if (current_team().is_enemy(team.side())) {
-			const pathfind::full_cost_map enemy_cost_map = get_cost_map_of_side(team.side());
-
-			compare_cost_maps_and_update_important_hexes(my_cost_map, enemy_cost_map);
-		}
-	}
-
-	// Mark 'near' villages and area around them as important
-	// To prevent a 'feedback' of important locations collect all
-	// important villages first and add them and their surroundings
-	// to important_hexes_ in a second step.
-	std::vector<map_location> important_villages;
-	BOOST_FOREACH(const map_location& village, map.villages()) {
-		std::vector<map_location> surrounding;
-		get_tiles_in_radius(village, MAP_VILLAGE_NEARNESS_THRESHOLD, surrounding);
-		BOOST_FOREACH(const map_location& hex, surrounding) {
-			if (important_hexes_.find(hex) != important_hexes_.end()) {
-				important_villages.push_back(village);
-				break;
-			}
-		}
-	}
-	BOOST_FOREACH(const map_location& village, important_villages) {
-		important_hexes_.insert(village);
-		std::vector<map_location> surrounding;
-		get_tiles_in_radius(village, MAP_VILLAGE_SURROUNDING, surrounding);
-		BOOST_FOREACH(const map_location& hex, surrounding) {
-			// only add hex if one of our units can reach the hex
-			if (map.on_board(hex) && my_cost_map.get_cost_at(hex.x, hex.y) != -1) {
-				important_hexes_.insert(hex);
-			}
-		}
-	}
-}
-
-/**
- * For Map Analysis.
- * Creates cost maps for a side. Each hex is map to
- * a) the summed movecost and
- * b) how many units can reach this hex
- * for all units of side.
- */
-const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const {
-	const unit_map& units = *resources::units;
-	const team& team = (*resources::teams)[side - 1];
-
-	pathfind::full_cost_map cost_map(true, true, team, true, true);
-
-	// First add all existing units to cost_map.
-	unsigned int unit_count = 0;
-	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != side || unit.can_recruit()) {
-			continue;
-		}
-		++unit_count;
-		cost_map.add_unit(unit);
-	}
-
-	// If this side has not so many units yet, add unit_types with the leaders position as origin.
-	if (unit_count < UNIT_THRESHOLD) {
-		std::vector<unit_map::const_iterator> leaders = units.find_leaders(side);
-		BOOST_FOREACH(const unit_map::const_iterator& leader, leaders) {
-			// First add team-recruits (it's fine when (team-)recruits are added multiple times).
-			BOOST_FOREACH(const std::string& recruit, team.recruits()) {
-				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
-			}
-
-			// Next add extra-recruits.
-			BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
-				cost_map.add_unit(leader->get_location(), unit_types.find(recruit), side);
-			}
-		}
-	}
-	return cost_map;
-}
-
-/**
- * For Map Analysis
- * Computes from our cost map and the combined cost map of all enemies the important hexes.
- */
-void recruitment::compare_cost_maps_and_update_important_hexes(
-		const pathfind::full_cost_map& my_cost_map,
-		const pathfind::full_cost_map& enemy_cost_map) {
-
-	const gamemap& map = *resources::game_map;
-
-	// First collect all hexes where the average costs are similar in important_hexes_candidates
-	// Then chose only those hexes where the average costs are relatively low.
-	// This is done to remove hexes to where the teams need a similar amount of moves but
-	// which are relatively far away comparing to other important hexes.
-	typedef std::map<map_location, double> border_cost_map;
-	border_cost_map important_hexes_candidates;
-	double smallest_border_movecost = 999999;
-	double biggest_border_movecost = 0;
-	for(int x = 0; x < map.w(); ++x) {
-		for (int y = 0; y < map.h(); ++y) {
-			double my_cost_average = my_cost_map.get_average_cost_at(x, y);
-			double enemy_cost_average = enemy_cost_map.get_average_cost_at(x, y);
-			if (my_cost_average == -1 || enemy_cost_average == -1) {
-				continue;
-			}
-			// We multiply the threshold MAP_BORDER_THICKNESS by the average_local_cost
-			// to favor high cost hexes (a bit).
-			if (std::abs(my_cost_average - MAP_OFFENSIVE_SHIFT - enemy_cost_average) <
-					MAP_BORDER_THICKNESS * average_local_cost_[map_location(x, y)]) {
-				double border_movecost = (my_cost_average + enemy_cost_average) / 2;
-
-				important_hexes_candidates[map_location(x, y)] = border_movecost;
-
-				if (border_movecost < smallest_border_movecost) {
-					smallest_border_movecost = border_movecost;
-				}
-				if (border_movecost > biggest_border_movecost) {
-					biggest_border_movecost = border_movecost;
-				}
-			}
-		}  // for
-	}  // for
-	double threshold = (biggest_border_movecost - smallest_border_movecost) *
-			MAP_BORDER_WIDTH + smallest_border_movecost;
-	BOOST_FOREACH(const border_cost_map::value_type& candidate, important_hexes_candidates) {
-		if (candidate.second < threshold) {
-			important_hexes_.insert(candidate.first);
-		}
-	}
-}
-
-/**
- * For Map Analysis.
- * Shows the important hexes for debugging purposes on the map. Only if debug is activated.
- */
-void recruitment::show_important_hexes() const {
-	if (!game_config::debug) {
-		return;
-	}
-	resources::screen->labels().clear_all();
-	BOOST_FOREACH(const map_location& loc, important_hexes_) {
-		// Little hack: use map_location north from loc and make 2 linebreaks to center the dot
-		resources::screen->labels().set_label(loc.get_direction(map_location::NORTH), "\n\n\u2B24");
-	}
-}
-
-/**
- * For Map Analysis.
- * Creates a map where each hex is mapped to the average cost of the terrain for our units.
- */
-void recruitment::update_average_local_cost() {
-	average_local_cost_.clear();
-	const gamemap& map = *resources::game_map;
-	const team& team = (*resources::teams)[get_side() - 1];
-
-	for(int x = 0; x < map.w(); ++x) {
-		for (int y = 0; y < map.h(); ++y) {
-			map_location loc(x, y);
-			int summed_cost = 0;
-			int count = 0;
-			BOOST_FOREACH(const std::string& recruit, team.recruits()){
-				const unit_type* const unit_type = unit_types.find(recruit);
-				if (!unit_type) {
-					continue;
-				}
-				int cost = unit_type->movement_type().get_movement().cost(map[loc]);
-				if (cost < 99) {
-					summed_cost += cost;
-					++count;
-				}
-			}
-			average_local_cost_[loc] = (count == 0) ? 0 : static_cast<double>(summed_cost) / count;
-		}
-	}
-}
-
-/**
- * Map Analysis.
- * When this function is called, important_hexes_ is already build.
- * This function fills the scores according to important_hexes_.
- */
-void recruitment::do_map_analysis(std::vector<data>* leader_data) {
-	BOOST_FOREACH(data& data, *leader_data) {
-		BOOST_FOREACH(const std::string& recruit, data.recruits) {
-			data.scores[recruit] += get_average_defense(recruit) * MAP_ANALYSIS_WEIGHT;
-		}
-	}
-}
-
-/**
- * For Map Analysis.
- * Calculates for a given unit the average defense on the map.
- * (According to important_hexes_ / important_terrain_)
- */
-double recruitment::get_average_defense(const std::string& u_type) const {
-	const unit_type* const u_info = unit_types.find(u_type);
-	if (!u_info) {
-		return 0.0;
-	}
-	long summed_defense = 0;
-	int total_terrains = 0;
-	BOOST_FOREACH(const terrain_count_map::value_type& entry, important_terrain_) {
-		const t_translation::t_terrain& terrain = entry.first;
-		int count = entry.second;
-		int defense = 100 - u_info->movement_type().defense_modifier(terrain);
-		summed_defense += defense * count;
-		total_terrains += count;
-	}
-	double average_defense = (total_terrains == 0) ? 0.0 :
-			static_cast<double>(summed_defense) / total_terrains;
-	return average_defense;
-}
-
-/**
- * Calculates a average lawful bonus, so Combat Analysis will work
- * better in caves and custom time of day cycles.
- */
-void recruitment::update_average_lawful_bonus() {
-	int sum = 0;
-	int counter = 0;
-	BOOST_FOREACH(const time_of_day& time, resources::tod_manager->times()) {
-		sum += time.lawful_bonus;
-		++counter;
-	}
-	if (counter > 0) {
-		average_lawful_bonus_ = round_double(static_cast<double>(sum) / counter);
-	}
-}
-
-/**
- * Combat Analysis.
- * Main function.
- * Compares all enemy units with all of our possible recruits and fills
- * the scores.
- */
-void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
-	const unit_map& units = *resources::units;
-
-	// Collect all enemy units (and their hp) we want to take into account in enemy_units.
-	typedef std::vector<std::pair<std::string, int> > unit_hp_vector;
-	unit_hp_vector enemy_units;
-	BOOST_FOREACH(const unit& unit, units) {
-		if (!current_team().is_enemy(unit.side())) {
-			continue;
-		}
-		enemy_units.push_back(std::make_pair(unit.type_id(), unit.hitpoints()));
-	}
-	if (enemy_units.size() < UNIT_THRESHOLD) {
-		// Use also enemies recruitment lists and insert units into enemy_units.
-		BOOST_FOREACH(const team& team, *resources::teams) {
-			if (!current_team().is_enemy(team.side())) {
-				continue;
-			}
-			std::set<std::string> possible_recruits;
-			// Add team recruits.
-			possible_recruits.insert(team.recruits().begin(), team.recruits().end());
-			// Add extra recruits.
-			const std::vector<unit_map::const_iterator> leaders = units.find_leaders(team.side());
-			BOOST_FOREACH(unit_map::const_iterator leader, leaders) {
-				possible_recruits.insert(leader->recruits().begin(), leader->recruits().end());
-			}
-			// Insert set in enemy_units.
-			BOOST_FOREACH(const std::string& possible_recruit, possible_recruits) {
-				const unit_type* recruit_type = unit_types.find(possible_recruit);
-				if (recruit_type) {
-					int hp = recruit_type->hitpoints();
-					enemy_units.push_back(std::make_pair(possible_recruit, hp));
-				}
-			}
-		}
-	}
-
-	BOOST_FOREACH(data& leader, *leader_data) {
-		if (leader.recruits.empty()) {
-			continue;
-		}
-		typedef std::map<std::string, double> simple_score_map;
-		simple_score_map temp_scores;
-
-		BOOST_FOREACH(const unit_hp_vector::value_type& entry, enemy_units) {
-			const std::string& enemy_unit = entry.first;
-			int enemy_unit_hp = entry.second;
-
-			std::string best_response;
-			double best_response_score = -99999.;
-			BOOST_FOREACH(const std::string& recruit, leader.recruits) {
-				double score = compare_unit_types(recruit, enemy_unit);
-				score *= enemy_unit_hp;
-				score = pow(score, COMBAT_SCORE_POWER);
-				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
-				if (score > best_response_score) {
-					best_response_score = score;
-					best_response = recruit;
-				}
-			}
-			if (COMBAT_DIRECT_RESPONSE) {
-				temp_scores[best_response] += enemy_unit_hp;
-			}
-		}
-
-		// Find things for normalization.
-		double max = -99999.;
-		double sum = 0;
-		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
-			double score = entry.second;
-			if (score > max) {
-				max = score;
-			}
-			sum += score;
-		}
-		assert(!temp_scores.empty());
-		double average = sum / temp_scores.size();
-
-		// What we do now is a linear transformation.
-		// We want to map the scores in temp_scores to something between 0 and 100.
-		// The max score shall always be 100.
-		// The min score depends on parameters.
-		double new_100 = max;
-		double score_threshold = (COMBAT_SCORE_THRESHOLD > 0) ? COMBAT_SCORE_THRESHOLD : 0.000001;
-		double new_0 = (COMBAT_DIRECT_RESPONSE) ? 0 : max - (score_threshold * (max - average));
-		if (new_100 == new_0) {
-			// This can happen if max == average. (E.g. only one possible recruit)
-			new_0 -= 0.000001;
-		}
-
-		BOOST_FOREACH(const simple_score_map::value_type& entry, temp_scores) {
-			const std::string& recruit = entry.first;
-			double score = entry.second;
-
-			// Here we transform.
-			// (If score <= new_0 then normalized_score will be 0)
-			// (If score = new_100 then normalized_score will be 100)
-			double normalized_score = 100 * ((score - new_0) / (new_100 - new_0));
-			if (normalized_score < 0) {
-				normalized_score = 0;
-			}
-			leader.scores[recruit] += normalized_score * COMABAT_ANALYSIS_WEIGHT;
-		}
-	}  // for all leaders
-}
-
-/**
- * For Combat Analysis.
- * Calculates how good unit-type a is against unit type b.
- * If the value is bigger then 0, a is better then b.
- * If the value is 2.0 then unit-type a is twice as good as unit-type b.
- * Since this function is called very often it uses a cache.
- */
-double recruitment::compare_unit_types(const std::string& a, const std::string& b) {
-	const unit_type* const type_a = unit_types.find(a);
-	const unit_type* const type_b = unit_types.find(b);
-	if (!type_a || !type_b) {
-		ERR_AI_FLIX << "Couldn't find unit type: " << ((type_a) ? b : a) << ".\n";
-		return 0.0;
-	}
-	double defense_a = get_average_defense(a);
-	double defense_b = get_average_defense(b);
-
-	const double* cache_value = get_cached_combat_value(a, b, defense_a, defense_b);
-	if (cache_value) {
-		return *cache_value;
-	}
-
-	double damage_to_a = 0.0;
-	double damage_to_b = 0.0;
-
-	// a attacks b
-	simulate_attack(type_a, type_b, defense_a, defense_b, &damage_to_a, &damage_to_b);
-	// b attacks a
-	simulate_attack(type_b, type_a, defense_b, defense_a, &damage_to_b, &damage_to_a);
-
-	int a_cost = (type_a->cost() > 0) ? type_a->cost() : 1;
-	int b_cost = (type_b->cost() > 0) ? type_b->cost() : 1;
-	int a_max_hp = (type_a->hitpoints() > 0) ? type_a->hitpoints() : 1;
-	int b_max_hp = (type_b->hitpoints() > 0) ? type_b->hitpoints() : 1;
-
-	double retval = 1.;
-	// There are rare cases where a unit deals 0 damage (eg. Elvish Lady).
-	// Then we just set the value to something reasonable.
-	if (damage_to_a <= 0 && damage_to_b <= 0) {
-		retval = 1.;
-	} else if (damage_to_a <= 0) {
-		retval = 2.;
-	} else if (damage_to_b <= 0) {
-		retval = 0.5;
-	} else {
-		// Normal case
-		double value_of_a = damage_to_b / (b_max_hp * a_cost);
-		double value_of_b = damage_to_a / (a_max_hp * b_cost);
-
-		if (value_of_a > value_of_b) {
-			return value_of_a / value_of_b;
-		} else if (value_of_a < value_of_b) {
-			return -value_of_b / value_of_a;
-		} else {
-			return 0.;
-		}
-	}
-
-	// Insert in cache.
-	const cached_combat_value entry(defense_a, defense_b, retval);
-	std::set<cached_combat_value>& cache = combat_cache[a][b];
-	cache.insert(entry);
-
-	return retval;
-}
-
-/**
- * For Combat Analysis.
- * Returns the cached combat value for two unit types
- * or NULL if there is none or terrain defenses are not within range.
- */
-const double* recruitment::get_cached_combat_value(const std::string& a, const std::string& b,
-		double a_defense, double b_defense) {
-	double best_distance = 999;
-	const double* best_value = NULL;
-	const std::set<cached_combat_value>& cache = combat_cache[a][b];
-	BOOST_FOREACH(const cached_combat_value& entry, cache) {
-		double distance_a = std::abs(entry.a_defense - a_defense);
-		double distance_b = std::abs(entry.b_defense - b_defense);
-		if (distance_a <= COMBAT_CACHE_TOLERANCY && distance_b <= COMBAT_CACHE_TOLERANCY) {
-			if(distance_a + distance_b <= best_distance) {
-				best_distance = distance_a + distance_b;
-				best_value = &entry.value;
-			}
-		}
-	}
-	return best_value;
-}
-
-/**
- * For Combat Analysis.
- * This struct encapsulates all information for one attack simulation.
- * One attack simulation is defined by the unit-types, the weapons and the units defenses.
- */
-struct attack_simulation {
-	const unit_type* attacker_type;
-	const unit_type* defender_type;
-	const battle_context_unit_stats attacker_stats;
-	const battle_context_unit_stats defender_stats;
-	combatant attacker_combatant;
-	combatant defender_combatant;
-
-	attack_simulation(const unit_type* attacker, const unit_type* defender,
-			double attacker_defense, double defender_defense,
-			const attack_type* att_weapon, const attack_type* def_weapon,
-			int average_lawful_bonus) :
-			attacker_type(attacker),
-			defender_type(defender),
-			attacker_stats(attacker, att_weapon, true, defender, def_weapon,
-					round_double(defender_defense), average_lawful_bonus),
-			defender_stats(defender, def_weapon, false, attacker, att_weapon,
-					round_double(attacker_defense), average_lawful_bonus),
-			attacker_combatant(attacker_stats),
-			defender_combatant(defender_stats)
-	{
-		attacker_combatant.fight(defender_combatant);
-	}
-
-	bool better_result(const attack_simulation* other, bool for_defender) {
-		assert(other);
-		if (for_defender) {
-			return battle_context::better_combat(
-					defender_combatant, attacker_combatant,
-					other->defender_combatant, other->attacker_combatant, 0);
-		} else {
-			return battle_context::better_combat(
-					attacker_combatant, defender_combatant,
-					other->attacker_combatant, other->defender_combatant, 0);
-		}
-	}
-
-	double get_avg_hp_of_defender() const {
-		return get_avg_hp_of_combatant(false);
-	}
-
-	double get_avg_hp_of_attacker() const {
-		return get_avg_hp_of_combatant(true);
-	}
-	double get_avg_hp_of_combatant(bool attacker) const {
-		const combatant& combatant = (attacker) ? attacker_combatant : defender_combatant;
-		const unit_type* unit_type = (attacker) ? attacker_type : defender_type;
-		double avg_hp = combatant.average_hp(0);
-
-		// handle poisson
-		avg_hp -= combatant.poisoned * game_config::poison_amount;
-
-		avg_hp = std::max(0., avg_hp);
-		avg_hp = std::min(static_cast<double>(unit_type->hitpoints()), avg_hp);
-		return avg_hp;
-	}
-};
-
-/**
- * For Combat Analysis.
- * Simulates a attack with a attacker and a defender.
- * The function will use battle_context::better_combat() to decide which weapon to use.
- */
-void recruitment::simulate_attack(
-			const unit_type* const attacker, const unit_type* const defender,
-			double attacker_defense, double defender_defense,
-			double* damage_to_attacker, double* damage_to_defender) const {
-	if(!attacker || !defender || !damage_to_attacker || !damage_to_defender) {
-		ERR_AI_FLIX << "NULL pointer in simulate_attack()\n";
-		return;
-	}
-	const std::vector<attack_type> attacker_weapons = attacker->attacks();
-	const std::vector<attack_type> defender_weapons = defender->attacks();
-
-	boost::shared_ptr<attack_simulation> best_att_attack;
-
-	// Let attacker choose weapon
-	BOOST_FOREACH(const attack_type& att_weapon, attacker_weapons) {
-		boost::shared_ptr<attack_simulation> best_def_response;
-		// Let defender choose weapon
-		BOOST_FOREACH(const attack_type& def_weapon, defender_weapons) {
-			if (att_weapon.range() != def_weapon.range()) {
-				continue;
-			}
-			boost::shared_ptr<attack_simulation> simulation(new attack_simulation(
-					attacker, defender,
-					attacker_defense, defender_defense,
-					&att_weapon, &def_weapon, average_lawful_bonus_));
-			if (!best_def_response || simulation->better_result(best_def_response.get(), true)) {
-				best_def_response = simulation;
-			}
-		}  // for defender weapons
-
-		if (!best_def_response) {
-			// Defender can not fight back. Simulate this as well.
-			best_def_response.reset(new attack_simulation(
-					attacker, defender,
-					attacker_defense, defender_defense,
-					&att_weapon, NULL, average_lawful_bonus_));
-		}
-		if (!best_att_attack || best_def_response->better_result(best_att_attack.get(), false)) {
-			best_att_attack = best_def_response;
-		}
-	}  // for attacker weapons
-
-	if (!best_att_attack) {
-		return;
-	}
-
-	*damage_to_defender += (defender->hitpoints() - best_att_attack->get_avg_hp_of_defender());
-	*damage_to_attacker += (attacker->hitpoints() - best_att_attack->get_avg_hp_of_attacker());
-}
-
-/**
- * For Gold Saving Strategies.
+ * For Aspect "recruitment_save_gold".
  * Guess the income over the next turns.
  * This doesn't need to be exact. In the end we are just interested if this value is
  * positive or negative.
@@ -1564,7 +1479,7 @@ double recruitment::get_estimated_income(int turns) const {
 }
 
 /**
- * For Gold Saving Strategies.
+ * For Aspect "recruitment_save_gold".
  * Guess how many units we will gain / loose over the next turns per turn.
  */
 double recruitment::get_estimated_unit_gain() const {
@@ -1572,7 +1487,7 @@ double recruitment::get_estimated_unit_gain() const {
 }
 
 /**
- * For Gold Saving Strategies.
+ * For Aspect "recruitment_save_gold".
  * Guess how many villages we will gain over the next turns per turn.
  */
 double recruitment::get_estimated_village_gain() const {
@@ -1587,7 +1502,7 @@ double recruitment::get_estimated_village_gain() const {
 }
 
 /**
- * For Gold Saving Strategies.
+ * For Aspect "recruitment_save_gold".
  * Returns our_total_unit_costs / enemy_total_unit_costs.
  */
 double recruitment::get_unit_ratio() const {
@@ -1606,7 +1521,8 @@ double recruitment::get_unit_ratio() const {
 }
 
 /**
- * Gold Saving Strategies. Main method.
+ * For Aspect "recruitment_save_gold".
+ * Main method.
  */
 void recruitment::update_state() {
 	if (state_ == LEADER_IN_DANGER || state_ == SPEND_ALL_GOLD) {
@@ -1636,47 +1552,6 @@ void recruitment::update_state() {
 	} else if (state_ == SAVE_GOLD && ratio < save_gold_end) {
 		state_ = NORMAL;
 		LOG_AI_FLIX << "Changed state to NORMAL.\n";
-	}
-}
-
-/**
- * This function will use the aspect villages_per_scout to decide how many
- * scouts we want to recruit.
- */
-void recruitment::update_scouts_wanted() {
-	scouts_wanted_ = 0;
-	if (get_villages_per_scout() == 0) {
-		return;
-	}
-	int neutral_villages = 0;
-	// We recruit the initial allocation of scouts
-	// based on how many neutral villages there are.
-	BOOST_FOREACH(const map_location& village, resources::game_map->villages()) {
-		if (village_owner(village) == -1) {
-			++neutral_villages;
-		}
-	}
-	double our_share = static_cast<double>(neutral_villages) / resources::teams->size();
-
-	// The villages per scout is for a two-side battle,
-	// accounting for all neutral villages on the map.
-	// We only look at our share of villages, so we halve it,
-	// making us get twice as many scouts.
-	double villages_per_scout = (VILLAGE_PER_SCOUT_MULTIPLICATOR * get_villages_per_scout()) / 2;
-
-	scouts_wanted_ = (villages_per_scout > 0) ? round_double(our_share / villages_per_scout) : 0;
-
-	if (scouts_wanted_ == 0) {
-		return;
-	}
-
-	// Subtract already recruited scouts.
-	BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
-		const std::string& unit_type = entry.first;
-		const int count = entry.second;
-		if (recruit_matches_type(unit_type, "scout")) {
-			scouts_wanted_ -= count;
-		}
 	}
 }
 
@@ -1741,6 +1616,46 @@ void recruitment::do_similarity_penalty(std::vector<data>* leader_data) const {
 }
 
 /**
+ * Called at the beginning and whenever the recruitment list changes.
+ */
+int recruitment::get_cheapest_unit_cost_for_leader(const unit_map::const_iterator& leader) {
+	std::map<size_t, int>::const_iterator it = cheapest_unit_costs_.find(leader->underlying_id());
+	if (it != cheapest_unit_costs_.end()) {
+		return it->second;
+	}
+
+	int cheapest_cost = 999999;
+
+	// team recruits
+	BOOST_FOREACH(const std::string& recruit, current_team().recruits()) {
+		const unit_type* const info = unit_types.find(recruit);
+		if (!info) {
+			continue;
+		}
+		if (info->cost() < cheapest_cost) {
+			cheapest_cost = info->cost();
+		}
+	}
+	// extra recruits
+	BOOST_FOREACH(const std::string& recruit, leader->recruits()) {
+		const unit_type* const info = unit_types.find(recruit);
+		if (!info) {
+			continue;
+		}
+		if (info->cost() < cheapest_cost) {
+			cheapest_cost = info->cost();
+		}
+	}
+	// Consider recall costs.
+	if (!current_team().recall_list().empty() && current_team().recall_cost() < cheapest_cost) {
+		cheapest_cost = current_team().recall_cost();
+	}
+	LOG_AI_FLIX << "Cheapest unit cost updated to " << cheapest_cost << ".\n";
+	cheapest_unit_costs_[leader->underlying_id()] = cheapest_cost;
+	return cheapest_cost;
+}
+
+/**
  * For Aspect "recruitment_more"
  */
 void recruitment::handle_recruitment_more(std::vector<data>* leader_data) const {
@@ -1757,6 +1672,89 @@ void recruitment::handle_recruitment_more(std::vector<data>* leader_data) const 
 					score += 25.;
 				}
 			}
+		}
+	}
+}
+
+/**
+ * Helper function.
+ * Returns true if there is a enemy within the radius.
+ */
+bool recruitment::is_enemy_in_radius(const map_location& loc, int radius) const {
+	const unit_map& units = *resources::units;
+	std::vector<map_location> surrounding;
+	get_tiles_in_radius(loc, radius, surrounding);
+	if (surrounding.empty()) {
+		return false;
+	}
+	BOOST_FOREACH(const map_location& loc, surrounding) {
+		const unit_map::const_iterator& enemy_it = units.find(loc);
+		if(enemy_it == units.end()) {
+			continue;
+		}
+		if (!current_team().is_enemy(enemy_it->side())) {
+			continue;
+		}
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Helper Function.
+ * Counts own units on the map and saves the result
+ * in member own_units_count_
+ */
+void recruitment::update_own_units_count() {
+	own_units_count_.clear();
+	total_own_units_ = 0;
+	const unit_map& units = *resources::units;
+	BOOST_FOREACH(const unit& unit, units) {
+		if (unit.side() != get_side() || unit.can_recruit()) {
+			continue;
+		}
+		++own_units_count_[unit.type_id()];
+		++total_own_units_;
+	}
+}
+
+/**
+ * This function will use the aspect villages_per_scout to decide how many
+ * scouts we want to recruit.
+ */
+void recruitment::update_scouts_wanted() {
+	scouts_wanted_ = 0;
+	if (get_villages_per_scout() == 0) {
+		return;
+	}
+	int neutral_villages = 0;
+	// We recruit the initial allocation of scouts
+	// based on how many neutral villages there are.
+	BOOST_FOREACH(const map_location& village, resources::game_map->villages()) {
+		if (village_owner(village) == -1) {
+			++neutral_villages;
+		}
+	}
+	double our_share = static_cast<double>(neutral_villages) / resources::teams->size();
+
+	// The villages per scout is for a two-side battle,
+	// accounting for all neutral villages on the map.
+	// We only look at our share of villages, so we halve it,
+	// making us get twice as many scouts.
+	double villages_per_scout = (VILLAGE_PER_SCOUT_MULTIPLICATOR * get_villages_per_scout()) / 2;
+
+	scouts_wanted_ = (villages_per_scout > 0) ? round_double(our_share / villages_per_scout) : 0;
+
+	if (scouts_wanted_ == 0) {
+		return;
+	}
+
+	// Subtract already recruited scouts.
+	BOOST_FOREACH(const count_map::value_type& entry, own_units_count_) {
+		const std::string& unit_type = entry.first;
+		const int count = entry.second;
+		if (recruit_matches_type(unit_type, "scout")) {
+			scouts_wanted_ -= count;
 		}
 	}
 }
