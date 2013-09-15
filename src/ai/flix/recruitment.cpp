@@ -102,19 +102,10 @@ const static double COMBAT_SCORE_POWER = 1.;
 // Formula: zero_threshold = max_score - (COMBAT_SCORE_THRESHOLD * (max_score - average_score));
 const static double COMBAT_SCORE_THRESHOLD = 1.5;
 
-// If set to true combat analysis will work as follows:
-// For each enemy unit determine what unit would be best against it.
-// Then the scores are distributed according to the enemy-units distribution.
-// (For each enemy the enemies HP are added to the score of our best unit against it)
-// COMBAT_SCORE_POWER and COMBAT_SCORE_THRESHOLD are ignored then.
-const static bool COMBAT_DIRECT_RESPONSE = false;
-
 // A cache is used to store the simulation results.
 // This value determines how much the average defenses of the important hexes can differ
 // until the simulation will run again.
 const static double COMBAT_CACHE_TOLERANCY = 0.5;
-
-const static double COMABAT_ANALYSIS_WEIGHT = 1.;
 
 // The old recruitment CA usually recruited too many scouts.
 // To prevent this we multiply the aspect village_per_scout with this constant.
@@ -985,14 +976,11 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 				double score = compare_unit_types(recruit, enemy_unit);
 				score *= enemy_unit_hp;
 				score = pow(score, COMBAT_SCORE_POWER);
-				temp_scores[recruit] += (COMBAT_DIRECT_RESPONSE) ? 0 : score;
+				temp_scores[recruit] += score;
 				if (score > best_response_score) {
 					best_response_score = score;
 					best_response = recruit;
 				}
-			}
-			if (COMBAT_DIRECT_RESPONSE) {
-				temp_scores[best_response] += enemy_unit_hp;
 			}
 		}
 
@@ -1015,7 +1003,7 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 		// The min score depends on parameters.
 		double new_100 = max;
 		double score_threshold = (COMBAT_SCORE_THRESHOLD > 0) ? COMBAT_SCORE_THRESHOLD : 0.000001;
-		double new_0 = (COMBAT_DIRECT_RESPONSE) ? 0 : max - (score_threshold * (max - average));
+		double new_0 = max - (score_threshold * (max - average));
 		if (new_100 == new_0) {
 			// This can happen if max == average. (E.g. only one possible recruit)
 			new_0 -= 0.000001;
@@ -1032,7 +1020,7 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 			if (normalized_score < 0) {
 				normalized_score = 0;
 			}
-			leader.scores[recruit] += normalized_score * COMABAT_ANALYSIS_WEIGHT;
+			leader.scores[recruit] += normalized_score;
 		}
 	}  // for all leaders
 }
