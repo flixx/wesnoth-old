@@ -254,7 +254,7 @@ const std::string holder::get_ai_overview()
 	s << "recruitment_pattern:  " << utils::join(this->ai_->get_recruitment_pattern()) << std::endl;
 	s << "recruitment_randomness:  " << this->ai_->get_recruitment_randomness() << std::endl;
 	s << "recruitment_save_gold:  " << std::endl << "----config begin----" << std::endl;
-		s << this->ai_->get_recruitment_save_gold() << "-----config end-----" << std::endl;
+	s << this->ai_->get_recruitment_save_gold() << "-----config end-----" << std::endl;
 	s << "scout_village_targeting:  " << this->ai_->get_scout_village_targeting() << std::endl;
 	s << "simple_targeting:  " << this->ai_->get_simple_targeting() << std::endl;
 	s << "support_villages:  " << this->ai_->get_support_villages() << std::endl;
