@@ -688,7 +688,8 @@ const  pathfind::full_cost_map recruitment::get_cost_map_of_side(int side) const
 	// First add all existing units to cost_map.
 	unsigned int unit_count = 0;
 	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != side || unit.can_recruit()) {
+		if (unit.side() != side || unit.can_recruit() ||
+				unit.incapacitated() || unit.total_movement() <= 0) {
 			continue;
 		}
 		++unit_count;
@@ -928,7 +929,7 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 	typedef std::vector<std::pair<std::string, int> > unit_hp_vector;
 	unit_hp_vector enemy_units;
 	BOOST_FOREACH(const unit& unit, units) {
-		if (!current_team().is_enemy(unit.side())) {
+		if (!current_team().is_enemy(unit.side()) || unit.incapacitated()) {
 			continue;
 		}
 		enemy_units.push_back(std::make_pair(unit.type_id(), unit.hitpoints()));
@@ -1467,6 +1468,9 @@ double recruitment::get_unit_ratio() const {
 		double own_total_value;
 		double enemy_total_value;
 		BOOST_FOREACH(const unit& unit, units) {
+			if (unit.incapacitated() || unit.total_movement() <= 0) {
+				continue;
+			}
 			double value = unit.cost() * unit.hitpoints() / unit.max_hitpoints();
 			if (current_team().is_enemy(unit.side())) {
 				enemy_total_value += value;
@@ -1649,7 +1653,7 @@ bool recruitment::is_enemy_in_radius(const map_location& loc, int radius) const 
 		if(enemy_it == units.end()) {
 			continue;
 		}
-		if (!current_team().is_enemy(enemy_it->side())) {
+		if (!current_team().is_enemy(enemy_it->side()) || enemy_it->incapacitated()) {
 			continue;
 		}
 		return true;
@@ -1667,7 +1671,8 @@ void recruitment::update_own_units_count() {
 	total_own_units_ = 0;
 	const unit_map& units = *resources::units;
 	BOOST_FOREACH(const unit& unit, units) {
-		if (unit.side() != get_side() || unit.can_recruit()) {
+		if (unit.side() != get_side() || unit.can_recruit() ||
+				unit.incapacitated() || unit.total_movement() <= 0) {
 			continue;
 		}
 		++own_units_count_[unit.type_id()];
