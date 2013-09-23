@@ -984,6 +984,9 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 			}
 		}
 
+		if (temp_scores.empty()) {
+			return;
+		}
 		// Find things for normalization.
 		double max = -99999.;
 		double sum = 0;
@@ -994,7 +997,6 @@ void recruitment::do_combat_analysis(std::vector<data>* leader_data) {
 			}
 			sum += score;
 		}
-		assert(!temp_scores.empty());
 		double average = sum / temp_scores.size();
 
 		// What we do now is a linear transformation.
