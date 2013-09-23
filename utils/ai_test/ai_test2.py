@@ -176,7 +176,7 @@ def run_game(cfg, test, switched_side):
 			game_result['faction2'] = faction2 if not switched_side else faction1
 
 			if not game_result['is_success']:
-				print_error(outerrlines) 
+				print_error(p.stderr) 
 
 			game_results.append(game_result)
 			continue
@@ -189,7 +189,7 @@ def run_game(cfg, test, switched_side):
 
 
 	if not game_result['is_success']:
-		print_error(outerrlines) 
+		print_error(p.stderr) 
 	return game_results
 
 def print_error(outerrlines):
